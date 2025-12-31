@@ -121,8 +121,12 @@ class UserService:
         Returns:
             TokenResponse with access and refresh tokens
         """
-        # Create access token
-        access_token = create_access_token(subject=user.id)
+        # Create access token with user info
+        access_token = create_access_token(
+            subject=user.id,
+            username=user.username,
+            email=user.email,
+        )
 
         # Create refresh token
         refresh_token = create_refresh_token(subject=user.id)

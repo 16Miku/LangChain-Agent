@@ -34,6 +34,8 @@ def hash_token(token: str) -> str:
 
 def create_access_token(
     subject: str,
+    username: str = None,
+    email: str = None,
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """
@@ -41,6 +43,8 @@ def create_access_token(
 
     Args:
         subject: User ID to encode in the token
+        username: Username to include in token
+        email: Email to include in token
         expires_delta: Optional custom expiration time
 
     Returns:
@@ -59,6 +63,12 @@ def create_access_token(
         "type": "access",
         "iat": datetime.utcnow(),
     }
+
+    # Add optional user info
+    if username:
+        to_encode["username"] = username
+    if email:
+        to_encode["email"] = email
 
     encoded_jwt = jwt.encode(
         to_encode,

@@ -89,9 +89,15 @@ chroma_langchain_db/
 *.db
 *.sqlite3
 chat_history.db
+auth.db
+chat.db
 
 # Milvus (V9)
 milvus_data/
+
+# -------------------- 微服务数据目录 --------------------
+backend/auth-service/data/
+backend/chat-service/data/
 
 # -------------------- 数据目录 --------------------
 backend/data/
