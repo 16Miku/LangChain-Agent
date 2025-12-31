@@ -3,7 +3,7 @@
 > **版本**: V9.0
 > **日期**: 2025-12-31
 > **目标**: 使用 Next.js 重构前端，集成多模态能力，增强 RAG 检索，引入用户认证系统
-> **状态**: 📋 规划阶段
+> **状态**: 🚧 开发中 (Phase 1: Week 3)
 
 ---
 
@@ -1820,18 +1820,20 @@ Phase 4: 部署优化 (1 周)
 - [x] 配置 API 客户端 (Axios + Token 拦截器)
 - [x] 创建设置页面 UI
 
-**Week 2: 用户认证** 🔄 进行中
+**Week 2: 用户认证** ✅ 已完成 (2025-12-31)
 
-- [ ] 创建 auth-service 项目结构
-- [ ] 实现用户注册 API
-- [ ] 实现用户登录 API
-- [ ] 实现 JWT Token 生成/验证
-- [ ] 实现 Refresh Token 机制
+- [x] 创建 auth-service 项目结构
+- [x] 实现用户注册 API (POST /api/auth/register)
+- [x] 实现用户登录 API (POST /api/auth/login)
+- [x] 实现 JWT Token 生成/验证 (bcrypt + python-jose)
+- [x] 实现 Refresh Token 机制 (POST /api/auth/refresh)
+- [x] 实现用户登出 API (POST /api/auth/logout)
+- [x] 实现获取当前用户 API (GET /api/auth/me)
 - [x] 前端认证状态管理 (已在 Week 1 完成)
 - [x] 前端路由保护 (已在 Week 1 完成)
 - [x] API 请求拦截器 (Token 自动携带/刷新) (已在 Week 1 完成)
 
-**Week 3: 聊天集成**
+**Week 3: 聊天集成** 🔄 进行中
 
 - [ ] 改造 chat-service 支持用户隔离
 - [ ] 实现会话 CRUD API
@@ -2003,9 +2005,11 @@ Phase 4: 部署优化 (1 周)
 | 版本 | 日期 | 变更内容 | 作者 |
 |------|------|---------|------|
 | 1.0 | 2025-12-31 | 初始版本 | Claude Code |
+| 1.1 | 2025-12-31 | Week 1 完成：Next.js 前端基础架构 | Claude Code |
+| 1.2 | 2025-12-31 | Week 2 完成：auth-service 用户认证服务 | Claude Code |
 
 ---
 
-> **文档状态**: 📋 规划阶段
+> **文档状态**: 🚧 开发中 (Phase 1: Week 3)
 > **最后更新**: 2025-12-31
-> **下一步**: 需求确认后进入开发阶段
+> **下一步**: Week 3 - 聊天集成（前后端对接、SSE 流式、会话管理）
