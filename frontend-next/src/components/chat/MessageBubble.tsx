@@ -60,6 +60,19 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
         return <>{children}</>;
       },
 
+      // Images - handle both URLs and data URLs (base64)
+      img: ({ src, alt }: { src?: string; alt?: string }) => {
+        if (!src) return null;
+        return (
+          <img
+            src={src}
+            alt={alt || 'Image'}
+            className="my-3 max-w-full rounded-lg border"
+            loading="lazy"
+          />
+        );
+      },
+
       // Links
       a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
         <a
