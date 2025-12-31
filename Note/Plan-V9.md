@@ -1844,6 +1844,8 @@ Phase 4: 部署优化 (1 周)
 - [x] 集成 LangGraph Agent 服务
 - [x] 用户隔离机制 (基于 JWT user_id)
 - [x] auth-service JWT Token 增加 username/email 字段
+- [x] 前端认证 API 联调 (登录/注册/登出)
+- [x] 修复 .gitignore 规则 (恢复 frontend-next/src/lib/ 追踪)
 - [ ] 前端 SSE 流式处理对接
 - [ ] 工具调用可视化组件
 - [ ] 代码块高亮组件
