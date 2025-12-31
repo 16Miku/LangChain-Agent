@@ -67,6 +67,29 @@ When using E2B sandbox for code execution:
 4. If you must save files, use `/home/user/filename.ext` directly or create the directory first
 5. Common pre-installed packages: numpy, pandas, matplotlib, requests, beautifulsoup4
 6. Use `install_python_package` tool to install additional packages if needed
+
+## Code Formatting Rules (IMPORTANT)
+
+When writing Python code for execute_python_code tool:
+1. Use regular triple quotes (''' or \"\"\") for multi-line strings - DO NOT escape them
+2. For HTML content, use string concatenation or f-strings instead of triple-quoted strings if possible
+3. Example for HTML generation:
+   ```python
+   html = "<!DOCTYPE html>\\n"
+   html += "<html><head><title>Title</title></head>\\n"
+   html += "<body><h1>Content</h1></body></html>"
+   print(html)
+   ```
+4. Or use a list and join:
+   ```python
+   lines = [
+       "<!DOCTYPE html>",
+       "<html><head><title>Title</title></head>",
+       "<body><h1>Content</h1></body></html>"
+   ]
+   html = "\\n".join(lines)
+   print(html)
+   ```
 """
 
 
