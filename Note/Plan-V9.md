@@ -1851,6 +1851,9 @@ Phase 4: 部署优化 (1 周)
 - [x] 代码块高亮组件 (CodeBlock.tsx)
 - [x] 图表渲染组件 (ImageRenderer.tsx)
 - [x] 消息复制/重新生成功能 (MessageBubble.tsx)
+- [x] 修复工具导入路径 (agent_service.py)
+- [x] 修复前端 UTF-8 中文显示乱码 (decodeBase64UTF8)
+- [x] 支持 OpenAI 兼容模式 LLM 配置 (.env.example 更新)
 
 #### Phase 2: 多模态能力
 
@@ -2017,9 +2020,10 @@ Phase 4: 部署优化 (1 周)
 | 1.2 | 2025-12-31 | Week 2 完成：auth-service 用户认证服务 | Claude Code |
 | 1.3 | 2025-12-31 | Week 3 进行中：chat-service 后端完成 | Claude Code |
 | 1.4 | 2025-12-31 | Week 3 完成：前端 SSE 流式对接、工具可视化、代码高亮、图表渲染组件 | Claude Code |
+| 1.5 | 2025-12-31 | Week 3 完成：修复工具导入路径、UTF-8 中文乱码、OpenAI 兼容模式支持 | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 2: Week 4)
 > **最后更新**: 2025-12-31
-> **下一步**: Week 4 - 图片上传与理解 (Gemini Vision API 集成)
+> **下一步**: Week 4 - 图片上传与理解 (多模态能力)
