@@ -1805,27 +1805,31 @@ Phase 4: 部署优化 (1 周)
 
 #### Phase 1: 前端重构 + 用户系统
 
-**Week 1: 基础搭建**
+**Week 1: 基础搭建** ✅ 已完成 (2025-12-31)
 
-- [ ] 创建 Next.js 14 项目
-- [ ] 配置 Tailwind CSS + shadcn/ui
-- [ ] 实现基础布局 (Header + Sidebar + Main)
-- [ ] 创建登录/注册页面 UI
-- [ ] 创建聊天页面 UI
-- [ ] 实现消息列表组件
-- [ ] 实现输入区域组件
-- [ ] 配置 Zustand 状态管理
+- [x] 创建 Next.js 14 项目 (实际使用 Next.js 16.1.1)
+- [x] 配置 Tailwind CSS + shadcn/ui (Tailwind 4.0)
+- [x] 实现基础布局 (Header + Sidebar + Main)
+- [x] 创建登录/注册页面 UI
+- [x] 创建聊天页面 UI
+- [x] 实现消息列表组件
+- [x] 实现输入区域组件 (支持图片上传/粘贴/拖拽)
+- [x] 配置 Zustand 状态管理 (authStore, chatStore, settingsStore)
+- [x] 实现 ThemeProvider (亮色/暗色/系统主题)
+- [x] 实现 AuthProvider (路由保护)
+- [x] 配置 API 客户端 (Axios + Token 拦截器)
+- [x] 创建设置页面 UI
 
-**Week 2: 用户认证**
+**Week 2: 用户认证** 🔄 进行中
 
 - [ ] 创建 auth-service 项目结构
 - [ ] 实现用户注册 API
 - [ ] 实现用户登录 API
 - [ ] 实现 JWT Token 生成/验证
 - [ ] 实现 Refresh Token 机制
-- [ ] 前端认证状态管理
-- [ ] 前端路由保护
-- [ ] API 请求拦截器 (Token 自动携带/刷新)
+- [x] 前端认证状态管理 (已在 Week 1 完成)
+- [x] 前端路由保护 (已在 Week 1 完成)
+- [x] API 请求拦截器 (Token 自动携带/刷新) (已在 Week 1 完成)
 
 **Week 3: 聊天集成**
 
