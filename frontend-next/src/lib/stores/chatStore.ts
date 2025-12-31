@@ -128,7 +128,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (content: string, images?: string[]) => {
-    const { currentConversationId, messages } = get();
+    const { currentConversationId, messages, conversations } = get();
 
     // Create user message
     const userMessage: Message = {
@@ -154,6 +154,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isStreaming: true,
       error: null,
     });
+
+    // Track new conversation ID from response header
+    let newConversationId: string | null = null;
 
     // Start streaming
     const controller = chatApi.streamChat(
@@ -223,15 +226,46 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 break;
               }
 
-              case 'done':
-                set({
-                  messages: currentMessages.map((m) =>
-                    m.id === lastMessage.id ? { ...m, isStreaming: false } : m
-                  ),
-                  isStreaming: false,
-                  streamController: null,
-                });
+              case 'done': {
+                // Parse done event data to get conversation_id
+                try {
+                  const doneData = JSON.parse(decodedData);
+                  if (doneData.conversation_id && !currentConversationId) {
+                    newConversationId = doneData.conversation_id;
+                  }
+                } catch {
+                  // done data might be plain "complete" string
+                }
+
+                // If a new conversation was created, update state
+                if (newConversationId) {
+                  const { conversations: currentConversations } = get();
+                  const newConversation: Conversation = {
+                    id: newConversationId,
+                    title: content.slice(0, 50) + (content.length > 50 ? '...' : ''),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  };
+                  set({
+                    currentConversationId: newConversationId,
+                    conversations: [newConversation, ...currentConversations],
+                    messages: currentMessages.map((m) =>
+                      m.id === lastMessage.id ? { ...m, isStreaming: false } : m
+                    ),
+                    isStreaming: false,
+                    streamController: null,
+                  });
+                } else {
+                  set({
+                    messages: currentMessages.map((m) =>
+                      m.id === lastMessage.id ? { ...m, isStreaming: false } : m
+                    ),
+                    isStreaming: false,
+                    streamController: null,
+                  });
+                }
                 break;
+              }
             }
           } catch {
             // Handle decode error - might be raw text
@@ -255,10 +289,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       },
       // onComplete
       () => {
-        set({
-          isStreaming: false,
-          streamController: null,
-        });
+        const { isStreaming: stillStreaming } = get();
+        if (stillStreaming) {
+          set({
+            isStreaming: false,
+            streamController: null,
+          });
+        }
       }
     );
 

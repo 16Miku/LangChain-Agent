@@ -1,16 +1,18 @@
 'use client';
 
 // ============================================================
-// Message Bubble Component
+// Message Bubble Component - Enhanced with CodeBlock & ToolCallPanel
 // ============================================================
 
-import { useState } from 'react';
-import { Copy, Check, RotateCcw, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Copy, Check, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { Message, ToolCall } from '@/lib/types';
+import type { Message } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { CodeBlock, InlineCode } from './CodeBlock';
+import { ToolCallPanel } from './ToolCallPanel';
 
 interface MessageBubbleProps {
   message: Message;
@@ -19,7 +21,6 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
-  const [toolsExpanded, setToolsExpanded] = useState(false);
 
   const isUser = message.role === 'user';
 
@@ -28,6 +29,99 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Custom components for ReactMarkdown
+  const markdownComponents = useMemo(
+    () => ({
+      // Code block and inline code
+      code: ({
+        inline,
+        className,
+        children,
+        ...props
+      }: {
+        inline?: boolean;
+        className?: string;
+        children?: React.ReactNode;
+      }) => {
+        const match = /language-(\w+)/.exec(className || '');
+        const language = match ? match[1] : 'plaintext';
+        const codeString = String(children).replace(/\n$/, '');
+
+        if (!inline && codeString.includes('\n')) {
+          return <CodeBlock code={codeString} language={language} className="my-4" />;
+        }
+
+        return <InlineCode>{children}</InlineCode>;
+      },
+
+      // Enhanced pre handling
+      pre: ({ children }: { children?: React.ReactNode }) => {
+        return <>{children}</>;
+      },
+
+      // Links
+      a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline hover:no-underline"
+        >
+          {children}
+        </a>
+      ),
+
+      // Tables
+      table: ({ children }: { children?: React.ReactNode }) => (
+        <div className="my-4 overflow-x-auto">
+          <table className="min-w-full border-collapse border border-border">
+            {children}
+          </table>
+        </div>
+      ),
+      th: ({ children }: { children?: React.ReactNode }) => (
+        <th className="border border-border bg-muted px-3 py-2 text-left font-medium">
+          {children}
+        </th>
+      ),
+      td: ({ children }: { children?: React.ReactNode }) => (
+        <td className="border border-border px-3 py-2">{children}</td>
+      ),
+
+      // Lists
+      ul: ({ children }: { children?: React.ReactNode }) => (
+        <ul className="my-2 ml-4 list-disc space-y-1">{children}</ul>
+      ),
+      ol: ({ children }: { children?: React.ReactNode }) => (
+        <ol className="my-2 ml-4 list-decimal space-y-1">{children}</ol>
+      ),
+
+      // Headings
+      h1: ({ children }: { children?: React.ReactNode }) => (
+        <h1 className="mb-4 mt-6 text-2xl font-bold">{children}</h1>
+      ),
+      h2: ({ children }: { children?: React.ReactNode }) => (
+        <h2 className="mb-3 mt-5 text-xl font-bold">{children}</h2>
+      ),
+      h3: ({ children }: { children?: React.ReactNode }) => (
+        <h3 className="mb-2 mt-4 text-lg font-bold">{children}</h3>
+      ),
+
+      // Blockquote
+      blockquote: ({ children }: { children?: React.ReactNode }) => (
+        <blockquote className="my-4 border-l-4 border-primary/50 pl-4 italic text-muted-foreground">
+          {children}
+        </blockquote>
+      ),
+
+      // Paragraph
+      p: ({ children }: { children?: React.ReactNode }) => (
+        <p className="mb-3 last:mb-0">{children}</p>
+      ),
+    }),
+    []
+  );
 
   return (
     <div
@@ -79,42 +173,23 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
             </div>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={markdownComponents}
+              >
                 {message.content}
               </ReactMarkdown>
             </div>
           )}
         </div>
 
-        {/* Tool Calls */}
+        {/* Tool Calls Panel */}
         {message.toolCalls && message.toolCalls.length > 0 && (
-          <div className="w-full">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-1 text-xs text-muted-foreground"
-              onClick={() => setToolsExpanded(!toolsExpanded)}
-            >
-              {toolsExpanded ? (
-                <ChevronUp className="h-3 w-3" />
-              ) : (
-                <ChevronDown className="h-3 w-3" />
-              )}
-              {message.toolCalls.length} tool{message.toolCalls.length > 1 ? 's' : ''} used
-            </Button>
-
-            {toolsExpanded && (
-              <div className="mt-2 space-y-2">
-                {message.toolCalls.map((tool) => (
-                  <ToolCallItem key={tool.id} toolCall={tool} />
-                ))}
-              </div>
-            )}
-          </div>
+          <ToolCallPanel toolCalls={message.toolCalls} className="mt-1" />
         )}
 
         {/* Actions */}
-        {!isUser && !message.isStreaming && (
+        {!isUser && !message.isStreaming && message.content && (
           <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
               {copied ? (
@@ -136,47 +211,6 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
       {isUser && (
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
           <span className="text-sm font-medium">U</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Tool Call Item Component
-function ToolCallItem({ toolCall }: { toolCall: ToolCall }) {
-  const [expanded, setExpanded] = useState(false);
-
-  const statusIcon = {
-    running: <Loader2 className="h-3 w-3 animate-spin text-blue-500" />,
-    success: <Check className="h-3 w-3 text-green-500" />,
-    error: <span className="h-3 w-3 text-red-500">✕</span>,
-  };
-
-  return (
-    <div className="rounded-lg border bg-card p-3">
-      <div
-        className="flex cursor-pointer items-center justify-between"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex items-center gap-2">
-          {statusIcon[toolCall.status]}
-          <span className="text-sm font-medium">{toolCall.name}</span>
-          {toolCall.duration && (
-            <span className="text-xs text-muted-foreground">
-              ({(toolCall.duration / 1000).toFixed(1)}s)
-            </span>
-          )}
-        </div>
-        {expanded ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
-      </div>
-
-      {expanded && toolCall.output && (
-        <div className="mt-2 max-h-48 overflow-auto rounded bg-muted p-2">
-          <pre className="text-xs whitespace-pre-wrap">{toolCall.output}</pre>
         </div>
       )}
     </div>

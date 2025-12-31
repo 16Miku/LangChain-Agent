@@ -314,8 +314,10 @@ async def chat_with_agent_stream(
             encoded_data = encode_sse_data(tool_data)
             yield f"event: tool_end\ndata: {encoded_data}\n\n"
 
-    # Send done marker
-    yield f"event: done\ndata: complete\n\n"
+    # Send done marker with conversation_id for new conversations
+    done_data = json.dumps({"conversation_id": conversation_id}, ensure_ascii=False)
+    encoded_done = encode_sse_data(done_data)
+    yield f"event: done\ndata: {encoded_done}\n\n"
 
 
 async def cleanup():

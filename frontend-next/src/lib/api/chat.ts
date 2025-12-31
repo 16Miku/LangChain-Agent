@@ -2,8 +2,100 @@
 // Chat API for Stream-Agent V9
 // ============================================================
 
-import apiClient, { API_BASE_URL } from './client';
+import axios from 'axios';
+import { CHAT_API_URL } from './client';
 import type { Conversation, Message, ChatRequest } from '@/lib/types';
+
+// Create a separate axios instance for chat service
+const chatClient = axios.create({
+  baseURL: CHAT_API_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor - add auth token
+chatClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Backend response format (snake_case)
+interface BackendConversation {
+  id: string;
+  title: string;
+  model?: string;
+  created_at: string;
+  updated_at: string;
+  message_count?: number;
+}
+
+interface BackendMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  created_at: string;
+  images?: string[];
+  tool_calls?: Array<{
+    id: string;
+    name: string;
+    args: Record<string, unknown>;
+    status: 'running' | 'success' | 'error';
+    output?: string;
+    duration?: number;
+  }>;
+  citations?: Array<{
+    sourceId: string;
+    sourceName: string;
+    pageNumber?: number;
+    content: string;
+    confidence: number;
+  }>;
+}
+
+interface BackendConversationListResponse {
+  conversations: BackendConversation[];
+  total: number;
+}
+
+interface BackendMessageListResponse {
+  messages: BackendMessage[];
+  total: number;
+}
+
+// Convert backend conversation to frontend format
+function toConversation(backend: BackendConversation): Conversation {
+  return {
+    id: backend.id,
+    title: backend.title,
+    model: backend.model,
+    createdAt: backend.created_at,
+    updatedAt: backend.updated_at,
+    messageCount: backend.message_count,
+  };
+}
+
+// Convert backend message to frontend format
+function toMessage(backend: BackendMessage): Message {
+  return {
+    id: backend.id,
+    role: backend.role,
+    content: backend.content,
+    timestamp: new Date(backend.created_at),
+    images: backend.images,
+    toolCalls: backend.tool_calls,
+    citations: backend.citations,
+  };
+}
 
 export interface CreateConversationResponse {
   id: string;
@@ -26,58 +118,78 @@ export const chatApi = {
    * Get conversation list
    */
   async getConversations(skip = 0, limit = 20): Promise<ConversationListResponse> {
-    const response = await apiClient.get<ConversationListResponse>('/api/conversations', {
+    const response = await chatClient.get<BackendConversationListResponse>('/api/conversations', {
       params: { skip, limit },
     });
-    return response.data;
+    return {
+      conversations: response.data.conversations.map(toConversation),
+      total: response.data.total,
+    };
   },
 
   /**
    * Create new conversation
    */
   async createConversation(title?: string): Promise<CreateConversationResponse> {
-    const response = await apiClient.post<CreateConversationResponse>('/api/conversations', {
+    const response = await chatClient.post<BackendConversation>('/api/conversations', {
       title: title || 'New Chat',
     });
-    return response.data;
+    return {
+      id: response.data.id,
+      title: response.data.title,
+      createdAt: response.data.created_at,
+    };
   },
 
   /**
    * Get conversation details
    */
   async getConversation(id: string): Promise<Conversation> {
-    const response = await apiClient.get<Conversation>(`/api/conversations/${id}`);
-    return response.data;
+    const response = await chatClient.get<BackendConversation>(`/api/conversations/${id}`);
+    return toConversation(response.data);
   },
 
   /**
    * Update conversation
    */
   async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation> {
-    const response = await apiClient.put<Conversation>(`/api/conversations/${id}`, data);
-    return response.data;
+    const response = await chatClient.put<BackendConversation>(`/api/conversations/${id}`, {
+      title: data.title,
+      model: data.model,
+    });
+    return toConversation(response.data);
   },
 
   /**
    * Delete conversation
    */
   async deleteConversation(id: string): Promise<void> {
-    await apiClient.delete(`/api/conversations/${id}`);
+    await chatClient.delete(`/api/conversations/${id}`);
   },
 
   /**
    * Get messages for a conversation
    */
   async getMessages(conversationId: string, skip = 0, limit = 50): Promise<MessageListResponse> {
-    const response = await apiClient.get<MessageListResponse>(
+    const response = await chatClient.get<BackendMessageListResponse>(
       `/api/conversations/${conversationId}/messages`,
       { params: { skip, limit } }
     );
-    return response.data;
+    return {
+      messages: response.data.messages.map(toMessage),
+      total: response.data.total,
+    };
   },
 
   /**
    * Stream chat response using SSE
+   *
+   * SSE Event format from backend:
+   * - event: text\ndata: <base64 encoded text>
+   * - event: tool_start\ndata: <base64 encoded tool name>
+   * - event: tool_end\ndata: <base64 encoded JSON {output, duration}>
+   * - event: done\ndata: <base64 encoded JSON {message_id, conversation_id}>
+   * - event: error\ndata: <base64 encoded error message>
    */
   streamChat(
     request: ChatRequest,
@@ -88,18 +200,27 @@ export const chatApi = {
     const controller = new AbortController();
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
-    fetch(`${API_BASE_URL}/api/chat/stream`, {
+    // Convert request to snake_case for backend
+    const backendRequest = {
+      conversation_id: request.conversationId,
+      content: request.content,
+      images: request.images,
+      api_keys: request.apiKeys,
+    };
+
+    fetch(`${CHAT_API_URL}/api/chat/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(backendRequest),
       signal: controller.signal,
     })
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
 
         const reader = response.body?.getReader();
@@ -109,6 +230,7 @@ export const chatApi = {
 
         const decoder = new TextDecoder();
         let buffer = '';
+        let currentEventType = 'text';
 
         while (true) {
           const { done, value } = await reader.read();
@@ -119,16 +241,18 @@ export const chatApi = {
           buffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (line.startsWith('event:')) {
-              const eventType = line.slice(6).trim();
-              const dataLine = lines[lines.indexOf(line) + 1];
-              if (dataLine?.startsWith('data:')) {
-                const data = dataLine.slice(5).trim();
-                onMessage({ type: eventType, data });
+            const trimmedLine = line.trim();
+
+            if (trimmedLine.startsWith('event:')) {
+              // Store the event type for the next data line
+              currentEventType = trimmedLine.slice(6).trim();
+            } else if (trimmedLine.startsWith('data:')) {
+              const data = trimmedLine.slice(5).trim();
+              if (data) {
+                onMessage({ type: currentEventType, data });
               }
-            } else if (line.startsWith('data:')) {
-              const data = line.slice(5).trim();
-              onMessage({ type: 'text', data });
+              // Reset to default after processing
+              currentEventType = 'text';
             }
           }
         }

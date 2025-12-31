@@ -3,7 +3,7 @@
 > **版本**: V9.0
 > **日期**: 2025-12-31
 > **目标**: 使用 Next.js 重构前端，集成多模态能力，增强 RAG 检索，引入用户认证系统
-> **状态**: 🚧 开发中 (Phase 1: Week 3)
+> **状态**: 🚧 开发中 (Phase 2: Week 4)
 
 ---
 
@@ -1833,7 +1833,7 @@ Phase 4: 部署优化 (1 周)
 - [x] 前端路由保护 (已在 Week 1 完成)
 - [x] API 请求拦截器 (Token 自动携带/刷新) (已在 Week 1 完成)
 
-**Week 3: 聊天集成** 🔄 进行中
+**Week 3: 聊天集成** ✅ 已完成 (2025-12-31)
 
 - [x] 创建 chat-service 微服务项目结构
 - [x] 实现会话 (Conversation) 数据模型
@@ -1846,11 +1846,11 @@ Phase 4: 部署优化 (1 周)
 - [x] auth-service JWT Token 增加 username/email 字段
 - [x] 前端认证 API 联调 (登录/注册/登出)
 - [x] 修复 .gitignore 规则 (恢复 frontend-next/src/lib/ 追踪)
-- [ ] 前端 SSE 流式处理对接
-- [ ] 工具调用可视化组件
-- [ ] 代码块高亮组件
-- [ ] 图表渲染组件
-- [ ] 消息复制/重新生成功能
+- [x] 前端 SSE 流式处理对接 (chat.ts, chatStore.ts)
+- [x] 工具调用可视化组件 (ToolCallPanel.tsx)
+- [x] 代码块高亮组件 (CodeBlock.tsx)
+- [x] 图表渲染组件 (ImageRenderer.tsx)
+- [x] 消息复制/重新生成功能 (MessageBubble.tsx)
 
 #### Phase 2: 多模态能力
 
@@ -2016,9 +2016,10 @@ Phase 4: 部署优化 (1 周)
 | 1.1 | 2025-12-31 | Week 1 完成：Next.js 前端基础架构 | Claude Code |
 | 1.2 | 2025-12-31 | Week 2 完成：auth-service 用户认证服务 | Claude Code |
 | 1.3 | 2025-12-31 | Week 3 进行中：chat-service 后端完成 | Claude Code |
+| 1.4 | 2025-12-31 | Week 3 完成：前端 SSE 流式对接、工具可视化、代码高亮、图表渲染组件 | Claude Code |
 
 ---
 
-> **文档状态**: 🚧 开发中 (Phase 1: Week 3)
+> **文档状态**: 🚧 开发中 (Phase 2: Week 4)
 > **最后更新**: 2025-12-31
-> **下一步**: Week 3 剩余 - 前端 SSE 对接、工具可视化、代码高亮等前端组件
+> **下一步**: Week 4 - 图片上传与理解 (Gemini Vision API 集成)
