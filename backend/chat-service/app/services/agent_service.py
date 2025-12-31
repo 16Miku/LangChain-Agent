@@ -207,6 +207,7 @@ async def chat_with_agent_stream(
     user_id: str,
     conversation_id: str,
     history: List[Dict[str, str]] = None,
+    images: List[str] = None,
     api_keys: Dict[str, str] = None,
 ) -> AsyncGenerator[str, None]:
     """
@@ -217,6 +218,7 @@ async def chat_with_agent_stream(
         user_id: User ID for isolation
         conversation_id: Conversation ID for thread management
         history: Previous messages in the conversation
+        images: Optional list of base64-encoded images
         api_keys: Optional API keys override
 
     Yields:
@@ -249,6 +251,49 @@ async def chat_with_agent_stream(
 
         return str(content) if content else ""
 
+    def build_multimodal_content(text: str, image_list: List[str] = None) -> list:
+        """
+        Build multimodal content for HumanMessage.
+
+        Args:
+            text: Text content
+            image_list: Optional list of base64-encoded images
+
+        Returns:
+            List of content parts for multimodal message
+        """
+        content_parts = []
+
+        # Add images first (Vision models typically expect images before text)
+        if image_list:
+            for img_base64 in image_list:
+                # Detect image type from base64 header or default to jpeg
+                if img_base64.startswith("/9j/"):
+                    media_type = "image/jpeg"
+                elif img_base64.startswith("iVBORw"):
+                    media_type = "image/png"
+                elif img_base64.startswith("R0lGOD"):
+                    media_type = "image/gif"
+                elif img_base64.startswith("UklGR"):
+                    media_type = "image/webp"
+                else:
+                    media_type = "image/jpeg"  # Default
+
+                content_parts.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{media_type};base64,{img_base64}"
+                    }
+                })
+
+        # Add text content
+        content_parts.append({
+            "type": "text",
+            "text": text
+        })
+
+        return content_parts
+
     # Initialize agent
     agent = await initialize_agent(user_id, api_keys)
 
@@ -262,11 +307,22 @@ async def chat_with_agent_stream(
     if history:
         for msg in history:
             if msg["role"] == "user":
-                messages.append(HumanMessage(content=msg["content"]))
+                # Check if history message has images
+                msg_images = msg.get("images")
+                if msg_images:
+                    content = build_multimodal_content(msg["content"], msg_images)
+                    messages.append(HumanMessage(content=content))
+                else:
+                    messages.append(HumanMessage(content=msg["content"]))
             elif msg["role"] == "assistant":
                 messages.append(AIMessage(content=msg["content"]))
 
-    messages.append(HumanMessage(content=message))
+    # Build current message (with images if provided)
+    if images:
+        current_content = build_multimodal_content(message, images)
+        messages.append(HumanMessage(content=current_content))
+    else:
+        messages.append(HumanMessage(content=message))
 
     # Stream events
     async for event in agent.astream_events(

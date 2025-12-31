@@ -86,9 +86,13 @@ async def stream_chat(
         user_id=current_user.id,
     )
 
-    # Convert to simple format for agent
+    # Convert to simple format for agent (include images for multimodal context)
     history = [
-        {"role": msg.role, "content": msg.content}
+        {
+            "role": msg.role,
+            "content": msg.content,
+            "images": msg.images,  # Include images for multimodal history
+        }
         for msg in history_messages[:-1]  # Exclude the just-added user message
     ]
 
@@ -106,6 +110,7 @@ async def stream_chat(
             user_id=current_user.id,
             conversation_id=conversation_id,
             history=history,
+            images=request.images,
             api_keys=request.api_keys,
         ):
             yield chunk
