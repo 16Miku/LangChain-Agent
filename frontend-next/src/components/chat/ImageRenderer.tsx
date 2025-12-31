@@ -147,24 +147,34 @@ interface ImageExtractorProps {
 }
 
 export function ImageExtractor({ content, className }: ImageExtractorProps) {
-  // Match [IMAGE_BASE64:...] pattern
-  const imagePattern = /\[IMAGE_BASE64:([A-Za-z0-9+/=]+)\]/g;
+  // Match [IMAGE_BASE64:...] pattern - use more permissive pattern
+  // The base64 string can be very long, so we need to handle it carefully
+  const imagePattern = /\[IMAGE_BASE64:([A-Za-z0-9+/=\s]+)\]/g;
   const matches = [...content.matchAll(imagePattern)];
 
   if (matches.length === 0) {
+    // Debug: log if we expected to find images but didn't
+    if (content.includes('IMAGE_BASE64')) {
+      console.warn('ImageExtractor: Found IMAGE_BASE64 text but regex did not match');
+      console.warn('Content snippet:', content.substring(0, 500));
+    }
     return null;
   }
 
   return (
     <div className={cn('flex flex-wrap gap-3', className)}>
-      {matches.map((match, index) => (
-        <ImageRenderer
-          key={index}
-          src={match[1]}
-          alt={`Generated Chart ${index + 1}`}
-          className="max-w-md"
-        />
-      ))}
+      {matches.map((match, index) => {
+        // Clean up the base64 string (remove any whitespace)
+        const cleanBase64 = match[1].replace(/\s/g, '');
+        return (
+          <ImageRenderer
+            key={index}
+            src={cleanBase64}
+            alt={`Generated Chart ${index + 1}`}
+            className="max-w-md"
+          />
+        );
+      })}
     </div>
   );
 }

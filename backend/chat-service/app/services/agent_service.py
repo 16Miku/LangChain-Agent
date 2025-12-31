@@ -349,7 +349,7 @@ async def chat_with_agent_stream(
             # Handle image data - preserve full images, truncate text
             if "[IMAGE_BASE64:" in output:
                 image_pattern = r"\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]"
-                images = re.findall(image_pattern, output)
+                image_matches = re.findall(image_pattern, output)
                 text_parts = re.split(image_pattern, output)
 
                 truncated_text_parts = [
@@ -360,8 +360,8 @@ async def chat_with_agent_stream(
                 safe_output = ""
                 for i, text_part in enumerate(truncated_text_parts):
                     safe_output += text_part
-                    if i < len(images):
-                        safe_output += images[i]
+                    if i < len(image_matches):
+                        safe_output += image_matches[i]
             else:
                 safe_output = (output[:1000] + "...") if len(output) > 1000 else output
 

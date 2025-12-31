@@ -209,6 +209,13 @@ function ToolCallItem({ toolCall }: ToolCallItemProps) {
         </div>
       </div>
 
+      {/* Always show images first if present (without needing to expand) */}
+      {hasImage && toolCall.status !== 'running' && (
+        <div className="mt-3">
+          <ImageExtractor content={toolCall.output!} className="mb-2" />
+        </div>
+      )}
+
       {/* Output Preview/Full */}
       {toolCall.output && toolCall.status !== 'running' && (
         <div className="mt-3">
@@ -231,11 +238,6 @@ function ToolCallItem({ toolCall }: ToolCallItemProps) {
 
           {outputExpanded && (
             <div className="mt-2 space-y-3">
-              {/* Render extracted images/charts */}
-              {hasImage && (
-                <ImageExtractor content={toolCall.output} className="mb-2" />
-              )}
-
               {/* Text output */}
               <div className="max-h-64 overflow-auto rounded-md bg-background p-3">
                 <pre className="text-xs whitespace-pre-wrap break-all text-foreground/80">
