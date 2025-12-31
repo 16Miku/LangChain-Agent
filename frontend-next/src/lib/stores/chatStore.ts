@@ -6,6 +6,24 @@ import { create } from 'zustand';
 import type { Conversation, Message, ToolCall } from '@/lib/types';
 import { chatApi } from '@/lib/api';
 
+// Properly decode Base64 UTF-8 string
+function decodeBase64UTF8(base64: string): string {
+  try {
+    // Decode base64 to binary string
+    const binaryString = atob(base64);
+    // Convert binary string to Uint8Array
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    // Decode UTF-8 bytes to string
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch {
+    // Fallback: return as-is if decoding fails
+    return base64;
+  }
+}
+
 interface ChatState {
   // State
   conversations: Conversation[];
@@ -172,8 +190,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         if (lastMessage?.role === 'assistant') {
           try {
-            // Decode base64 data
-            const decodedData = atob(event.data);
+            // Decode base64 UTF-8 data
+            const decodedData = decodeBase64UTF8(event.data);
 
             switch (event.type) {
               case 'text':

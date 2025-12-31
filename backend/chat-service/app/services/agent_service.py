@@ -64,9 +64,10 @@ async def get_tools(api_keys: Dict[str, str] = None) -> List:
     """Load MCP tools and custom tools."""
     global _mcp_client, _mcp_tools
 
-    # Import tools dynamically to avoid circular imports
+    # Import tools dynamically - tools are in backend/ directory
     import sys
-    backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    # Path: chat-service/app/services/agent_service.py -> backend/
+    backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     if backend_path not in sys.path:
         sys.path.insert(0, backend_path)
 
