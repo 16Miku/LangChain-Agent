@@ -1835,10 +1835,16 @@ Phase 4: 部署优化 (1 周)
 
 **Week 3: 聊天集成** 🔄 进行中
 
-- [ ] 改造 chat-service 支持用户隔离
-- [ ] 实现会话 CRUD API
-- [ ] 实现消息存储 (PostgreSQL)
-- [ ] 前端 SSE 流式处理
+- [x] 创建 chat-service 微服务项目结构
+- [x] 实现会话 (Conversation) 数据模型
+- [x] 实现消息 (Message) 数据模型
+- [x] 实现会话 CRUD API (GET/POST/PUT/DELETE)
+- [x] 实现消息存储和查询 API
+- [x] 实现流式聊天 API (POST /api/chat/stream)
+- [x] 集成 LangGraph Agent 服务
+- [x] 用户隔离机制 (基于 JWT user_id)
+- [x] auth-service JWT Token 增加 username/email 字段
+- [ ] 前端 SSE 流式处理对接
 - [ ] 工具调用可视化组件
 - [ ] 代码块高亮组件
 - [ ] 图表渲染组件
@@ -2007,9 +2013,10 @@ Phase 4: 部署优化 (1 周)
 | 1.0 | 2025-12-31 | 初始版本 | Claude Code |
 | 1.1 | 2025-12-31 | Week 1 完成：Next.js 前端基础架构 | Claude Code |
 | 1.2 | 2025-12-31 | Week 2 完成：auth-service 用户认证服务 | Claude Code |
+| 1.3 | 2025-12-31 | Week 3 进行中：chat-service 后端完成 | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 1: Week 3)
 > **最后更新**: 2025-12-31
-> **下一步**: Week 3 - 聊天集成（前后端对接、SSE 流式、会话管理）
+> **下一步**: Week 3 剩余 - 前端 SSE 对接、工具可视化、代码高亮等前端组件
