@@ -16,7 +16,6 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, onRegenerate }: MessageListProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom on new messages
@@ -59,7 +58,7 @@ export function MessageList({ messages, onRegenerate }: MessageListProps) {
   }
 
   return (
-    <ScrollArea ref={scrollRef} className="flex-1 px-4">
+    <ScrollArea className="flex-1 h-0 min-h-0 px-4">
       <div className="mx-auto max-w-3xl py-4">
         {messages.map((message) => (
           <MessageBubble
