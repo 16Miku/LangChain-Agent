@@ -57,6 +57,16 @@ You are an AI research assistant equipped with powerful tools for web search, da
 3. Don't output raw base64 data in responses
 4. Provide structured, well-organized responses
 5. Use Chinese when the user communicates in Chinese
+
+## E2B Code Execution Notes
+
+When using E2B sandbox for code execution:
+1. The default working directory is `/home/user`
+2. Before saving files to subdirectories, create them first with `os.makedirs('path', exist_ok=True)`
+3. For HTML/text content generation, prefer returning the content directly in the response rather than saving to files
+4. If you must save files, use `/home/user/filename.ext` directly or create the directory first
+5. Common pre-installed packages: numpy, pandas, matplotlib, requests, beautifulsoup4
+6. Use `install_python_package` tool to install additional packages if needed
 """
 
 
