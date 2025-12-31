@@ -1865,6 +1865,9 @@ Phase 4: 部署优化 (1 周)
 - [x] 后端多模态消息构建 (build_multimodal_content 函数)
 - [x] Vision API 集成 (支持 OpenAI 兼容模式)
 - [x] 更新 .env.example 添加视觉模型说明
+- [x] 修复 E2B 图表显示问题 (变量名 `images` 冲突改为 `image_matches`)
+- [x] 修复 ToolCallPanel 自动展示图片 (无需手动展开)
+- [x] 修复 Markdown 图片渲染 (MessageBubble 添加 img 组件)
 - [ ] OCR 功能实现 (延后到 Week 5)
 
 **Week 5: 语音交互**
@@ -2023,6 +2026,7 @@ Phase 4: 部署优化 (1 周)
 | 1.4 | 2025-12-31 | Week 3 完成：前端 SSE 流式对接、工具可视化、代码高亮、图表渲染组件 | Claude Code |
 | 1.5 | 2025-12-31 | Week 3 完成：修复工具导入路径、UTF-8 中文乱码、OpenAI 兼容模式支持 | Claude Code |
 | 1.6 | 2026-01-01 | Week 4 完成：图片理解多模态功能 | Claude Code |
+| 1.7 | 2026-01-01 | Week 4 Bug修复：E2B图表显示(变量名冲突)、Markdown图片渲染 | Claude Code |
 
 ---
 
