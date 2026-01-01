@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
+from app.database import init_db
 from app.api.v1 import documents, search, ingest
 
 
@@ -15,21 +16,31 @@ async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # Startup
     print(f"Starting {settings.SERVICE_NAME}...")
+    print(f"Debug mode: {settings.DEBUG}")
+    print(f"Database: {settings.DATABASE_URL}")
 
-    # 初始化服务
-    from app.services.milvus_service import MilvusService
+    # 初始化数据库表
+    init_db()
+    print("Database tables initialized")
+
+    # 初始化 Embedding 服务
     from app.services.embedding_service import EmbeddingService
-
-    app.state.milvus_service = MilvusService()
     app.state.embedding_service = EmbeddingService()
+    print("Embedding service initialized")
 
-    # 确保 Milvus Collection 存在
-    try:
-        app.state.milvus_service.ensure_collection()
-        print(f"Milvus collection '{settings.MILVUS_COLLECTION}' ready")
-    except Exception as e:
-        print(f"Warning: Failed to connect to Milvus: {e}")
-        print("RAG service will start but vector search may not work")
+    # 初始化 Milvus 服务（可选）
+    if settings.MILVUS_ENABLED:
+        from app.services.milvus_service import MilvusService
+        app.state.milvus_service = MilvusService()
+        try:
+            app.state.milvus_service.ensure_collection()
+            print(f"Milvus collection '{settings.MILVUS_COLLECTION}' ready")
+        except Exception as e:
+            print(f"Warning: Failed to connect to Milvus: {e}")
+            app.state.milvus_service = None
+    else:
+        app.state.milvus_service = None
+        print("Milvus disabled (MILVUS_ENABLED=False)")
 
     yield
 
@@ -61,7 +72,13 @@ app.include_router(ingest.router, prefix="/api/v1/ingest", tags=["Ingest"])
 
 @app.get("/")
 async def root():
-    return {"service": settings.SERVICE_NAME, "status": "running"}
+    return {
+        "service": settings.SERVICE_NAME,
+        "status": "running",
+        "debug": settings.DEBUG,
+        "milvus_enabled": settings.MILVUS_ENABLED,
+        "jwt_enabled": settings.JWT_ENABLED
+    }
 
 
 @app.get("/health")
@@ -70,19 +87,20 @@ async def health_check():
     health = {
         "status": "healthy",
         "service": settings.SERVICE_NAME,
-        "milvus": "unknown",
-        "embedding": "ready"
+        "milvus": "disabled" if not settings.MILVUS_ENABLED else "unknown",
+        "embedding": "ready",
+        "database": "sqlite" if "sqlite" in settings.DATABASE_URL else "postgresql"
     }
 
     # 检查 Milvus 连接
-    try:
-        if hasattr(app.state, 'milvus_service'):
+    if settings.MILVUS_ENABLED and hasattr(app.state, 'milvus_service') and app.state.milvus_service:
+        try:
             if app.state.milvus_service.is_connected():
                 health["milvus"] = "connected"
             else:
                 health["milvus"] = "disconnected"
-    except Exception:
-        health["milvus"] = "error"
+        except Exception:
+            health["milvus"] = "error"
 
     return health
 

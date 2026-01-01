@@ -93,13 +93,13 @@ async def get_document_status(
 
     # 估算剩余处理时间
     estimated_time = None
-    if document.status == DocumentStatus.PROCESSING:
+    if document.status == DocumentStatus.PROCESSING.value:
         estimated_time = 30  # 假设 30 秒
 
     return DocumentStatusResponse(
         id=document.id,
         filename=document.filename,
-        status=document.status.value,
+        status=document.status if isinstance(document.status, str) else document.status.value,
         chunk_count=document.chunk_count,
         error_message=document.error_message,
         estimated_time=estimated_time

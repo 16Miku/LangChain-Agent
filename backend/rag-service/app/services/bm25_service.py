@@ -129,7 +129,7 @@ class BM25Service:
                 "content": chunk.content,
                 "document_id": str(chunk.document_id),
                 "page_number": chunk.page_number,
-                "metadata": chunk.metadata or {}
+                "metadata": chunk.extra_data or {}
             }
             for chunk in chunks
         ]

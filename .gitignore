@@ -91,6 +91,7 @@ chroma_langchain_db/
 chat_history.db
 auth.db
 chat.db
+rag_test.db
 
 # Milvus (V9)
 milvus_data/

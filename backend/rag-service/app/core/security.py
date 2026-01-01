@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from app.config import settings
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)  # 允许无 token
 
 
 class TokenPayload(BaseModel):
@@ -46,9 +46,25 @@ def verify_token(token: str) -> TokenPayload:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> CurrentUser:
     """获取当前用户"""
+    # 测试模式：跳过 JWT 验证，返回测试用户
+    if not settings.JWT_ENABLED:
+        return CurrentUser(
+            user_id="test-user-id-12345",
+            username="test_user",
+            email="test@example.com"
+        )
+
+    # 生产模式：验证 JWT
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = credentials.credentials
     payload = verify_token(token)
 

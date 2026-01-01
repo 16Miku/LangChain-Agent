@@ -4,6 +4,7 @@
 
 from typing import Optional, List
 import uuid
+import io
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request, BackgroundTasks
 from sqlalchemy.orm import Session
@@ -17,6 +18,53 @@ from app.models.document import DocumentStatus
 from app.schemas.document import DocumentUploadResponse
 
 router = APIRouter()
+
+
+def extract_text_from_pdf(content_bytes: bytes) -> str:
+    """
+    从 PDF 文件中提取文本
+
+    Args:
+        content_bytes: PDF 文件的字节内容
+
+    Returns:
+        提取的文本内容
+    """
+    try:
+        import PyPDF2
+
+        pdf_file = io.BytesIO(content_bytes)
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+
+        text_parts = []
+        for page_num, page in enumerate(pdf_reader.pages):
+            page_text = page.extract_text()
+            if page_text:
+                text_parts.append(f"[Page {page_num + 1}]\n{page_text}")
+
+        return "\n\n".join(text_parts)
+
+    except ImportError:
+        print("PyPDF2 not installed, trying pdfplumber...")
+        try:
+            import pdfplumber
+
+            pdf_file = io.BytesIO(content_bytes)
+            text_parts = []
+
+            with pdfplumber.open(pdf_file) as pdf:
+                for page_num, page in enumerate(pdf.pages):
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(f"[Page {page_num + 1}]\n{page_text}")
+
+            return "\n\n".join(text_parts)
+
+        except ImportError:
+            raise Exception("No PDF library available. Please install PyPDF2 or pdfplumber.")
+
+    except Exception as e:
+        raise Exception(f"Failed to extract text from PDF: {str(e)}")
 
 
 def chunk_text(
@@ -131,8 +179,9 @@ async def process_document(
                 }
             ))
 
-        # 插入 Milvus
-        milvus_service.insert(chunk_data_list)
+        # 插入 Milvus (如果启用)
+        if milvus_service is not None:
+            milvus_service.insert(chunk_data_list)
 
         # 保存分块到数据库 (用于 BM25)
         chunk_dicts = [
@@ -207,8 +256,12 @@ async def upload_document(
         if file_ext in ['.txt', '.md']:
             content = content_bytes.decode('utf-8')
         elif file_ext == '.pdf':
-            # TODO: 集成 PDF 解析 (PyPDF2 或 MinerU)
-            content = f"[PDF content placeholder for {filename}]"
+            content = extract_text_from_pdf(content_bytes)
+            if not content.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to extract text from PDF. The PDF may be image-based or encrypted."
+                )
         else:
             content = content_bytes.decode('utf-8', errors='ignore')
 

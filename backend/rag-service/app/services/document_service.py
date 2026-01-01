@@ -3,15 +3,12 @@
 # ============================================================
 
 from typing import List, Optional
-from uuid import UUID
 import os
 
 from sqlalchemy.orm import Session
-from fastapi import UploadFile
 
 from app.models.document import Document, DocumentStatus
 from app.models.chunk import Chunk
-from app.schemas.document import DocumentResponse
 
 
 class DocumentService:
@@ -41,12 +38,12 @@ class DocumentService:
             Document 对象
         """
         document = Document(
-            user_id=UUID(user_id),
+            user_id=user_id,
             filename=filename,
             file_type=file_type or os.path.splitext(filename)[1].lower(),
             file_size=file_size,
             file_path=file_path,
-            status=DocumentStatus.PENDING
+            status=DocumentStatus.PENDING.value
         )
         db.add(document)
         db.commit()
@@ -67,8 +64,8 @@ class DocumentService:
             Document 对象或 None
         """
         return db.query(Document).filter(
-            Document.id == UUID(document_id),
-            Document.user_id == UUID(user_id)
+            Document.id == document_id,
+            Document.user_id == user_id
         ).first()
 
     @staticmethod
@@ -90,7 +87,7 @@ class DocumentService:
         Returns:
             (文档列表, 总数)
         """
-        query = db.query(Document).filter(Document.user_id == UUID(user_id))
+        query = db.query(Document).filter(Document.user_id == user_id)
         total = query.count()
         documents = query.order_by(Document.created_at.desc()).offset(skip).limit(limit).all()
         return documents, total
@@ -116,9 +113,9 @@ class DocumentService:
         Returns:
             更新后的 Document 对象
         """
-        document = db.query(Document).filter(Document.id == UUID(document_id)).first()
+        document = db.query(Document).filter(Document.id == document_id).first()
         if document:
-            document.status = status
+            document.status = status.value if isinstance(status, DocumentStatus) else status
             document.chunk_count = chunk_count
             if error_message:
                 document.error_message = error_message
@@ -140,13 +137,13 @@ class DocumentService:
             是否删除成功
         """
         document = db.query(Document).filter(
-            Document.id == UUID(document_id),
-            Document.user_id == UUID(user_id)
+            Document.id == document_id,
+            Document.user_id == user_id
         ).first()
 
         if document:
             # 删除关联的 chunks
-            db.query(Chunk).filter(Chunk.document_id == UUID(document_id)).delete()
+            db.query(Chunk).filter(Chunk.document_id == document_id).delete()
             db.delete(document)
             db.commit()
             return True
@@ -174,12 +171,12 @@ class DocumentService:
         chunk_objects = []
         for i, chunk_data in enumerate(chunks):
             chunk = Chunk(
-                document_id=UUID(document_id),
-                user_id=UUID(user_id),
+                document_id=document_id,
+                user_id=user_id,
                 chunk_index=i,
                 content=chunk_data.get("content", ""),
                 page_number=chunk_data.get("page_number"),
-                metadata=chunk_data.get("metadata", {})
+                extra_data=chunk_data.get("metadata", {})
             )
             db.add(chunk)
             chunk_objects.append(chunk)
@@ -205,6 +202,6 @@ class DocumentService:
             Chunk 对象列表
         """
         return db.query(Chunk).filter(
-            Chunk.document_id == UUID(document_id),
-            Chunk.user_id == UUID(user_id)
+            Chunk.document_id == document_id,
+            Chunk.user_id == user_id
         ).order_by(Chunk.chunk_index).all()

@@ -11,12 +11,14 @@ class Settings(BaseSettings):
 
     # Service
     SERVICE_NAME: str = "rag-service"
-    DEBUG: bool = False
+    DEBUG: bool = True
 
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/streamagent"
+    # Database (支持 SQLite 测试模式)
+    DATABASE_URL: str = "sqlite:///./rag_test.db"
+    # PostgreSQL: "postgresql://postgres:postgres@localhost:5432/streamagent"
 
-    # Milvus
+    # Milvus (可选)
+    MILVUS_ENABLED: bool = False  # 设为 False 可跳过 Milvus
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530
     MILVUS_COLLECTION: str = "document_chunks"
@@ -28,12 +30,13 @@ class Settings(BaseSettings):
     # Search
     DEFAULT_TOP_K: int = 10
     DEFAULT_ALPHA: float = 0.5  # 向量检索权重 (1-alpha 为 BM25 权重)
-    ENABLE_RERANK: bool = True
+    ENABLE_RERANK: bool = False  # 暂时禁用 Reranker
 
     # Reranker
     RERANKER_MODEL: str = "BAAI/bge-reranker-base"
 
-    # MinIO (文件存储)
+    # MinIO (文件存储) - 可选
+    MINIO_ENABLED: bool = False
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
@@ -44,8 +47,9 @@ class Settings(BaseSettings):
     MINERU_API_KEY: str | None = None
     MINERU_API_URL: str = "https://mineru.datadance.cn/api/v1"
 
-    # JWT (用于验证请求)
-    JWT_SECRET: str = "your-super-secret-jwt-key-change-in-production"
+    # JWT (用于验证请求) - 测试模式可跳过
+    JWT_ENABLED: bool = False  # 测试时禁用 JWT 验证
+    JWT_SECRET: str = "test-secret-key-for-development"
     JWT_ALGORITHM: str = "HS256"
 
     class Config:
