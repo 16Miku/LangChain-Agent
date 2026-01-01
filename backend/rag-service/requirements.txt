@@ -18,6 +18,9 @@ pymilvus>=2.4.0
 sentence-transformers>=2.7.0
 jieba>=0.42.1
 
+# PDF Parsing
+PyPDF2>=3.0.0
+
 # Authentication
 python-jose[cryptography]>=3.3.0
 
