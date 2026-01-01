@@ -14,6 +14,7 @@ from app.core.security import get_current_user, CurrentUser
 from app.services.document_service import DocumentService
 from app.services.milvus_service import MilvusService, ChunkData
 from app.services.embedding_service import EmbeddingService
+from app.services.chunking_service import ChunkingService, ChunkingStrategy
 from app.models.document import DocumentStatus
 from app.schemas.document import DocumentUploadResponse
 
@@ -70,50 +71,43 @@ def extract_text_from_pdf(content_bytes: bytes) -> str:
 def chunk_text(
     text: str,
     chunk_size: int = 500,
-    chunk_overlap: int = 50
+    chunk_overlap: int = 50,
+    strategy: str = "semantic"
 ) -> List[dict]:
     """
-    简单的文本分块
+    智能文本分块
 
     Args:
         text: 输入文本
         chunk_size: 分块大小
         chunk_overlap: 重叠大小
+        strategy: 分块策略 (fixed, semantic, recursive, page_aware)
 
     Returns:
         分块列表
     """
-    chunks = []
-    start = 0
-    chunk_index = 0
+    # 自动检测是否包含 PDF 页面标记
+    if "[Page " in text and strategy == "semantic":
+        strategy = "page_aware"
 
-    while start < len(text):
-        end = start + chunk_size
+    chunking_service = ChunkingService(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        strategy=ChunkingStrategy(strategy)
+    )
 
-        # 尝试在句子边界处分割
-        if end < len(text):
-            # 向后找句子结束符
-            for sep in ['。', '！', '？', '.', '!', '?', '\n\n']:
-                pos = text.rfind(sep, start, end + 100)
-                if pos > start:
-                    end = pos + 1
-                    break
+    results = chunking_service.chunk(text)
 
-        chunk_content = text[start:end].strip()
-        if chunk_content:
-            chunks.append({
-                "content": chunk_content,
-                "chunk_index": chunk_index,
-                "metadata": {
-                    "start_char": start,
-                    "end_char": end
-                }
-            })
-            chunk_index += 1
-
-        start = end - chunk_overlap
-
-    return chunks
+    return [
+        {
+            "content": r.content,
+            "chunk_index": r.chunk_index,
+            "page_number": r.page_number,
+            "section": r.section,
+            "metadata": r.metadata or {}
+        }
+        for r in results
+    ]
 
 
 async def process_document(
@@ -165,6 +159,12 @@ async def process_document(
         chunk_data_list = []
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
             chunk_id = str(uuid.uuid4())
+            # 合并元数据，包含章节信息
+            metadata = {
+                "filename": filename,
+                "section": chunk.get("section"),  # 章节标题
+                **chunk.get("metadata", {})
+            }
             chunk_data_list.append(ChunkData(
                 id=chunk_id,
                 document_id=document_id,
@@ -173,10 +173,7 @@ async def process_document(
                 content=chunk["content"],
                 page_number=chunk.get("page_number"),
                 embedding=embedding,
-                metadata={
-                    "filename": filename,
-                    **chunk.get("metadata", {})
-                }
+                metadata=metadata
             ))
 
         # 插入 Milvus (如果启用)

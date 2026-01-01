@@ -1919,8 +1919,8 @@ Phase 5: 扩展功能 (待定)
 - [x] Reranker 模型集成 (bge-reranker + 简单关键词重排序)
 - [x] 引用追溯实现 (CitationService + 上下文获取)
 - [x] 混合搜索 Milvus 空指针修复
+- [x] 智能分块服务 (ChunkingService - 语义/页面感知/递归分块)
 - [ ] MinerU API 集成
-- [ ] 智能分块逻辑改进
 - [ ] 前端引用展示组件
 - [ ] 多轮对话检索优化
 - [ ] 文档管理界面
@@ -2097,6 +2097,7 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 2.1 | 2026-01-02 | Week 6 进行中：创建 rag-service 微服务 (Milvus+BM25+RRF混合检索) | Claude Code |
 | 2.2 | 2026-01-02 | Week 6 完成：PDF解析(PyPDF2)、SQLite测试模式修复、BM25中文搜索测试通过 | Claude Code |
 | 2.3 | 2026-01-02 | Week 7 进行中：Reranker重排序、引用追溯(CitationService)、Milvus空指针修复 | Claude Code |
+| 2.4 | 2026-01-02 | Week 7 进行中：智能分块服务(ChunkingService - 语义/页面感知/递归策略) | Claude Code |
 
 ---
 

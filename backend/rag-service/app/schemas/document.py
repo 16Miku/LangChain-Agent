@@ -2,7 +2,7 @@
 # Document Schemas
 # ============================================================
 
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime
 from pydantic import BaseModel, Field
 from uuid import UUID
@@ -18,7 +18,7 @@ class DocumentCreate(BaseModel):
 class DocumentResponse(BaseModel):
     """文档响应"""
     id: UUID
-    user_id: UUID
+    user_id: Union[UUID, str]  # 兼容测试模式字符串 ID
     filename: str
     file_type: Optional[str]
     file_size: Optional[int]
