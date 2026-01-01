@@ -4,8 +4,8 @@
 // Settings Page
 // ============================================================
 
-import { useState } from 'react';
-import { Moon, Sun, Monitor, Save, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Moon, Sun, Monitor, Save, Loader2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,10 +13,11 @@ import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useSettingsStore, useAuthStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
+import { getVoices, type VoiceInfo } from '@/lib/api/voice';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { defaultModel, setDefaultModel, voiceEnabled, setVoiceEnabled } = useSettingsStore();
+  const { defaultModel, setDefaultModel, voiceEnabled, setVoiceEnabled, selectedVoice, setSelectedVoice } = useSettingsStore();
   const { user } = useAuthStore();
 
   const [isSaving, setIsSaving] = useState(false);
@@ -25,6 +26,27 @@ export default function SettingsPage() {
     E2B_API_KEY: '',
     BRIGHT_DATA_API_KEY: '',
   });
+  const [availableVoices, setAvailableVoices] = useState<VoiceInfo[]>([]);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+
+  // 加载可用语音列表
+  useEffect(() => {
+    if (voiceEnabled) {
+      loadVoices();
+    }
+  }, [voiceEnabled]);
+
+  const loadVoices = async () => {
+    setIsLoadingVoices(true);
+    try {
+      const response = await getVoices();
+      setAvailableVoices(response.voices);
+    } catch (error) {
+      console.error('加载语音列表失败:', error);
+    } finally {
+      setIsLoadingVoices(false);
+    }
+  };
 
   const handleSaveApiKeys = async () => {
     setIsSaving(true);
@@ -122,10 +144,14 @@ export default function SettingsPage() {
         {/* Voice Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Voice Settings</CardTitle>
-            <CardDescription>Configure voice input and output</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Volume2 className="h-5 w-5" />
+              Voice Settings
+            </CardTitle>
+            <CardDescription>Configure voice input and text-to-speech output</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Enable Voice Toggle */}
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Enable Voice</p>
@@ -140,6 +166,36 @@ export default function SettingsPage() {
                 {voiceEnabled ? 'Enabled' : 'Disabled'}
               </Button>
             </div>
+
+            {/* Voice Selection */}
+            {voiceEnabled && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">TTS Voice</label>
+                  {isLoadingVoices ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Loading voices...</span>
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedVoice || 'zh-CN-XiaoxiaoNeural'}
+                      onChange={(e) => setSelectedVoice(e.target.value)}
+                      className="w-full rounded-md border bg-background px-3 py-2"
+                    >
+                      {availableVoices.map((voice) => (
+                        <option key={voice.id} value={voice.id}>
+                          {voice.name} ({voice.language})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Selected voice will be used for AI response playback
+                  </p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

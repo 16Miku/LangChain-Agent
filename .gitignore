@@ -98,6 +98,7 @@ milvus_data/
 # -------------------- 微服务数据目录 --------------------
 backend/auth-service/data/
 backend/chat-service/data/
+backend/whisper-service/data/
 
 # -------------------- 数据目录 --------------------
 backend/data/
@@ -107,6 +108,12 @@ data/
 backend/temp_uploads/
 uploads/
 temp_uploads/
+
+# -------------------- 测试文件 --------------------
+test_tts.mp3
+test_*.mp3
+test_*.wav
+test_*.webm
 
 # -------------------- 日志文件 --------------------
 *.log

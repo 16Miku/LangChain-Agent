@@ -8,6 +8,7 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:8001';
 const CHAT_API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://localhost:8002';
+const VOICE_API_URL = process.env.NEXT_PUBLIC_VOICE_API_URL || 'http://localhost:8003';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -76,4 +77,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
-export { API_BASE_URL, AUTH_API_URL, CHAT_API_URL };
+export { API_BASE_URL, AUTH_API_URL, CHAT_API_URL, VOICE_API_URL };

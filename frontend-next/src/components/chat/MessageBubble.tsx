@@ -4,8 +4,8 @@
 // Message Bubble Component - Enhanced with CodeBlock & ToolCallPanel
 // ============================================================
 
-import { useState, useMemo } from 'react';
-import { Copy, Check, RotateCcw, Loader2 } from 'lucide-react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { Copy, Check, RotateCcw, Loader2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Message } from '@/lib/types';
@@ -13,6 +13,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock, InlineCode } from './CodeBlock';
 import { ToolCallPanel } from './ToolCallPanel';
+import { PlayButton, AudioPlayer } from '@/components/voice';
+import { synthesizeSpeech } from '@/lib/api/voice';
 
 interface MessageBubbleProps {
   message: Message;
@@ -21,14 +23,56 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
 
   const isUser = message.role === 'user';
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // 生成语音
+  const handleGenerateSpeech = useCallback(async () => {
+    if (audioUrl) return; // 已有音频
+
+    setIsGeneratingAudio(true);
+    try {
+      const url = await synthesizeSpeech({
+        text: message.content,
+      });
+      setAudioUrl(url);
+    } catch (error) {
+      console.error('生成语音失败:', error);
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  }, [audioUrl, message.content]);
+
+  // 播放/暂停音频
+  const handleToggleAudio = useCallback(() => {
+    if (audioRef.current) {
+      if (isPlayingAudio) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlayingAudio(!isPlayingAudio);
+    }
+  }, [isPlayingAudio]);
+
+  // 清理音频 URL
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
 
   // Custom components for ReactMarkdown
   const markdownComponents = useMemo(
@@ -204,6 +248,7 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
         {/* Actions */}
         {!isUser && !message.isStreaming && message.content && (
           <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            {/* Copy Button */}
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
               {copied ? (
                 <Check className="h-3 w-3 text-green-500" />
@@ -211,11 +256,43 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
                 <Copy className="h-3 w-3" />
               )}
             </Button>
+
+            {/* TTS Play Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={audioUrl ? handleToggleAudio : handleGenerateSpeech}
+              disabled={isGeneratingAudio}
+            >
+              {isGeneratingAudio ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : audioUrl ? (
+                <Volume2 className="h-3 w-3" />
+              ) : (
+                <Volume2 className="h-3 w-3 opacity-50" />
+              )}
+            </Button>
+
+            {/* Regenerate Button */}
             {onRegenerate && (
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onRegenerate}>
                 <RotateCcw className="h-3 w-3" />
               </Button>
             )}
+          </div>
+        )}
+
+        {/* Audio Player (when audio is generated) */}
+        {audioUrl && !isUser && (
+          <div className="mt-2">
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              onEnded={() => setIsPlayingAudio(false)}
+              onPlay={() => setIsPlayingAudio(true)}
+              onPause={() => setIsPlayingAudio(false)}
+            />
           </div>
         )}
       </div>

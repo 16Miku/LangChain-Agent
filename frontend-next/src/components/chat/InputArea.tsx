@@ -5,10 +5,11 @@
 // ============================================================
 
 import { useState, useRef, useCallback } from 'react';
-import { Send, Paperclip, X, StopCircle, Mic, Image as ImageIcon } from 'lucide-react';
+import { Send, Paperclip, X, StopCircle, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { VoiceRecorder } from '@/components/voice';
 import { cn } from '@/lib/utils';
 
 interface InputAreaProps {
@@ -102,6 +103,20 @@ export function InputArea({
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
+
+  // 处理语音转文字结果
+  const handleTranscript = useCallback((transcript: string) => {
+    setInput((prev) => {
+      // 如果当前有内容，添加空格
+      const prefix = prev.trim() ? prev.trim() + ' ' : '';
+      return prefix + transcript;
+    });
+
+    // 聚焦到输入框
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 100);
+  }, []);
 
   return (
     <div className="border-t bg-background p-4">
@@ -200,23 +215,11 @@ export function InputArea({
             rows={1}
           />
 
-          {/* Voice Input Button (placeholder for future) */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0"
-                  disabled={disabled || isStreaming}
-                >
-                  <Mic className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Voice input (coming soon)</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Voice Input Button */}
+          <VoiceRecorder
+            onTranscript={handleTranscript}
+            disabled={disabled || isStreaming}
+          />
 
           {/* Send / Stop Button */}
           {isStreaming ? (

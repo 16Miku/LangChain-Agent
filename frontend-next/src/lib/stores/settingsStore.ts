@@ -21,6 +21,7 @@ interface SettingsState {
   voiceEnabled: boolean;
   voiceLanguage: string;
   ttsVoice: string;
+  selectedVoice: string;  // 别名，与 ttsVoice 同步
 
   // Actions
   setTheme: (theme: Theme) => void;
@@ -32,11 +33,12 @@ interface SettingsState {
   setVoiceEnabled: (enabled: boolean) => void;
   setVoiceLanguage: (language: string) => void;
   setTtsVoice: (voice: string) => void;
+  setSelectedVoice: (voice: string) => void;  // 别名方法
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Default values
       theme: 'system',
       sidebarOpen: true,
@@ -46,6 +48,7 @@ export const useSettingsStore = create<SettingsState>()(
       voiceEnabled: false,
       voiceLanguage: 'zh-CN',
       ttsVoice: 'zh-CN-XiaoxiaoNeural',
+      selectedVoice: 'zh-CN-XiaoxiaoNeural',
 
       // Actions
       setTheme: (theme) => {
@@ -80,7 +83,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       setVoiceLanguage: (language) => set({ voiceLanguage: language }),
 
-      setTtsVoice: (voice) => set({ ttsVoice: voice }),
+      setTtsVoice: (voice) => set({ ttsVoice: voice, selectedVoice: voice }),
+
+      setSelectedVoice: (voice) => set({ ttsVoice: voice, selectedVoice: voice }),
     }),
     {
       name: 'settings-storage',

@@ -3,7 +3,7 @@
 > **版本**: V9.0
 > **日期**: 2025-12-31
 > **目标**: 使用 Next.js 重构前端，集成多模态能力，增强 RAG 检索，引入用户认证系统
-> **状态**: 🚧 开发中 (Phase 2: Week 4)
+> **状态**: 🚧 开发中 (Phase 3: Week 6)
 
 ---
 
@@ -1874,15 +1874,20 @@ Phase 5: 扩展功能 (待定)
 - [x] 修复 Markdown 图片渲染 (MessageBubble 添加 img 组件)
 - [ ] OCR 功能实现 (延后到 Week 5)
 
-**Week 5: 语音交互**
+**Week 5: 语音交互** ✅ 已完成 (2026-01-01)
 
-- [ ] 创建 whisper-service
-- [ ] 集成 faster-whisper
-- [ ] 前端录音组件
-- [ ] 语音转文字流程
-- [ ] Edge TTS 集成
-- [ ] 前端音频播放器
-- [ ] 语音设置选项
+- [x] 创建 whisper-service 项目结构
+- [x] 集成 faster-whisper 语音识别
+- [x] 集成 edge-tts 语音合成
+- [x] 前端录音组件 VoiceRecorder (MediaRecorder API)
+- [x] 前端音频播放器组件 AudioPlayer
+- [x] 语音转文字完整流程 (InputArea 集成)
+- [x] 文字转语音完整流程 (MessageBubble 集成)
+- [x] 语音设置选项 (Settings 页面 TTS 语音选择)
+- [x] 修复路由前缀问题 (/api/v1/voice/*)
+- [x] 修复 MIME 类型验证 (支持 codecs 参数)
+- [x] 修复 Whisper 转录 (bytes → BytesIO)
+- [x] 修复 Edge TTS 合成 (使用 stream_sync())
 
 #### Phase 3: RAG 增强
 
@@ -2073,9 +2078,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 1.6 | 2026-01-01 | Week 4 完成：图片理解多模态功能 | Claude Code |
 | 1.7 | 2026-01-01 | Week 4 Bug修复：E2B图表显示(变量名冲突)、Markdown图片渲染 | Claude Code |
 | 1.8 | 2026-01-01 | 优化 System Prompt：E2B沙箱指南、代码格式规则；新增 Phase 5 AI生成PPT规划 | Claude Code |
+| 1.9 | 2026-01-01 | Week 5 完成：语音交互功能 (whisper-service + faster-whisper + edge-tts + 前端组件) | Claude Code |
 
 ---
 
-> **文档状态**: 🚧 开发中 (Phase 2: Week 5)
+> **文档状态**: 🚧 开发中 (Phase 3: Week 6)
 > **最后更新**: 2026-01-01
-> **下一步**: Week 5 - 语音交互 (Whisper STT + Edge TTS)
+> **下一步**: Week 6 - Milvus 向量存储迁移 + 混合检索
