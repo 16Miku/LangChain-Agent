@@ -1889,6 +1889,13 @@ Phase 5: 扩展功能 (待定)
 - [x] 修复 Whisper 转录 (bytes → BytesIO)
 - [x] 修复 Edge TTS 合成 (使用 stream_sync())
 
+**Week 5.5: 前端优化** ✅ 已完成 (2026-01-02)
+
+- [x] 新增 ConversationItem 组件 (支持对话重命名和删除)
+- [x] 使用 CSS Grid 布局解决长标题挤压按钮的问题
+- [x] 修复默认页面重定向逻辑 (未登录跳转 login，已登录跳转 chat)
+- [x] 添加 authStore 的 isInitialized 状态用于初始化检测
+
 #### Phase 3: RAG 增强
 
 **Week 6: 向量存储迁移**
@@ -2079,9 +2086,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 1.7 | 2026-01-01 | Week 4 Bug修复：E2B图表显示(变量名冲突)、Markdown图片渲染 | Claude Code |
 | 1.8 | 2026-01-01 | 优化 System Prompt：E2B沙箱指南、代码格式规则；新增 Phase 5 AI生成PPT规划 | Claude Code |
 | 1.9 | 2026-01-01 | Week 5 完成：语音交互功能 (whisper-service + faster-whisper + edge-tts + 前端组件) | Claude Code |
+| 2.0 | 2026-01-02 | Week 5.5 完成：前端侧边栏优化 (ConversationItem组件、Grid布局、默认页面重定向) | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 3: Week 6)
-> **最后更新**: 2026-01-01
+> **最后更新**: 2026-01-02
 > **下一步**: Week 6 - Milvus 向量存储迁移 + 混合检索
