@@ -12,6 +12,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  isInitialized: boolean;  // 是否已初始化（检查过本地存储）
   isLoading: boolean;
   error: string | null;
 
@@ -22,6 +23,7 @@ interface AuthState {
   refreshAccessToken: () => Promise<void>;
   clearError: () => void;
   setUser: (user: User | null) => void;
+  initialize: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -31,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      isInitialized: false,
       isLoading: false,
       error: null,
 
@@ -128,6 +131,32 @@ export const useAuthStore = create<AuthState>()(
       clearError: () => set({ error: null }),
 
       setUser: (user: User | null) => set({ user }),
+
+      initialize: () => {
+        // Check if there's a stored token on mount
+        if (typeof window !== 'undefined') {
+          const storedToken = localStorage.getItem('accessToken');
+          const storedRefreshToken = localStorage.getItem('refreshToken');
+          const storedUser = localStorage.getItem('auth-storage-user');
+
+          if (storedToken && storedRefreshToken) {
+            // Has tokens, mark as authenticated
+            set({
+              accessToken: storedToken,
+              refreshToken: storedRefreshToken,
+              isAuthenticated: true,
+              isInitialized: true,
+            });
+          } else {
+            // No tokens, mark as initialized but not authenticated
+            set({
+              isInitialized: true,
+            });
+          }
+        } else {
+          set({ isInitialized: true });
+        }
+      },
     }),
     {
       name: 'auth-storage',

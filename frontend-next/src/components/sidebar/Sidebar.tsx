@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useEffect } from 'react';
-import { PlusCircle, MessageSquare, Settings, LogOut, Menu, Trash2, Edit2 } from 'lucide-react';
+import { PlusCircle, MessageSquare, Settings, LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +19,7 @@ import { useChatStore, useAuthStore, useSettingsStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ConversationItem } from './ConversationItem';
 
 export function Sidebar() {
   const router = useRouter();
@@ -46,9 +47,24 @@ export function Sidebar() {
     }
   };
 
-  const handleSelectConversation = async (id: string) => {
-    await selectConversation(id);
+  const handleSelectConversation = (id: string) => {
+    selectConversation(id);
     router.push(`/chat/${id}`);
+  };
+
+  const handleRenameConversation = async (id: string, newTitle: string) => {
+    // TODO: Implement rename API call
+    console.log('Rename conversation:', id, 'to', newTitle);
+    // For now, just update the local state
+    const { conversations } = useChatStore.getState();
+    const conv = conversations.find(c => c.id === id);
+    if (conv) {
+      useChatStore.setState({
+        conversations: conversations.map(c =>
+          c.id === id ? { ...c, title: newTitle } : c
+        )
+      });
+    }
   };
 
   const handleDeleteConversation = async (e: React.MouseEvent, id: string) => {
@@ -131,45 +147,20 @@ export function Sidebar() {
         </div>
 
         {/* Conversation List */}
-        <ScrollArea className="flex-1 px-2">
+        <ScrollArea className="flex-1 px-2 w-full overflow-hidden">
           {Object.entries(groupedConversations).map(([group, convs]) => (
             <div key={group} className="mb-4">
               <p className="mb-2 px-2 text-xs font-medium text-muted-foreground">{group}</p>
               {convs.map((conv) => (
-                <div
+                <ConversationItem
                   key={conv.id}
-                  className={cn(
-                    'group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 hover:bg-sidebar-accent',
-                    currentConversationId === conv.id && 'bg-sidebar-accent'
-                  )}
-                  onClick={() => handleSelectConversation(conv.id)}
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-sm">{conv.title}</span>
-                  </div>
-                  <div className="hidden gap-1 group-hover:flex">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: Implement rename
-                      }}
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-destructive"
-                      onClick={(e) => handleDeleteConversation(e, conv.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
+                  id={conv.id}
+                  title={conv.title}
+                  isActive={currentConversationId === conv.id}
+                  onSelect={handleSelectConversation}
+                  onDelete={handleDeleteConversation}
+                  onRename={handleRenameConversation}
+                />
               ))}
             </div>
           ))}

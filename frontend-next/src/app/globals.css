@@ -123,3 +123,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Sidebar conversation item hover effects */
+.sidebar-conversation-item .sidebar-conversation-actions {
+  opacity: 0;
+  transition: opacity 150ms ease-in-out;
+}
+
+.sidebar-conversation-item:hover .sidebar-conversation-actions {
+  opacity: 1 !important;
+}
