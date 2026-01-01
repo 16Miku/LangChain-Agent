@@ -1898,15 +1898,18 @@ Phase 5: 扩展功能 (待定)
 
 #### Phase 3: RAG 增强
 
-**Week 6: 向量存储迁移**
+**Week 6: 向量存储迁移** 🚧 进行中 (2026-01-02)
 
-- [ ] 创建 rag-service 项目结构
-- [ ] Milvus Collection 设计
-- [ ] 向量存储服务封装
-- [ ] ChromaDB 数据迁移脚本
-- [ ] BM25 索引构建
-- [ ] RRF 融合算法实现
-- [ ] 混合检索 API
+- [x] 创建 rag-service 项目结构
+- [x] Milvus Collection 设计 (milvus_service.py)
+- [x] 向量存储服务封装 (MilvusService)
+- [x] Embedding 服务封装 (EmbeddingService - sentence-transformers)
+- [x] BM25 索引构建 (BM25Service - jieba 中文分词)
+- [x] RRF 融合算法实现 (HybridSearchService)
+- [x] 混合检索 API (向量+BM25+RRF融合)
+- [x] 文档管理 API (CRUD)
+- [x] 文档摄取 API (上传/分块/向量化)
+- [ ] ChromaDB 数据迁移脚本 (待定)
 
 **Week 7: 高级检索**
 
@@ -2087,9 +2090,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 1.8 | 2026-01-01 | 优化 System Prompt：E2B沙箱指南、代码格式规则；新增 Phase 5 AI生成PPT规划 | Claude Code |
 | 1.9 | 2026-01-01 | Week 5 完成：语音交互功能 (whisper-service + faster-whisper + edge-tts + 前端组件) | Claude Code |
 | 2.0 | 2026-01-02 | Week 5.5 完成：前端侧边栏优化 (ConversationItem组件、Grid布局、默认页面重定向) | Claude Code |
+| 2.1 | 2026-01-02 | Week 6 进行中：创建 rag-service 微服务 (Milvus+BM25+RRF混合检索) | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 3: Week 6)
 > **最后更新**: 2026-01-02
-> **下一步**: Week 6 - Milvus 向量存储迁移 + 混合检索
+> **下一步**: Week 6 - 测试 rag-service，Week 7 - MinerU 集成 + 引用追溯
