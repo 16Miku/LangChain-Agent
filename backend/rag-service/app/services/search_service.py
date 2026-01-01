@@ -3,7 +3,7 @@
 # 结合向量检索和 BM25 关键词检索
 # ============================================================
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
 import time
 
@@ -14,6 +14,9 @@ from app.services.milvus_service import MilvusService, VectorSearchResult
 from app.services.bm25_service import BM25Service, BM25Result
 from app.services.embedding_service import EmbeddingService
 from app.schemas.search import SearchResult
+
+if TYPE_CHECKING:
+    from app.services.rerank_service import RerankService
 
 
 @dataclass
@@ -26,7 +29,8 @@ class FusedResult:
     fused_score: float
     vector_score: Optional[float]
     bm25_score: Optional[float]
-    metadata: Dict[str, Any]
+    rerank_score: Optional[float] = None  # 重排序分数
+    metadata: Dict[str, Any] = None
 
 
 class HybridSearchService:
@@ -172,14 +176,16 @@ class HybridSearchService:
         """
         start_time = time.time()
 
-        # 1. 向量检索
-        query_embedding = self.embedding.embed_query(query)
-        vector_results = self.milvus.search(
-            query_embedding=query_embedding,
-            top_k=top_k * 2,  # 检索更多用于融合
-            user_id=user_id,
-            document_ids=document_ids
-        )
+        # 1. 向量检索 (如果 Milvus 可用)
+        vector_results: List[VectorSearchResult] = []
+        if self.milvus is not None:
+            query_embedding = self.embedding.embed_query(query)
+            vector_results = self.milvus.search(
+                query_embedding=query_embedding,
+                top_k=top_k * 2,  # 检索更多用于融合
+                user_id=user_id,
+                document_ids=document_ids
+            )
 
         # 2. BM25 检索 (如果可用)
         bm25_results: List[BM25Result] = []
@@ -246,13 +252,13 @@ class HybridSearchService:
             search_results.append(SearchResult(
                 chunk_id=result.chunk_id,
                 document_id=result.document_id,
-                document_name=result.metadata.get("filename", "Unknown"),
+                document_name=result.metadata.get("filename", "Unknown") if result.metadata else "Unknown",
                 content=result.content,
                 page_number=result.page_number,
                 score=result.fused_score,
                 vector_score=result.vector_score,
                 bm25_score=result.bm25_score,
-                rerank_score=None,  # TODO: 添加重排序分数
+                rerank_score=result.rerank_score,
                 metadata=result.metadata
             ))
 
@@ -280,17 +286,43 @@ class HybridSearchService:
             return results[:top_k]
 
         try:
-            # 准备文档对
-            pairs = [[query, r.content] for r in results]
+            # 准备数据格式
+            rerank_input = [
+                {
+                    "chunk_id": r.chunk_id,
+                    "document_id": r.document_id,
+                    "content": r.content,
+                    "score": r.fused_score,
+                    "metadata": r.metadata
+                }
+                for r in results
+            ]
 
-            # 重排序
-            scores = self.reranker.compute_score(pairs)
+            # 调用 RerankService
+            reranked = self.reranker.rerank(query, rerank_input, top_k)
 
-            # 按重排序分数排序
-            scored_results = list(zip(results, scores))
-            scored_results.sort(key=lambda x: x[1], reverse=True)
+            # 转换回 FusedResult
+            reranked_results = []
+            for rr in reranked:
+                # 找到原始结果
+                original = next(
+                    (r for r in results if r.chunk_id == rr.chunk_id),
+                    None
+                )
+                if original:
+                    reranked_results.append(FusedResult(
+                        chunk_id=rr.chunk_id,
+                        document_id=rr.document_id,
+                        content=rr.content,
+                        page_number=original.page_number,
+                        fused_score=rr.rerank_score,  # 使用重排序分数
+                        vector_score=original.vector_score,
+                        bm25_score=original.bm25_score,
+                        rerank_score=rr.rerank_score,  # 记录重排序分数
+                        metadata=rr.metadata
+                    ))
 
-            return [r for r, _ in scored_results[:top_k]]
+            return reranked_results
 
         except Exception as e:
             print(f"Reranking failed: {e}")
@@ -315,6 +347,9 @@ class HybridSearchService:
         Returns:
             检索结果列表
         """
+        if self.milvus is None:
+            return []
+
         query_embedding = self.embedding.embed_query(query)
         vector_results = self.milvus.search(
             query_embedding=query_embedding,

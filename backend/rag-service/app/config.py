@@ -30,9 +30,10 @@ class Settings(BaseSettings):
     # Search
     DEFAULT_TOP_K: int = 10
     DEFAULT_ALPHA: float = 0.5  # 向量检索权重 (1-alpha 为 BM25 权重)
-    ENABLE_RERANK: bool = False  # 暂时禁用 Reranker
+    ENABLE_RERANK: bool = True  # 启用 Reranker
 
     # Reranker
+    RERANKER_ENABLED: bool = False  # 是否使用 CrossEncoder (需要下载模型)
     RERANKER_MODEL: str = "BAAI/bge-reranker-base"
 
     # MinIO (文件存储) - 可选

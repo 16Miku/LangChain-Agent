@@ -136,3 +136,8 @@ docker-compose.override.yml
 *.bak
 *.tmp
 *.temp
+nul
+
+# 临时 HTML 文件
+temp.html
+**/temp.html
