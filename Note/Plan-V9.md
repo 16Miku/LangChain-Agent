@@ -1927,6 +1927,8 @@ Phase 5: 扩展功能 (待定)
 - [x] LLM RAG 结果利用优化 (System Prompt 增加 RAG 使用指南 + 工具输出格式优化)
 - [x] 引用展示优化 - 结构化引用数据传递 ([RAG_CITATIONS] 标记 + citation SSE 事件)
 - [x] 引用展示优化 - 完整内容弹窗 (CitationPanel 展开详情 + 前后文上下文)
+- [x] 文档目录提取功能 (extract_toc + chunk_with_toc - 提升长篇书籍章节问答准确性)
+- [x] 前端文档列表 UI 修复 (CSS Grid 布局解决长文件名挤压问题)
 - [ ] 引用展示优化 - 引用高亮标记 (待定)
 - [ ] MinerU API 集成 (可选)
 - [ ] 多轮对话检索优化
@@ -2109,9 +2111,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 2.7 | 2026-01-03 | Week 7 完成：RAG与Chat集成(rag_search + list_knowledge_documents工具，代理绕过修复) | Claude Code |
 | 2.8 | 2026-01-03 | Week 7 完成：RAG检索优化(chunk_size 500→1500, overlap 50→200, top_k 5→10) | Claude Code |
 | 2.9 | 2026-01-03 | Week 7 完成：LLM RAG结果利用优化(System Prompt + 引用数据传递 + citation SSE事件) | Claude Code |
+| 3.0 | 2026-01-03 | Week 7 完成：文档目录提取功能(extract_toc + chunk_with_toc) + 前端文档列表UI修复 | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 3: Week 7 完成)
 > **最后更新**: 2026-01-03
-> **下一步**: Week 8 - 部署优化 (Docker Compose + 测试) 或 引用高亮标记 (可选)
+> **下一步**: Week 8 - 部署优化 (Docker Compose + 测试) 或 引用高亮标记/MinerU集成 (可选)

@@ -48,13 +48,20 @@ class ChunkingService:
     ENGLISH_SENTENCE_ENDS = ['.', '!', '?']
     # 段落分隔符
     PARAGRAPH_SEPARATORS = ['\n\n', '\r\n\r\n']
-    # 章节标题模式
+    # 章节标题模式（按优先级排列）
     SECTION_PATTERNS = [
-        r'^第[一二三四五六七八九十百千]+[章节篇部]',  # 中文章节
-        r'^[一二三四五六七八九十]+[、．.]',           # 中文序号
-        r'^\d+[\.、]\s*\S+',                          # 数字序号
+        r'^第[一二三四五六七八九十百千]+[章节篇部]',  # 中文章节：第一章
+        r'^[一二三四五六七八九十]+[、．.\s]',         # 中文序号：一、二、
+        r'^\d+[\.．、]\s*.+',                         # 数字序号：1.xxx 2、xxx
+        r'^[（(]\d+[）)]\s*.+',                       # 括号序号：(1)xxx （2）xxx
         r'^#{1,6}\s+',                                # Markdown 标题
         r'^\[Page \d+\]',                             # PDF 页面标记
+    ]
+    # 主章节模式（用于目录提取，只匹配顶级章节）
+    MAIN_SECTION_PATTERNS = [
+        r'^第[一二三四五六七八九十百千]+[章节篇部]',  # 中文章节：第一章
+        r'^[一二三四五六七八九十]+[、．.]\s*.{2,}',   # 中文大写序号：一、xxx
+        r'^\d+[\.．]\s*[^\d\.\s].{4,}',               # 数字序号：1.xxx（标题至少5字符，排除纯数字条目）
     ]
 
     def __init__(
@@ -77,6 +84,7 @@ class ChunkingService:
 
         # 编译正则表达式
         self._section_patterns = [re.compile(p, re.MULTILINE) for p in self.SECTION_PATTERNS]
+        self._main_section_patterns = [re.compile(p, re.MULTILINE) for p in self.MAIN_SECTION_PATTERNS]
 
     def chunk(
         self,
@@ -460,6 +468,131 @@ class ChunkingService:
             section=section,
             metadata={"strategy": "semantic", "paragraph_count": len(paragraphs)}
         )
+
+    def extract_toc(self, text: str, main_only: bool = True) -> Optional[ChunkResult]:
+        """
+        从文本中提取目录/章节结构
+
+        生成一个特殊的 TOC chunk，包含文档的所有章节标题。
+        这对于回答"这本书讲了什么"、"有哪些章节"等宏观问题非常有用。
+
+        Args:
+            text: 文档全文
+            main_only: 是否只提取主章节（如 1. 2. 3.），忽略子章节
+
+        Returns:
+            包含目录结构的 ChunkResult，如果没有找到章节则返回 None
+        """
+        main_sections = []  # 主章节
+        sub_sections = []   # 子章节
+        lines = text.split('\n')
+
+        patterns_to_use = self._main_section_patterns if main_only else self._section_patterns
+
+        for line in lines:
+            line = line.strip()
+            if not line or len(line) < 2:
+                continue
+
+            # 跳过页面标记
+            if line.startswith('[Page '):
+                continue
+
+            # 检查是否匹配主章节模式
+            is_main = False
+            for pattern in self._main_section_patterns:
+                if pattern.match(line):
+                    is_main = True
+                    break
+
+            if is_main:
+                # 过滤掉明显不是章节标题的条目
+                # 1. 排除纯数字列表条目（如"1.剥夺地产"这种短条目）
+                if re.match(r'^\d+\.', line) and len(line) < 20 and '章' not in line and '节' not in line:
+                    continue
+                # 2. 排除包含明显非标题内容的行
+                if any(keyword in line for keyword in ['把', '实行', '没收', '废除', '征收']):
+                    continue
+
+                # 限制标题长度，去除可能的页码等杂项
+                title = line[:80] if len(line) > 80 else line
+                # 避免重复
+                if title not in main_sections:
+                    main_sections.append(title)
+            elif not main_only:
+                # 检查是否匹配普通章节模式
+                for pattern in self._section_patterns:
+                    if pattern.match(line):
+                        title = line[:80] if len(line) > 80 else line
+                        if title not in sub_sections:
+                            sub_sections.append(title)
+                        break
+
+        if not main_sections:
+            return None
+
+        # 构建目录内容
+        toc_content = "【文档目录/章节结构】\n\n"
+        toc_content += "本文档的主要章节结构如下：\n\n"
+
+        for section in main_sections:
+            toc_content += f"• {section}\n"
+
+        toc_content += f"\n本文档共有 {len(main_sections)} 个主要章节"
+
+        if sub_sections and not main_only:
+            toc_content += f"，{len(sub_sections)} 个子章节"
+
+        toc_content += "。\n\n如需了解某个章节的详细内容，请明确指出章节名称。"
+
+        return ChunkResult(
+            content=toc_content,
+            chunk_index=-1,  # 特殊索引，表示目录
+            section="__TOC__",  # 特殊标记
+            metadata={
+                "strategy": "toc",
+                "is_toc": True,
+                "main_section_count": len(main_sections),
+                "sub_section_count": len(sub_sections),
+                "main_sections": main_sections,
+                "sub_sections": sub_sections[:20] if sub_sections else []  # 限制存储数量
+            }
+        )
+
+    def chunk_with_toc(
+        self,
+        text: str,
+        strategy: Optional[ChunkingStrategy] = None,
+        **kwargs
+    ) -> List[ChunkResult]:
+        """
+        分块并生成目录
+
+        在普通分块的基础上，额外生成一个 TOC chunk 放在最前面。
+        这样检索时可以同时匹配文档结构和具体内容。
+
+        Args:
+            text: 输入文本
+            strategy: 分块策略
+
+        Returns:
+            分块结果列表（第一个是 TOC，如果存在）
+        """
+        results = []
+
+        # 1. 提取目录
+        toc = self.extract_toc(text)
+        if toc:
+            results.append(toc)
+
+        # 2. 正常分块
+        chunks = self.chunk(text, strategy, **kwargs)
+
+        # 3. 调整索引（如果有 TOC，后续 chunk 索引从 0 开始）
+        for chunk in chunks:
+            results.append(chunk)
+
+        return results
 
 
 # 便捷函数

@@ -72,7 +72,8 @@ def chunk_text(
     text: str,
     chunk_size: int = 1500,
     chunk_overlap: int = 200,
-    strategy: str = "semantic"
+    strategy: str = "semantic",
+    extract_toc: bool = True
 ) -> List[dict]:
     """
     智能文本分块
@@ -82,6 +83,7 @@ def chunk_text(
         chunk_size: 分块大小，默认 1500
         chunk_overlap: 重叠大小，默认 200
         strategy: 分块策略 (fixed, semantic, recursive, page_aware)
+        extract_toc: 是否提取目录作为单独的 chunk，默认 True
 
     Returns:
         分块列表
@@ -96,7 +98,11 @@ def chunk_text(
         strategy=ChunkingStrategy(strategy)
     )
 
-    results = chunking_service.chunk(text)
+    # 使用带目录提取的分块方法
+    if extract_toc:
+        results = chunking_service.chunk_with_toc(text)
+    else:
+        results = chunking_service.chunk(text)
 
     return [
         {

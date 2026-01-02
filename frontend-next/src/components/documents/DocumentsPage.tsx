@@ -357,16 +357,18 @@ export function DocumentList({ searchQuery, onRefresh }: DocumentListProps) {
             {filteredDocs.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
               >
                 {/* 文件图标 */}
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
                   {getFileIcon(doc.filename)}
                 </div>
 
-                {/* 文件信息 */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{doc.filename}</p>
+                {/* 文件信息 - 使用 overflow-hidden 确保不会撑开容器 */}
+                <div className="overflow-hidden">
+                  <p className="font-medium truncate" title={doc.filename}>
+                    {doc.filename}
+                  </p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{formatFileSize(doc.fileSize)}</span>
                     <span>·</span>
