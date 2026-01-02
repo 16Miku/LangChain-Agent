@@ -9,3 +9,4 @@ export { InputArea } from './InputArea';
 export { CodeBlock, InlineCode } from './CodeBlock';
 export { ToolCallPanel } from './ToolCallPanel';
 export { ImageRenderer, ImageExtractor, ChartContainer } from './ImageRenderer';
+export { CitationPanel, CitationBadge, type CitationInfo } from './CitationPanel';

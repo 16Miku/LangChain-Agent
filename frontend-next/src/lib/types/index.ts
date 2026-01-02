@@ -59,11 +59,16 @@ export interface ToolCall {
 }
 
 export interface Citation {
-  sourceId: string;
-  sourceName: string;
+  chunkId: string;
+  documentId: string;
+  documentName: string;
   pageNumber?: number;
+  section?: string;
   content: string;
-  confidence: number;
+  contentPreview?: string;
+  score: number;
+  highlightRanges?: Array<{ start: number; end: number }>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Conversation {

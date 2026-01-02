@@ -1920,8 +1920,8 @@ Phase 5: 扩展功能 (待定)
 - [x] 引用追溯实现 (CitationService + 上下文获取)
 - [x] 混合搜索 Milvus 空指针修复
 - [x] 智能分块服务 (ChunkingService - 语义/页面感知/递归分块)
+- [x] 前端引用展示组件 (CitationPanel + RAG API)
 - [ ] MinerU API 集成
-- [ ] 前端引用展示组件
 - [ ] 多轮对话检索优化
 - [ ] 文档管理界面
 
@@ -2098,9 +2098,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 2.2 | 2026-01-02 | Week 6 完成：PDF解析(PyPDF2)、SQLite测试模式修复、BM25中文搜索测试通过 | Claude Code |
 | 2.3 | 2026-01-02 | Week 7 进行中：Reranker重排序、引用追溯(CitationService)、Milvus空指针修复 | Claude Code |
 | 2.4 | 2026-01-02 | Week 7 进行中：智能分块服务(ChunkingService - 语义/页面感知/递归策略) | Claude Code |
+| 2.5 | 2026-01-02 | Week 7 进行中：前端引用展示组件(CitationPanel + RAG API + chatStore集成) | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 3: Week 7)
 > **最后更新**: 2026-01-02
-> **下一步**: Week 7 - MinerU 集成 + 引用追溯 + Reranker
+> **下一步**: Week 7 - MinerU 集成 + 文档管理界面

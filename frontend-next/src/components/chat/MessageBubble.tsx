@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock, InlineCode } from './CodeBlock';
 import { ToolCallPanel } from './ToolCallPanel';
+import { CitationPanel, type CitationInfo } from './CitationPanel';
 import { PlayButton, AudioPlayer } from '@/components/voice';
 import { synthesizeSpeech } from '@/lib/api/voice';
 
@@ -243,6 +244,23 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
         {/* Tool Calls Panel */}
         {message.toolCalls && message.toolCalls.length > 0 && (
           <ToolCallPanel toolCalls={message.toolCalls} className="mt-1" />
+        )}
+
+        {/* Citations Panel - 引用展示 */}
+        {!isUser && message.citations && message.citations.length > 0 && (
+          <CitationPanel
+            citations={message.citations.map((c) => ({
+              chunkId: c.chunkId,
+              documentId: c.documentId,
+              documentName: c.documentName,
+              pageNumber: c.pageNumber,
+              section: c.section,
+              content: c.content,
+              contentPreview: c.contentPreview,
+              score: c.score,
+            }))}
+            className="mt-2 max-w-full"
+          />
         )}
 
         {/* Actions */}

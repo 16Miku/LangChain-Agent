@@ -54,11 +54,16 @@ interface BackendMessage {
     duration?: number;
   }>;
   citations?: Array<{
-    sourceId: string;
-    sourceName: string;
-    pageNumber?: number;
+    chunk_id: string;
+    document_id: string;
+    document_name: string;
+    page_number?: number;
+    section?: string;
     content: string;
-    confidence: number;
+    content_preview?: string;
+    score: number;
+    highlight_ranges?: Array<{ start: number; end: number }>;
+    metadata?: Record<string, unknown>;
   }>;
 }
 
@@ -93,7 +98,18 @@ function toMessage(backend: BackendMessage): Message {
     timestamp: new Date(backend.created_at),
     images: backend.images,
     toolCalls: backend.tool_calls,
-    citations: backend.citations,
+    citations: backend.citations?.map((c) => ({
+      chunkId: c.chunk_id,
+      documentId: c.document_id,
+      documentName: c.document_name,
+      pageNumber: c.page_number,
+      section: c.section,
+      content: c.content,
+      contentPreview: c.content_preview,
+      score: c.score,
+      highlightRanges: c.highlight_ranges,
+      metadata: c.metadata,
+    })),
   };
 }
 

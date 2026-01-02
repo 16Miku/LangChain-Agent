@@ -3,7 +3,7 @@
 // ============================================================
 
 import { create } from 'zustand';
-import type { Conversation, Message, ToolCall } from '@/lib/types';
+import type { Conversation, Message, ToolCall, Citation } from '@/lib/types';
 import { chatApi } from '@/lib/api';
 
 // Properly decode Base64 UTF-8 string
@@ -237,6 +237,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
                       }
                       return m;
                     }),
+                  });
+                } catch {
+                  // Handle parse error
+                }
+                break;
+              }
+
+              case 'citation': {
+                // Handle citation event from RAG
+                try {
+                  const citationData = JSON.parse(decodedData);
+                  const newCitation: Citation = {
+                    chunkId: citationData.chunk_id,
+                    documentId: citationData.document_id,
+                    documentName: citationData.document_name,
+                    pageNumber: citationData.page_number,
+                    section: citationData.section,
+                    content: citationData.content,
+                    contentPreview: citationData.content_preview,
+                    score: citationData.score,
+                    highlightRanges: citationData.highlight_ranges,
+                    metadata: citationData.metadata,
+                  };
+                  set({
+                    messages: currentMessages.map((m) =>
+                      m.id === lastMessage.id
+                        ? { ...m, citations: [...(m.citations || []), newCitation] }
+                        : m
+                    ),
                   });
                 } catch {
                   // Handle parse error
