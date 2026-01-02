@@ -313,11 +313,11 @@ export const ragApi = {
    * Get document list
    */
   async getDocuments(skip: number = 0, limit: number = 20): Promise<Document[]> {
-    const response = await ragClient.get<BackendDocument[]>('/api/v1/documents', {
+    const response = await ragClient.get<{documents: BackendDocument[], total: number}>('/api/v1/documents', {
       params: { skip, limit },
     });
 
-    return response.data.map(toDocument);
+    return response.data.documents.map(toDocument);
   },
 
   /**
