@@ -70,8 +70,8 @@ def extract_text_from_pdf(content_bytes: bytes) -> str:
 
 def chunk_text(
     text: str,
-    chunk_size: int = 500,
-    chunk_overlap: int = 50,
+    chunk_size: int = 1500,
+    chunk_overlap: int = 200,
     strategy: str = "semantic"
 ) -> List[dict]:
     """
@@ -79,8 +79,8 @@ def chunk_text(
 
     Args:
         text: 输入文本
-        chunk_size: 分块大小
-        chunk_overlap: 重叠大小
+        chunk_size: 分块大小，默认 1500
+        chunk_overlap: 重叠大小，默认 200
         strategy: 分块策略 (fixed, semantic, recursive, page_aware)
 
     Returns:

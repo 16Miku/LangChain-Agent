@@ -98,7 +98,7 @@ class SearchResult(BaseModel):
 @tool
 async def rag_search(
     query: str,
-    top_k: int = 5,
+    top_k: int = 10,
     rerank: bool = True,
 ) -> str:
     """
@@ -108,7 +108,7 @@ async def rag_search(
 
     Args:
         query: 用户的问题或搜索查询
-        top_k: 返回的结果数量，默认5条
+        top_k: 返回的结果数量，默认10条
         rerank: 是否使用重排序提升结果质量，默认True
 
     Returns:

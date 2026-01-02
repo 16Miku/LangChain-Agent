@@ -59,16 +59,16 @@ class ChunkingService:
 
     def __init__(
         self,
-        chunk_size: int = 500,
-        chunk_overlap: int = 50,
+        chunk_size: int = 1500,
+        chunk_overlap: int = 200,
         strategy: ChunkingStrategy = ChunkingStrategy.SEMANTIC
     ):
         """
         初始化分块服务
 
         Args:
-            chunk_size: 目标分块大小（字符数）
-            chunk_overlap: 分块重叠大小
+            chunk_size: 目标分块大小（字符数），默认 1500
+            chunk_overlap: 分块重叠大小，默认 200
             strategy: 分块策略
         """
         self.chunk_size = chunk_size
@@ -465,8 +465,8 @@ class ChunkingService:
 # 便捷函数
 def chunk_text(
     text: str,
-    chunk_size: int = 500,
-    chunk_overlap: int = 50,
+    chunk_size: int = 1500,
+    chunk_overlap: int = 200,
     strategy: str = "semantic"
 ) -> List[dict]:
     """
@@ -474,8 +474,8 @@ def chunk_text(
 
     Args:
         text: 输入文本
-        chunk_size: 分块大小
-        chunk_overlap: 重叠大小
+        chunk_size: 分块大小，默认 1500
+        chunk_overlap: 重叠大小，默认 200
         strategy: 分块策略 (fixed, semantic, recursive, page_aware)
 
     Returns:

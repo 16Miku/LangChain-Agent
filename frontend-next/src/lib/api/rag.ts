@@ -340,8 +340,8 @@ export const ragApi = {
    */
   async uploadDocument(
     file: File,
-    chunkSize: number = 500,
-    chunkOverlap: number = 50,
+    chunkSize: number = 1500,
+    chunkOverlap: number = 200,
     strategy: string = 'semantic'
   ): Promise<Document> {
     const formData = new FormData();

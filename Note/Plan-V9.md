@@ -1923,6 +1923,7 @@ Phase 5: 扩展功能 (待定)
 - [x] 前端引用展示组件 (CitationPanel + RAG API)
 - [x] 文档管理界面 (DocumentsPage - 上传/列表/搜索/删除)
 - [x] RAG 与 Chat 集成 (rag_search + list_knowledge_documents 工具)
+- [x] RAG 检索优化 (chunk_size: 500→1500, overlap: 50→200, top_k: 5→10)
 - [ ] MinerU API 集成 (可选)
 - [ ] 多轮对话检索优化
 
@@ -2102,9 +2103,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 2.5 | 2026-01-02 | Week 7 进行中：前端引用展示组件(CitationPanel + RAG API + chatStore集成) | Claude Code |
 | 2.6 | 2026-01-03 | Week 7 进行中：文档管理界面(DocumentsPage - Tabs组件/上传/列表/删除) | Claude Code |
 | 2.7 | 2026-01-03 | Week 7 完成：RAG与Chat集成(rag_search + list_knowledge_documents工具，代理绕过修复) | Claude Code |
+| 2.8 | 2026-01-03 | Week 7 完成：RAG检索优化(chunk_size 500→1500, overlap 50→200, top_k 5→10) | Claude Code |
 
 ---
 
-> **文档状态**: 🚧 开发中 (Phase 3: Week 7 基本完成)
+> **文档状态**: 🚧 开发中 (Phase 3: Week 7 完成)
 > **最后更新**: 2026-01-03
 > **下一步**: Week 8 - 部署优化 (Docker Compose + 测试) 或 MinerU API 集成 (可选)
