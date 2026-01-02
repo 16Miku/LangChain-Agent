@@ -59,6 +59,15 @@ You are an AI research assistant equipped with powerful tools for web search, da
 5. Use Chinese when the user communicates in Chinese
 6. **重要**: 当用户询问关于已上传文档的问题时，优先使用 rag_search 工具检索知识库
 
+## RAG Knowledge Base Usage (重要)
+
+When using rag_search tool:
+1. **必须使用检索结果**: 当 rag_search 返回相关内容时，你必须基于这些内容来回答问题，而不是说"无法获取"
+2. **综合多条结果**: 检索会返回多条相关片段，请综合这些内容给出完整答案
+3. **引用来源**: 在回答中提及内容来自哪个文档或页码
+4. **忽略标记**: 检索结果末尾可能包含 [RAG_CITATIONS] 标记，这是系统内部使用的，请忽略
+5. **内容相关性**: 即使检索内容不完全匹配问题，也要尽力从中提取有用信息
+
 ## E2B Code Execution Notes
 
 When using E2B sandbox for code execution:
@@ -380,11 +389,27 @@ async def chat_with_agent_stream(
             tool_name = event["name"]
             output = str(event["data"].get("output", ""))
 
+            # 处理 RAG 引用数据 - 解析 [RAG_CITATIONS] 标记
+            citations_data = None
+            display_output = output
+            if "[RAG_CITATIONS]" in output and "[/RAG_CITATIONS]" in output:
+                try:
+                    start_marker = "[RAG_CITATIONS]"
+                    end_marker = "[/RAG_CITATIONS]"
+                    start_idx = output.find(start_marker) + len(start_marker)
+                    end_idx = output.find(end_marker)
+                    citations_json = output[start_idx:end_idx]
+                    citations_data = json.loads(citations_json)
+                    # 从显示输出中移除引用数据标记
+                    display_output = output[:output.find(start_marker)].strip()
+                except Exception as e:
+                    print(f"解析 RAG 引用数据失败: {e}")
+
             # Handle image data - preserve full images, truncate text
-            if "[IMAGE_BASE64:" in output:
+            if "[IMAGE_BASE64:" in display_output:
                 image_pattern = r"\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]"
-                image_matches = re.findall(image_pattern, output)
-                text_parts = re.split(image_pattern, output)
+                image_matches = re.findall(image_pattern, display_output)
+                text_parts = re.split(image_pattern, display_output)
 
                 truncated_text_parts = [
                     (part[:500] + "..." if len(part) > 500 else part)
@@ -397,13 +422,29 @@ async def chat_with_agent_stream(
                     if i < len(image_matches):
                         safe_output += image_matches[i]
             else:
-                safe_output = (output[:1000] + "...") if len(output) > 1000 else output
+                safe_output = (display_output[:1000] + "...") if len(display_output) > 1000 else display_output
 
             tool_data = json.dumps(
                 {"name": tool_name, "output": safe_output}, ensure_ascii=False
             )
             encoded_data = encode_sse_data(tool_data)
             yield f"event: tool_end\ndata: {encoded_data}\n\n"
+
+            # 发送 citation 事件（如果有引用数据）
+            if citations_data:
+                for citation in citations_data:
+                    citation_event = json.dumps({
+                        "chunk_id": citation.get("chunk_id", ""),
+                        "document_id": citation.get("document_id", ""),
+                        "document_name": citation.get("document_name", ""),
+                        "page_number": citation.get("page_number"),
+                        "section": citation.get("section"),
+                        "content": citation.get("content", ""),
+                        "content_preview": citation.get("content_preview", ""),
+                        "score": citation.get("score", 0),
+                    }, ensure_ascii=False)
+                    encoded_citation = encode_sse_data(citation_event)
+                    yield f"event: citation\ndata: {encoded_citation}\n\n"
 
     # Send done marker with conversation_id for new conversations
     done_data = json.dumps({"conversation_id": conversation_id}, ensure_ascii=False)

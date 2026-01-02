@@ -141,7 +141,6 @@ async def rag_search(
             data = response.json()
 
             results = data.get("results", [])
-            citations = data.get("citations", [])
             search_time = data.get("search_time_ms", 0)
             total = data.get("total", 0)
 
@@ -150,8 +149,9 @@ async def rag_search(
             if not results:
                 return "未在知识库中找到相关内容。请确认已上传相关文档，或尝试用不同的关键词搜索。"
 
-            # 格式化输出
-            output_parts = [f"从知识库中检索到 {len(results)} 条相关内容:\n"]
+            # 格式化输出（供 AI 阅读）
+            # 注意：返回给 LLM 的内容要简洁明了，让 LLM 能够根据这些内容回答问题
+            output_parts = [f"从知识库中检索到 {len(results)} 条相关内容，请根据以下内容回答用户问题：\n\n"]
 
             for i, result in enumerate(results, 1):
                 doc_name = result.get("document_name", "未知文档")
@@ -162,21 +162,39 @@ async def rag_search(
                 # 构建引用标识
                 page_info = f" (第{page_num}页)" if page_num else ""
 
-                output_parts.append(f"---\n**[{i}] {doc_name}{page_info}** (相关度: {score:.2f})\n")
-                output_parts.append(f"{content}\n")
+                output_parts.append(f"=== 来源 [{i}]: {doc_name}{page_info} (相关度: {score:.2f}) ===\n")
+                output_parts.append(f"{content}\n\n")
 
-            # 添加引用追溯信息
-            if citations:
-                output_parts.append("\n---\n**引用来源:**\n")
-                for cit in citations[:5]:  # 最多显示5条引用
-                    cit_doc = cit.get("document_name", "未知")
-                    cit_page = cit.get("page_number")
-                    cit_section = cit.get("section", "")
-                    page_str = f"第{cit_page}页" if cit_page else ""
-                    section_str = f" - {cit_section}" if cit_section else ""
-                    output_parts.append(f"- {cit_doc} {page_str}{section_str}\n")
+            # 添加提示，引导 LLM 使用检索到的内容
+            output_parts.append("---\n请根据以上检索到的内容，综合回答用户的问题。如果检索内容与问题相关，请直接引用并回答。")
 
-            return "".join(output_parts)
+            text_output = "".join(output_parts)
+
+            # 构建结构化引用数据（供前端展示）
+            # 使用特殊标记 [RAG_CITATIONS] 附加到输出末尾
+            # 这部分数据会被 agent_service.py 解析并单独发送给前端，不会干扰 LLM
+            citations_data = []
+            for result in results:
+                citations_data.append({
+                    "chunk_id": result.get("chunk_id", ""),
+                    "document_id": result.get("document_id", ""),
+                    "document_name": result.get("document_name", "未知文档"),
+                    "page_number": result.get("page_number"),
+                    "content": result.get("content", "")[:200],  # 预览内容
+                    "content_preview": result.get("content", "")[:100] + "...",
+                    "score": result.get("score", 0),
+                    "vector_score": result.get("vector_score"),
+                    "bm25_score": result.get("bm25_score"),
+                    "rerank_score": result.get("rerank_score"),
+                })
+
+            # 将引用数据序列化并附加到输出末尾
+            # 格式：主要内容 + [RAG_CITATIONS]JSON数据[/RAG_CITATIONS]
+            import json
+            citations_json = json.dumps(citations_data, ensure_ascii=False)
+            full_output = f"{text_output}\n\n[RAG_CITATIONS]{citations_json}[/RAG_CITATIONS]"
+
+            return full_output
 
     except httpx.TimeoutException:
         print("❌ [RAG Search] 请求超时")
