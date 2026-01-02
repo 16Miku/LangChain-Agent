@@ -1767,6 +1767,279 @@ docker-compose down
 docker-compose down -v
 ```
 
+### 8.5 Render + Supabase 云部署方案 (推荐)
+
+> 适用于快速部署、低运维成本的场景。使用 Supabase 的 pgvector 扩展替代 Milvus。
+
+#### 8.5.1 架构图
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      Render + Supabase 云部署架构                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Render (计算层)                         Supabase (数据层)              │
+│  ┌─────────────────────┐                ┌─────────────────────────┐    │
+│  │ frontend-next       │                │ PostgreSQL + pgvector   │    │
+│  │ (Web Service)       │                │                         │    │
+│  │ - Next.js 14        │                │ Tables:                 │    │
+│  │ - 静态资源          │                │ - users                 │    │
+│  └──────────┬──────────┘                │ - conversations         │    │
+│             │                           │ - messages              │    │
+│  ┌──────────▼──────────┐                │ - documents             │    │
+│  │ auth-service        │◄──────────────►│ - document_chunks       │    │
+│  │ (Web Service)       │                │   (embedding vector)    │    │
+│  │ - 端口 8001         │                │                         │    │
+│  └──────────┬──────────┘                └─────────────────────────┘    │
+│             │                                                           │
+│  ┌──────────▼──────────┐                ┌─────────────────────────┐    │
+│  │ chat-service        │                │ Supabase Storage        │    │
+│  │ (Web Service)       │                │ (可选)                  │    │
+│  │ - 端口 8002         │                │ - PDF/文档存储          │    │
+│  │ - LangGraph Agent   │                └─────────────────────────┘    │
+│  └──────────┬──────────┘                                               │
+│             │                                                           │
+│  ┌──────────▼──────────┐                                               │
+│  │ rag-service         │                                               │
+│  │ (Web Service)       │                                               │
+│  │ - 端口 8004         │                                               │
+│  │ - pgvector 检索     │                                               │
+│  │ - BM25 混合检索     │                                               │
+│  └──────────┬──────────┘                                               │
+│             │                                                           │
+│  ┌──────────▼──────────┐                                               │
+│  │ whisper-service     │  (可选: 或使用 OpenAI Whisper API)            │
+│  │ (Web Service)       │                                               │
+│  │ - 端口 8003         │                                               │
+│  └─────────────────────┘                                               │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 8.5.2 服务配置
+
+| 服务 | Render 类型 | 配置建议 | 环境变量 |
+|------|------------|---------|---------|
+| **frontend-next** | Web Service | Starter ($7/月) 或 Free | `NEXT_PUBLIC_API_URL` |
+| **auth-service** | Web Service | Starter | `DATABASE_URL`, `JWT_SECRET` |
+| **chat-service** | Web Service | Standard ($25/月) | `DATABASE_URL`, `GOOGLE_API_KEY`, `E2B_API_KEY` |
+| **rag-service** | Web Service | Standard | `DATABASE_URL`, `EMBEDDING_MODEL` |
+| **whisper-service** | Web Service | Standard (需要内存) | `WHISPER_MODEL` |
+
+#### 8.5.3 Supabase 配置
+
+**1. 启用 pgvector 扩展**
+
+```sql
+-- 在 Supabase SQL Editor 中执行
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+**2. 创建向量表**
+
+```sql
+-- document_chunks 表 (替代 Milvus)
+CREATE TABLE document_chunks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    chunk_index INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    page_number INTEGER,
+    section VARCHAR(255),
+    embedding vector(384),  -- all-MiniLM-L6-v2 维度
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 创建向量索引 (IVFFlat)
+CREATE INDEX ON document_chunks
+USING ivfflat (embedding vector_cosine_ops)
+WITH (lists = 100);
+
+-- 创建用户隔离索引
+CREATE INDEX idx_chunks_user_id ON document_chunks(user_id);
+CREATE INDEX idx_chunks_document_id ON document_chunks(document_id);
+```
+
+**3. 向量搜索函数**
+
+```sql
+-- 相似度搜索函数
+CREATE OR REPLACE FUNCTION search_documents(
+    query_embedding vector(384),
+    match_user_id UUID,
+    match_count INT DEFAULT 10
+)
+RETURNS TABLE (
+    id UUID,
+    document_id UUID,
+    content TEXT,
+    page_number INTEGER,
+    section VARCHAR,
+    similarity FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        dc.id,
+        dc.document_id,
+        dc.content,
+        dc.page_number,
+        dc.section,
+        1 - (dc.embedding <=> query_embedding) AS similarity
+    FROM document_chunks dc
+    WHERE dc.user_id = match_user_id
+    ORDER BY dc.embedding <=> query_embedding
+    LIMIT match_count;
+END;
+$$;
+```
+
+#### 8.5.4 rag-service 改造
+
+需要新增 `PgvectorService` 替代 `MilvusService`:
+
+```python
+# app/services/pgvector_service.py
+
+from typing import List, Optional
+import numpy as np
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+class PgvectorService:
+    """
+    使用 Supabase pgvector 的向量检索服务
+    """
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    async def insert(self, chunks: List[ChunkData]) -> None:
+        """插入向量数据"""
+        for chunk in chunks:
+            embedding_str = f"[{','.join(map(str, chunk.embedding))}]"
+            self.db.execute(text("""
+                INSERT INTO document_chunks
+                (id, document_id, user_id, chunk_index, content, page_number, section, embedding, metadata)
+                VALUES (:id, :doc_id, :user_id, :idx, :content, :page, :section, :embedding::vector, :meta)
+            """), {
+                "id": chunk.id,
+                "doc_id": chunk.document_id,
+                "user_id": chunk.user_id,
+                "idx": chunk.chunk_index,
+                "content": chunk.content,
+                "page": chunk.page_number,
+                "section": chunk.section,
+                "embedding": embedding_str,
+                "meta": chunk.metadata
+            })
+        self.db.commit()
+
+    async def search(
+        self,
+        query_embedding: List[float],
+        user_id: str,
+        top_k: int = 10
+    ) -> List[dict]:
+        """向量相似度搜索"""
+        embedding_str = f"[{','.join(map(str, query_embedding))}]"
+        result = self.db.execute(text("""
+            SELECT id, document_id, content, page_number, section,
+                   1 - (embedding <=> :embedding::vector) AS similarity
+            FROM document_chunks
+            WHERE user_id = :user_id
+            ORDER BY embedding <=> :embedding::vector
+            LIMIT :top_k
+        """), {
+            "embedding": embedding_str,
+            "user_id": user_id,
+            "top_k": top_k
+        })
+        return [dict(row) for row in result]
+
+    async def delete_by_document(self, document_id: str) -> None:
+        """删除文档的所有向量"""
+        self.db.execute(text(
+            "DELETE FROM document_chunks WHERE document_id = :doc_id"
+        ), {"doc_id": document_id})
+        self.db.commit()
+```
+
+#### 8.5.5 环境变量配置
+
+```bash
+# Render 环境变量
+
+# ========== Supabase ==========
+DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+SUPABASE_URL=https://[project-ref].supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# ========== JWT ==========
+JWT_SECRET=your_jwt_secret_at_least_32_chars
+JWT_ALGORITHM=HS256
+
+# ========== External APIs ==========
+GOOGLE_API_KEY=your_google_api_key
+E2B_API_KEY=your_e2b_api_key
+BRIGHT_DATA_API_KEY=your_bright_data_key
+
+# ========== Embedding ==========
+EMBEDDING_MODEL=all-MiniLM-L6-v2
+
+# ========== TTS ==========
+EDGE_TTS_VOICE=zh-CN-XiaoxiaoNeural
+```
+
+#### 8.5.6 部署步骤
+
+```bash
+# 1. 创建 Supabase 项目
+#    - 访问 https://supabase.com
+#    - 创建新项目，记录连接字符串
+
+# 2. 初始化数据库
+#    - 在 Supabase SQL Editor 执行上述 SQL
+#    - 启用 pgvector 扩展
+#    - 创建表和索引
+
+# 3. 在 Render 创建服务
+#    - 连接 GitHub 仓库
+#    - 为每个微服务创建 Web Service
+#    - 配置环境变量
+
+# 4. 配置服务间通信
+#    - 使用 Render Private Services 或环境变量配置内部 URL
+
+# 5. 配置前端
+#    - NEXT_PUBLIC_API_URL 指向后端服务 URL
+```
+
+#### 8.5.7 成本估算
+
+| 服务 | 免费额度 | 付费价格 |
+|------|---------|---------|
+| **Supabase** | 500MB 数据库, 1GB 存储 | $25/月 (Pro) |
+| **Render** (5个服务) | 750小时/月 (会休眠) | ~$50-100/月 |
+| **总计** | 可免费试用 | ~$75-125/月 |
+
+#### 8.5.8 pgvector vs Milvus 对比
+
+| 特性 | pgvector (Supabase) | Milvus |
+|------|---------------------|--------|
+| **部署复杂度** | 低 (内置) | 高 (独立服务) |
+| **运维成本** | 低 | 高 |
+| **向量维度** | ≤2000 | 更高 |
+| **数据规模** | 百万级 | 亿级 |
+| **混合查询** | ✅ SQL + 向量 | 需额外处理 |
+| **适用场景** | 中小规模 | 大规模 |
+
+> **结论**: 对于个人/小团队知识库项目，pgvector 完全够用，且大幅简化部署架构。
+
 ---
 
 ## 九、开发计划
@@ -1937,14 +2210,22 @@ Phase 5: 扩展功能 (待定)
 
 **Week 8: 部署与测试**
 
+> 部署方案: Render (计算) + Supabase (数据库 + pgvector 向量存储)
+
+- [ ] PgvectorService 实现 (替代 MilvusService)
+- [ ] Supabase 数据库 Schema 设计与迁移
+- [ ] rag-service 适配 pgvector
+- [ ] Render 部署配置 (render.yaml)
+- [ ] 服务健康检查实现
+- [ ] 环境变量管理 (.env.example 更新)
+- [ ] 前端构建与部署配置
+- [ ] 端到端测试
+- [ ] 部署文档编写
+
+**备选: Docker Compose 本地部署**
 - [ ] 完善 Docker Compose 配置
 - [ ] Nginx 反向代理配置
-- [ ] 健康检查实现
-- [ ] 环境变量管理
-- [ ] 编写部署文档
-- [ ] 端到端测试
-- [ ] 性能测试与优化
-- [ ] Bug 修复
+- [ ] 本地 Milvus 配置
 
 #### Phase 5: 扩展功能 (待定)
 
@@ -2112,9 +2393,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 2.8 | 2026-01-03 | Week 7 完成：RAG检索优化(chunk_size 500→1500, overlap 50→200, top_k 5→10) | Claude Code |
 | 2.9 | 2026-01-03 | Week 7 完成：LLM RAG结果利用优化(System Prompt + 引用数据传递 + citation SSE事件) | Claude Code |
 | 3.0 | 2026-01-03 | Week 7 完成：文档目录提取功能(extract_toc + chunk_with_toc) + 前端文档列表UI修复 | Claude Code |
+| 3.1 | 2026-01-03 | Week 8 规划：新增 Render + Supabase 云部署方案 (pgvector 替代 Milvus) | Claude Code |
 
 ---
 
-> **文档状态**: 🚧 开发中 (Phase 3: Week 7 完成)
+> **文档状态**: 🚧 开发中 (Phase 4: Week 8 进行中)
 > **最后更新**: 2026-01-03
-> **下一步**: Week 8 - 部署优化 (Docker Compose + 测试) 或 引用高亮标记/MinerU集成 (可选)
+> **下一步**: Week 8 - Render + Supabase 部署 (PgvectorService 实现 + 部署配置)
