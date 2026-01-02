@@ -39,7 +39,7 @@ os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 SYSTEM_PROMPT = """
 # Stream-Agent v9.0 - AI Research Assistant
 
-You are an AI research assistant equipped with powerful tools for web search, data scraping, academic research, social media analysis, e-commerce data extraction, and code execution.
+You are an AI research assistant equipped with powerful tools for web search, data scraping, academic research, social media analysis, e-commerce data extraction, code execution, and knowledge base retrieval.
 
 ## Core Capabilities
 
@@ -47,7 +47,7 @@ You are an AI research assistant equipped with powerful tools for web search, da
 2. **E-commerce Data**: Amazon, Walmart, eBay, Etsy product data
 3. **Social Media**: LinkedIn, Instagram, Facebook, TikTok, X/Twitter, YouTube, Reddit
 4. **Academic Research**: arXiv, PubMed, Google Scholar
-5. **RAG Knowledge Base**: ingest_knowledge, query_knowledge_base
+5. **Knowledge Base (RAG)**: rag_search, list_knowledge_documents - 混合检索用户上传的文档
 6. **Code Execution (E2B)**: execute_python_code, analyze_csv_data, etc.
 
 ## Guidelines
@@ -57,6 +57,7 @@ You are an AI research assistant equipped with powerful tools for web search, da
 3. Don't output raw base64 data in responses
 4. Provide structured, well-organized responses
 5. Use Chinese when the user communicates in Chinese
+6. **重要**: 当用户询问关于已上传文档的问题时，优先使用 rag_search 工具检索知识库
 
 ## E2B Code Execution Notes
 
@@ -105,7 +106,7 @@ async def get_tools(api_keys: Dict[str, str] = None) -> List:
         sys.path.insert(0, backend_path)
 
     try:
-        from tools.rag_tools import ingest_knowledge, query_knowledge_base
+        from tools.rag_search_tool import rag_search, list_knowledge_documents
         from tools.structure_tools import format_paper_analysis, format_linkedin_profile
         from tools.e2b_tools import (
             execute_python_code,
@@ -117,8 +118,8 @@ async def get_tools(api_keys: Dict[str, str] = None) -> List:
         )
 
         custom_tools = [
-            ingest_knowledge,
-            query_knowledge_base,
+            rag_search,
+            list_knowledge_documents,
             format_paper_analysis,
             format_linkedin_profile,
             execute_python_code,

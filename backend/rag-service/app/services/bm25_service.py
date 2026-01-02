@@ -108,16 +108,18 @@ class BM25Service:
 
         self.avg_doc_len = total_length / self.doc_count if self.doc_count > 0 else 0
 
-    def build_index_from_db(self, db: Session, user_id: str, document_ids: Optional[List[str]] = None) -> None:
+    def build_index_from_db(self, db: Session, user_id: Optional[str] = None, document_ids: Optional[List[str]] = None) -> None:
         """
         从数据库构建索引
 
         Args:
             db: 数据库会话
-            user_id: 用户ID
+            user_id: 用户ID (None 表示获取所有用户的数据)
             document_ids: 可选的文档ID列表过滤
         """
-        query = db.query(Chunk).filter(Chunk.user_id == user_id)
+        query = db.query(Chunk)
+        if user_id:
+            query = query.filter(Chunk.user_id == user_id)
         if document_ids:
             query = query.filter(Chunk.document_id.in_(document_ids))
 

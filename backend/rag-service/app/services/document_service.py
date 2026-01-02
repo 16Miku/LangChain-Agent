@@ -71,7 +71,7 @@ class DocumentService:
     @staticmethod
     def list_documents(
         db: Session,
-        user_id: str,
+        user_id: Optional[str] = None,
         skip: int = 0,
         limit: int = 20
     ) -> tuple[List[Document], int]:
@@ -80,14 +80,16 @@ class DocumentService:
 
         Args:
             db: 数据库会话
-            user_id: 用户ID
+            user_id: 用户ID (None 表示获取所有文档)
             skip: 跳过数量
             limit: 返回数量
 
         Returns:
             (文档列表, 总数)
         """
-        query = db.query(Document).filter(Document.user_id == user_id)
+        query = db.query(Document)
+        if user_id:
+            query = query.filter(Document.user_id == user_id)
         total = query.count()
         documents = query.order_by(Document.created_at.desc()).offset(skip).limit(limit).all()
         return documents, total

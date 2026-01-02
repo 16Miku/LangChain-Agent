@@ -191,7 +191,7 @@ class HybridSearchService:
         bm25_results: List[BM25Result] = []
         if self.bm25 and alpha < 1.0:
             # 如果 BM25 索引为空且有数据库会话，重建索引
-            if self.bm25.doc_count == 0 and db and user_id:
+            if self.bm25.doc_count == 0 and db:
                 self.bm25.build_index_from_db(db, user_id, document_ids)
 
             bm25_results = self.bm25.search(

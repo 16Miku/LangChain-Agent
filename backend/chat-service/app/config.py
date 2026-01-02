@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     # Auth Service URL (for validating users)
     AUTH_SERVICE_URL: str = "http://localhost:8001"
 
+    # RAG Service URL (for knowledge base search)
+    RAG_SERVICE_URL: str = "http://localhost:8004"
+
+    # Internal Service Key (用于调用其他微服务)
+    INTERNAL_SERVICE_KEY: str = "internal-service-key-change-in-production"
+
     # LLM Configuration
     GOOGLE_API_KEY: str = ""
     GOOGLE_MODEL: str = "gemini-2.0-flash-lite"

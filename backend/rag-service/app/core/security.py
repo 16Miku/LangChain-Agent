@@ -66,6 +66,17 @@ async def get_current_user(
         )
 
     token = credentials.credentials
+
+    # 检查是否是内部服务调用
+    if token == settings.INTERNAL_SERVICE_KEY:
+        # 内部服务调用，返回系统用户
+        return CurrentUser(
+            user_id="internal-service-user",
+            username="internal_service",
+            email="internal@service"
+        )
+
+    # 验证 JWT Token
     payload = verify_token(token)
 
     return CurrentUser(

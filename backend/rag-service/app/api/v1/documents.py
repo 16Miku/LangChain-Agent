@@ -37,9 +37,12 @@ async def list_documents(
         skip: 跳过数量
         limit: 返回数量
     """
+    # 内部服务调用时返回所有文档（用于 Agent 工具调用）
+    user_id = None if current_user.user_id == "internal-service-user" else current_user.user_id
+
     documents, total = DocumentService.list_documents(
         db=db,
-        user_id=current_user.user_id,
+        user_id=user_id,
         skip=skip,
         limit=limit
     )

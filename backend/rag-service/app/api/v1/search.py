@@ -77,13 +77,16 @@ async def hybrid_search(
         reranker=reranker
     )
 
+    # 内部服务调用时搜索所有文档
+    user_id = None if current_user.user_id == "internal-service-user" else current_user.user_id
+
     # 执行检索
     try:
         results, search_time_ms = await search_service.search(
             query=request.query,
             top_k=request.top_k,
             alpha=request.alpha,
-            user_id=current_user.user_id,
+            user_id=user_id,
             document_ids=document_ids,
             use_rerank=request.rerank and settings.ENABLE_RERANK,
             db=db

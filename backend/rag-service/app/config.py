@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "test-secret-key-for-development"
     JWT_ALGORITHM: str = "HS256"
 
+    # Internal Service Key (用于微服务间调用)
+    INTERNAL_SERVICE_KEY: str = "internal-service-key-change-in-production"
+
     class Config:
         env_file = ".env"
         extra = "ignore"
