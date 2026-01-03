@@ -10,6 +10,7 @@ import type { Conversation, Message, ChatRequest } from '@/lib/types';
 const chatClient = axios.create({
   baseURL: CHAT_API_URL,
   timeout: 30000,
+  proxy: false, // 禁用代理，避免 Clash 等软件干扰本地请求
   headers: {
     'Content-Type': 'application/json',
   },

@@ -2,7 +2,7 @@
 // Auth API for Stream-Agent V9
 // ============================================================
 
-import apiClient from './client';
+import { authApiClient } from './client';
 import type { User, LoginCredentials, RegisterData, AuthTokens } from '@/lib/types';
 
 // Backend response format (snake_case)
@@ -55,7 +55,7 @@ export const authApi = {
    * User registration
    */
   async register(data: RegisterData): Promise<RegisterResponse> {
-    const response = await apiClient.post<BackendUserResponse>('/api/auth/register', data);
+    const response = await authApiClient.post<BackendUserResponse>('/api/auth/register', data);
     return {
       user: toUser(response.data),
     };
@@ -65,7 +65,7 @@ export const authApi = {
    * User login
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await apiClient.post<BackendTokenResponse>('/api/auth/login', credentials);
+    const response = await authApiClient.post<BackendTokenResponse>('/api/auth/login', credentials);
     return {
       tokens: toTokens(response.data),
     };
@@ -75,7 +75,7 @@ export const authApi = {
    * Refresh access token
    */
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
-    const response = await apiClient.post<BackendTokenResponse>('/api/auth/refresh', {
+    const response = await authApiClient.post<BackendTokenResponse>('/api/auth/refresh', {
       refresh_token: refreshToken,
     });
     return toTokens(response.data);
@@ -85,7 +85,7 @@ export const authApi = {
    * Logout
    */
   async logout(refreshToken: string): Promise<void> {
-    await apiClient.post('/api/auth/logout', {
+    await authApiClient.post('/api/auth/logout', {
       refresh_token: refreshToken,
     });
   },
@@ -94,7 +94,7 @@ export const authApi = {
    * Get current user
    */
   async getCurrentUser(): Promise<User> {
-    const response = await apiClient.get<BackendUserResponse>('/api/auth/me');
+    const response = await authApiClient.get<BackendUserResponse>('/api/auth/me');
     return toUser(response.data);
   },
 
@@ -102,7 +102,7 @@ export const authApi = {
    * Update password
    */
   async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
-    await apiClient.put('/api/auth/password', {
+    await authApiClient.put('/api/auth/password', {
       current_password: currentPassword,
       new_password: newPassword,
     });

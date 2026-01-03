@@ -6,15 +6,17 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 
 // API Base URLs for different services
 // 支持通过环境变量配置各服务地址
-const CHAT_API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://localhost:8002';
-const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_URL || process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:8001';
-const RAG_API_URL = process.env.NEXT_PUBLIC_RAG_URL || process.env.NEXT_PUBLIC_RAG_API_URL || 'http://localhost:8004';
-const WHISPER_API_URL = process.env.NEXT_PUBLIC_WHISPER_URL || process.env.NEXT_PUBLIC_VOICE_API_URL || 'http://localhost:8003';
+// 注意: Windows 上使用 127.0.0.1 而不是 localhost，避免代理软件干扰
+const CHAT_API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://127.0.0.1:8002';
+const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_URL || process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://127.0.0.1:8001';
+const RAG_API_URL = process.env.NEXT_PUBLIC_RAG_URL || process.env.NEXT_PUBLIC_RAG_API_URL || 'http://127.0.0.1:8004';
+const WHISPER_API_URL = process.env.NEXT_PUBLIC_WHISPER_URL || process.env.NEXT_PUBLIC_VOICE_API_URL || 'http://127.0.0.1:8003';
 
 // 默认 API 客户端 (使用 Chat 服务)
 const apiClient: AxiosInstance = axios.create({
   baseURL: CHAT_API_URL,
   timeout: 30000,
+  proxy: false, // 禁用代理，避免 Clash 等软件干扰本地请求
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,6 +26,7 @@ const apiClient: AxiosInstance = axios.create({
 export const authApiClient: AxiosInstance = axios.create({
   baseURL: AUTH_API_URL,
   timeout: 30000,
+  proxy: false, // 禁用代理
   headers: {
     'Content-Type': 'application/json',
   },
@@ -33,6 +36,7 @@ export const authApiClient: AxiosInstance = axios.create({
 export const ragApiClient: AxiosInstance = axios.create({
   baseURL: RAG_API_URL,
   timeout: 60000, // RAG 操作可能需要更长时间
+  proxy: false, // 禁用代理
   headers: {
     'Content-Type': 'application/json',
   },
@@ -42,6 +46,7 @@ export const ragApiClient: AxiosInstance = axios.create({
 export const whisperApiClient: AxiosInstance = axios.create({
   baseURL: WHISPER_API_URL,
   timeout: 60000, // 音频处理需要更长时间
+  proxy: false, // 禁用代理
   headers: {
     'Content-Type': 'multipart/form-data',
   },
@@ -81,7 +86,7 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${AUTH_API_URL}/api/v1/auth/refresh`, {
+          const response = await axios.post(`${AUTH_API_URL}/api/auth/refresh`, {
             refresh_token: refreshToken,
           });
 

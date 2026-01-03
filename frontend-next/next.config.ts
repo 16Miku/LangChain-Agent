@@ -5,15 +5,16 @@ const nextConfig: NextConfig = {
   output: "standalone",
 
   // 环境变量
+  // 注意: Windows 上使用 127.0.0.1 而不是 localhost，避免代理软件干扰
   env: {
     // 后端 API 地址 (客户端使用)
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002",
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8002",
     // Auth 服务地址
-    NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:8001",
+    NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL || "http://127.0.0.1:8001",
     // RAG 服务地址
-    NEXT_PUBLIC_RAG_URL: process.env.NEXT_PUBLIC_RAG_URL || "http://localhost:8004",
+    NEXT_PUBLIC_RAG_URL: process.env.NEXT_PUBLIC_RAG_URL || "http://127.0.0.1:8004",
     // Whisper 服务地址
-    NEXT_PUBLIC_WHISPER_URL: process.env.NEXT_PUBLIC_WHISPER_URL || "http://localhost:8003",
+    NEXT_PUBLIC_WHISPER_URL: process.env.NEXT_PUBLIC_WHISPER_URL || "http://127.0.0.1:8003",
   },
 
   // 图片域名白名单 (外部图片)
