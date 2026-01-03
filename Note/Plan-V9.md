@@ -2234,11 +2234,11 @@ Phase 5: 扩展功能 (待定)
 
 > 基于 E2B 代码执行能力，扩展为完整的文档生成功能
 
-**Phase 5.1: Reveal.js 网页演示 (快速验证)**
-- [ ] 新增 `generate_presentation` 工具
-- [ ] 支持基础幻灯片结构 (标题、内容、图片)
-- [ ] 前端 PPT 预览组件 (iframe 嵌入)
-- [ ] 主题选择 (black, white, league 等)
+**Phase 5.1: Reveal.js 网页演示 (快速验证)** ✅ 已完成 (2026-01-03)
+- [x] 新增 `generate_presentation` 工具
+- [x] 支持基础幻灯片结构 (标题、内容、图片)
+- [x] 前端 PPT 预览组件 (iframe 嵌入)
+- [x] 主题选择 (black, white, league 等 9种主题)
 
 **Phase 5.2: python-pptx 生成标准 PPT**
 - [ ] 新增 `generate_pptx` 工具
@@ -2402,9 +2402,11 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 3.6 | 2026-01-03 | Week 8 修复：前端 API 路由配置 (.env.local + auth.ts 使用 authApiClient) | Claude Code |
 | 3.7 | 2026-01-03 | Week 8 修复：Token Refresh 500 错误 (添加 jti 确保 token 唯一性) | Claude Code |
 | 3.8 | 2026-01-03 | Week 8 修复：工具调用/引用持久化 (后端 citation 收集 + 前端字段名驼峰匹配) | Claude Code |
+| 3.9 | 2026-01-03 | Phase 5.1 完成：AI生成PPT功能 (generate_presentation工具 + Reveal.js + 前端PresentationPreview组件) | Claude Code |
+| 4.0 | 2026-01-03 | Phase 5.1 修复：PPT预览不显示 (agent_service.py 保护 [PRESENTATION_HTML:] 标记不被截断) | Claude Code |
+| 4.1 | 2026-01-03 | Phase 5.1 修复：PPT中文乱码 (前端使用 TextDecoder 正确解码 UTF-8 base64) | Claude Code |
 
 ---
-
-> **文档状态**: ✅ Phase 4 完成 (Week 8 部署与测试) - 14/14 测试通过
+> **文档状态**: ✅ Phase 5.1 完成 (AI 生成 PPT - Reveal.js 方案)
 > **最后更新**: 2026-01-03
-> **下一步**: Phase 5 - AI 生成 PPT / 扩展功能 (待定)
+> **下一步**: Phase 5.2 - python-pptx 生成标准 PPT (可选)

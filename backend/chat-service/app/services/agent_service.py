@@ -124,6 +124,7 @@ async def get_tools(api_keys: Dict[str, str] = None) -> List:
             upload_data_to_sandbox,
             download_file_from_sandbox,
             analyze_csv_data,
+            generate_presentation,
         )
 
         custom_tools = [
@@ -137,6 +138,7 @@ async def get_tools(api_keys: Dict[str, str] = None) -> List:
             upload_data_to_sandbox,
             download_file_from_sandbox,
             analyze_csv_data,
+            generate_presentation,
         ]
     except ImportError as e:
         print(f"Warning: Could not import some tools: {e}")
@@ -421,6 +423,24 @@ async def chat_with_agent_stream(
                     safe_output += text_part
                     if i < len(image_matches):
                         safe_output += image_matches[i]
+
+            # Handle presentation data - preserve full HTML, truncate text
+            elif "[PRESENTATION_HTML:" in display_output:
+                pres_pattern = r"\[PRESENTATION_HTML:[A-Za-z0-9+/=]+\]"
+                pres_matches = re.findall(pres_pattern, display_output)
+                text_parts = re.split(pres_pattern, display_output)
+
+                truncated_text_parts = [
+                    (part[:500] + "..." if len(part) > 500 else part)
+                    for part in text_parts
+                ]
+
+                safe_output = ""
+                for i, text_part in enumerate(truncated_text_parts):
+                    safe_output += text_part
+                    if i < len(pres_matches):
+                        safe_output += pres_matches[i]
+
             else:
                 safe_output = (display_output[:1000] + "...") if len(display_output) > 1000 else display_output
 

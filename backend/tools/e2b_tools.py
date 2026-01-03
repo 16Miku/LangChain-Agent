@@ -640,3 +640,224 @@ print(f"✅ 图表生成成功: {title}")
         "chart_type": chart_type,
         "code": chart_code
     })
+
+
+# ============================================================
+# AI 生成演示文稿工具 (Phase 5.1)
+# ============================================================
+
+@tool
+async def generate_presentation(
+    topic: str,
+    slides: str,
+    theme: str = "black"
+) -> str:
+    """
+    根据主题和幻灯片内容生成 Reveal.js 网页演示文稿。
+
+    Args:
+        topic (str): 演示文稿主题/标题
+        slides (str): 幻灯片内容，JSON 格式数组。每个幻灯片包含:
+                     - title: 幻灯片标题
+                     - content: 内容（支持 Markdown 格式，如列表 "- item1\\n- item2"）
+                     - image_url: (可选) 图片 URL
+                     - background: (可选) 背景颜色如 "#ff0000" 或图片 URL
+                     - notes: (可选) 演讲者备注
+
+                     示例:
+                     [
+                       {"title": "引言", "content": "欢迎参加本次演示"},
+                       {"title": "要点", "content": "- 第一点\\n- 第二点\\n- 第三点"},
+                       {"title": "总结", "content": "谢谢观看!", "background": "#1a1a2e"}
+                     ]
+        theme (str): 演示主题，可选值:
+                    - "black" (默认，黑色背景)
+                    - "white" (白色背景)
+                    - "league" (灰色纹理)
+                    - "beige" (米色)
+                    - "sky" (蓝天)
+                    - "night" (夜间蓝色)
+                    - "serif" (衬线字体)
+                    - "simple" (简约)
+                    - "solarized" (Solarized 配色)
+
+    Returns:
+        str: 生成结果，包含:
+             - 演示文稿 HTML 内容的 Base64 编码 [PRESENTATION_HTML:...]
+             - 预览 URL（本地/沙箱）
+             - 幻灯片数量统计
+
+    使用流程:
+    1. 用户描述想要创建的演示文稿主题
+    2. AI 规划幻灯片结构（5-10 张）
+    3. 调用此工具生成 HTML
+    4. 前端渲染预览
+
+    注意:
+    - 建议每个演示文稿 5-15 张幻灯片
+    - 内容支持 Markdown 格式（列表、加粗、代码块等）
+    - 可以使用 fragment 类实现逐步显示效果
+    """
+    import json as json_module
+
+    # 解析幻灯片数据
+    try:
+        if isinstance(slides, str):
+            slides_data = json_module.loads(slides)
+        else:
+            slides_data = slides
+    except json_module.JSONDecodeError as e:
+        return f"❌ 幻灯片数据 JSON 解析错误: {e}\n\n请确保 slides 参数是有效的 JSON 数组格式。"
+
+    if not isinstance(slides_data, list) or len(slides_data) == 0:
+        return "❌ slides 必须是非空的 JSON 数组"
+
+    # 验证主题
+    valid_themes = ["black", "white", "league", "beige", "sky", "night", "serif", "simple", "solarized"]
+    if theme not in valid_themes:
+        theme = "black"
+
+    # 生成幻灯片 HTML
+    slides_html = []
+    for i, slide in enumerate(slides_data):
+        slide_attrs = []
+
+        # 背景设置
+        if slide.get("background"):
+            bg = slide["background"]
+            if bg.startswith("#") or bg.startswith("rgb"):
+                slide_attrs.append(f'data-background="{bg}"')
+            elif bg.startswith("http"):
+                slide_attrs.append(f'data-background="{bg}"')
+
+        attrs_str = " " + " ".join(slide_attrs) if slide_attrs else ""
+
+        # 幻灯片内容
+        title = slide.get("title", f"幻灯片 {i + 1}")
+        content = slide.get("content", "")
+        image_url = slide.get("image_url", "")
+        notes = slide.get("notes", "")
+
+        # 处理 Markdown 列表为 HTML
+        content_html = ""
+        if content:
+            lines = content.split("\\n") if "\\n" in content else content.split("\n")
+            list_items = []
+            regular_lines = []
+
+            for line in lines:
+                line = line.strip()
+                if line.startswith("- "):
+                    list_items.append(f'<li class="fragment">{line[2:]}</li>')
+                elif line.startswith("* "):
+                    list_items.append(f'<li class="fragment">{line[2:]}</li>')
+                elif line:
+                    regular_lines.append(line)
+
+            if regular_lines:
+                content_html += f'<p>{" ".join(regular_lines)}</p>'
+            if list_items:
+                content_html += f'<ul>{"".join(list_items)}</ul>'
+
+        # 图片
+        image_html = ""
+        if image_url:
+            image_html = f'<img src="{image_url}" alt="" style="max-height: 400px;">'
+
+        # 演讲者备注
+        notes_html = ""
+        if notes:
+            notes_html = f'<aside class="notes">{notes}</aside>'
+
+        slide_html = f'''
+    <section{attrs_str}>
+      <h2>{title}</h2>
+      {content_html}
+      {image_html}
+      {notes_html}
+    </section>'''
+
+        slides_html.append(slide_html)
+
+    # 完整 HTML 模板
+    html_template = f'''<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{topic}</title>
+
+  <!-- Reveal.js CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/{theme}.css">
+
+  <!-- 代码高亮 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+
+  <style>
+    .reveal h1, .reveal h2 {{ text-transform: none; }}
+    .reveal ul {{ text-align: left; }}
+    .reveal li {{ margin: 0.5em 0; }}
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      <!-- 标题页 -->
+      <section>
+        <h1>{topic}</h1>
+        <p><small>使用 Stream-Agent AI 生成</small></p>
+      </section>
+
+      <!-- 内容页 -->
+      {"".join(slides_html)}
+
+      <!-- 结束页 -->
+      <section>
+        <h2>谢谢观看</h2>
+        <p>Q & A</p>
+      </section>
+    </div>
+  </div>
+
+  <!-- Reveal.js Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/markdown/markdown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+
+  <script>
+    Reveal.initialize({{
+      hash: true,
+      center: true,
+      transition: 'slide',
+      plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    }});
+  </script>
+</body>
+</html>'''
+
+    # 编码 HTML 为 Base64
+    html_b64 = base64.b64encode(html_template.encode('utf-8')).decode('utf-8')
+
+    # 返回结果
+    total_slides = len(slides_data) + 2  # +2 for title and end slides
+
+    return f"""✅ **演示文稿生成成功**
+
+📊 **演示信息**:
+- 主题: {topic}
+- 幻灯片数量: {total_slides} 张
+- 样式主题: {theme}
+
+🎨 **可用主题**: black, white, league, beige, sky, night, serif, simple, solarized
+
+💡 **使用提示**:
+- 按 **空格键** 或 **→** 切换下一页
+- 按 **←** 返回上一页
+- 按 **S** 打开演讲者视图
+- 按 **F** 全屏模式
+- 按 **ESC** 查看幻灯片概览
+
+[PRESENTATION_HTML:{html_b64}]"""

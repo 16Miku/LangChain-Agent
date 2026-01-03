@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { ToolCall } from '@/lib/types';
 import { ImageExtractor } from './ImageRenderer';
+import { PresentationExtractor } from './PresentationPreview';
 
 interface ToolCallPanelProps {
   toolCalls: ToolCall[];
@@ -52,6 +53,8 @@ const toolIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   install_python_package: Zap,
   upload: Image,
   download: Image,
+  presentation: FileText,
+  generate_presentation: FileText,
   default: Terminal,
 };
 
@@ -166,6 +169,9 @@ function ToolCallItem({ toolCall }: ToolCallItemProps) {
   // Check if output contains image data
   const hasImage = toolCall.output?.includes('[IMAGE_BASE64:');
 
+  // Check if output contains presentation data
+  const hasPresentation = toolCall.output?.includes('[PRESENTATION_HTML:');
+
   // Safely truncate output for preview
   const getOutputPreview = () => {
     if (!toolCall.output) return null;
@@ -175,6 +181,11 @@ function ToolCallItem({ toolCall }: ToolCallItemProps) {
     // Remove image base64 data for preview
     if (hasImage) {
       output = output.replace(/\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]/g, '[IMAGE]');
+    }
+
+    // Remove presentation base64 data for preview
+    if (hasPresentation) {
+      output = output.replace(/\[PRESENTATION_HTML:[A-Za-z0-9+/=]+\]/g, '[PRESENTATION]');
     }
 
     if (output.length > 150) {
@@ -216,6 +227,13 @@ function ToolCallItem({ toolCall }: ToolCallItemProps) {
         </div>
       )}
 
+      {/* Always show presentations if present (without needing to expand) */}
+      {hasPresentation && toolCall.status !== 'running' && (
+        <div className="mt-3">
+          <PresentationExtractor content={toolCall.output!} className="mb-2" />
+        </div>
+      )}
+
       {/* Output Preview/Full */}
       {toolCall.output && toolCall.status !== 'running' && (
         <div className="mt-3">
@@ -241,9 +259,16 @@ function ToolCallItem({ toolCall }: ToolCallItemProps) {
               {/* Text output */}
               <div className="max-h-64 overflow-auto rounded-md bg-background p-3">
                 <pre className="text-xs whitespace-pre-wrap break-all text-foreground/80">
-                  {hasImage
-                    ? toolCall.output.replace(/\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]/g, '[Chart Image]')
-                    : toolCall.output}
+                  {(() => {
+                    let output = toolCall.output || '';
+                    if (hasImage) {
+                      output = output.replace(/\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]/g, '[Chart Image]');
+                    }
+                    if (hasPresentation) {
+                      output = output.replace(/\[PRESENTATION_HTML:[A-Za-z0-9+/=]+\]/g, '[Presentation HTML]');
+                    }
+                    return output;
+                  })()}
                 </pre>
               </div>
             </div>
