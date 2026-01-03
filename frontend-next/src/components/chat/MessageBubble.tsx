@@ -106,14 +106,17 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
       },
 
       // Images - handle both URLs and data URLs (base64)
-      img: ({ src, alt }: { src?: string; alt?: string }) => {
-        if (!src) return null;
+      // 使用 React.ImgHTMLAttributes 类型来匹配 ReactMarkdown 要求
+      img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
+        const { src, alt, ...rest } = props;
+        if (!src || typeof src !== 'string') return null;
         return (
           <img
             src={src}
             alt={alt || 'Image'}
             className="my-3 max-w-full rounded-lg border"
             loading="lazy"
+            {...rest}
           />
         );
       },

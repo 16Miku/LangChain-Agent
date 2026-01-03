@@ -1,11 +1,11 @@
 // Voice API 客户端
 
 import axios from 'axios';
-import { VOICE_API_URL } from './client';
+import { WHISPER_API_URL } from './client';
 
 // 创建独立的 voice API 客户端
 const voiceApiClient = axios.create({
-  baseURL: VOICE_API_URL,
+  baseURL: WHISPER_API_URL,
   timeout: 60000, // 语音处理可能需要更长时间
 });
 

@@ -5,38 +5,70 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // API Base URLs for different services
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:8001';
-const CHAT_API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://localhost:8002';
-const VOICE_API_URL = process.env.NEXT_PUBLIC_VOICE_API_URL || 'http://localhost:8003';
+// 支持通过环境变量配置各服务地址
+const CHAT_API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://localhost:8002';
+const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_URL || process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:8001';
+const RAG_API_URL = process.env.NEXT_PUBLIC_RAG_URL || process.env.NEXT_PUBLIC_RAG_API_URL || 'http://localhost:8004';
+const WHISPER_API_URL = process.env.NEXT_PUBLIC_WHISPER_URL || process.env.NEXT_PUBLIC_VOICE_API_URL || 'http://localhost:8003';
 
-// Create axios instance
+// 默认 API 客户端 (使用 Chat 服务)
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: CHAT_API_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - add auth token
-apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage (client-side only)
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-    return config;
+// Auth 服务专用客户端
+export const authApiClient: AxiosInstance = axios.create({
+  baseURL: AUTH_API_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
   },
-  (error: AxiosError) => {
-    return Promise.reject(error);
+});
+
+// RAG 服务专用客户端
+export const ragApiClient: AxiosInstance = axios.create({
+  baseURL: RAG_API_URL,
+  timeout: 60000, // RAG 操作可能需要更长时间
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Whisper 服务专用客户端
+export const whisperApiClient: AxiosInstance = axios.create({
+  baseURL: WHISPER_API_URL,
+  timeout: 60000, // 音频处理需要更长时间
+  headers: {
+    'Content-Type': 'multipart/form-data',
+  },
+});
+
+// Token 拦截器通用函数
+const addAuthToken = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+  // Get token from localStorage (client-side only)
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('accessToken');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
-);
+  return config;
+};
+
+// 为所有客户端添加请求拦截器
+[apiClient, authApiClient, ragApiClient].forEach(client => {
+  client.interceptors.request.use(addAuthToken);
+});
+
+// whisperApiClient 使用 multipart/form-data，不需要 Authorization
+// 也不需要在请求拦截器中添加 token
 
 // Response interceptor - handle errors and token refresh
+// 为主客户端添加响应拦截器
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -49,7 +81,7 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+          const response = await axios.post(`${AUTH_API_URL}/api/v1/auth/refresh`, {
             refresh_token: refreshToken,
           });
 
@@ -77,4 +109,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
-export { API_BASE_URL, AUTH_API_URL, CHAT_API_URL, VOICE_API_URL };
+export { CHAT_API_URL, AUTH_API_URL, RAG_API_URL, WHISPER_API_URL };

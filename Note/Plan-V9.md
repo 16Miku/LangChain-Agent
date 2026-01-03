@@ -2220,7 +2220,7 @@ Phase 5: 扩展功能 (待定)
 - [x] 服务健康检查实现 (已内置 /health 端点) ✅ 2026-01-03
 - [x] 环境变量管理 (.env.example 更新) ✅ 2026-01-03
 - [x] 部署文档编写 (docs/deploy-render.md) ✅ 2026-01-03
-- [ ] 前端构建与部署配置
+- [x] 前端构建与部署配置 (Dockerfile + next.config.ts + API客户端优化) ✅ 2026-01-03
 - [ ] 端到端测试
 
 **备选: Docker Compose 本地部署**
@@ -2397,9 +2397,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 3.1 | 2026-01-03 | Week 8 规划：新增 Render + Supabase 云部署方案 (pgvector 替代 Milvus) | Claude Code |
 | 3.2 | 2026-01-03 | Week 8 实现：PgvectorService 完成 (SQLite暴力搜索 + PostgreSQL pgvector双模式支持) | Claude Code |
 | 3.3 | 2026-01-03 | Week 8 完成：Supabase Schema (database/supabase_schema.sql) + Render 部署配置 (render.yaml) | Claude Code |
+| 3.4 | 2026-01-03 | Week 8 完成：前端构建配置 (Dockerfile + next.config.ts + API客户端优化 + 类型修复) | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 4: Week 8 进行中)
 > **最后更新**: 2026-01-03
-> **下一步**: Week 8 - 前端构建配置 + 端到端测试
+> **下一步**: Week 8 - 端到端测试
