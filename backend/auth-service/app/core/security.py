@@ -92,6 +92,8 @@ def create_refresh_token(
     Returns:
         Encoded JWT token string
     """
+    import uuid
+
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -104,6 +106,7 @@ def create_refresh_token(
         "exp": expire,
         "type": "refresh",
         "iat": datetime.utcnow(),
+        "jti": str(uuid.uuid4()),  # 唯一标识符，确保每个 token 不同
     }
 
     encoded_jwt = jwt.encode(

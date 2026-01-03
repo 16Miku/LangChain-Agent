@@ -95,17 +95,27 @@ async def refresh_token(
 
     - **refresh_token**: Valid refresh token
     """
-    service = UserService(db)
+    import logging
+    logger = logging.getLogger(__name__)
 
-    tokens = await service.refresh_tokens(token_data.refresh_token)
-    if tokens is None:
+    try:
+        service = UserService(db)
+        tokens = await service.refresh_tokens(token_data.refresh_token)
+        if tokens is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return tokens
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh error: {type(e).__name__}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Token refresh failed: {str(e)}",
         )
-
-    return tokens
 
 
 @router.post(

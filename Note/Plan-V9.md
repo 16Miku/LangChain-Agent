@@ -2399,9 +2399,11 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 3.3 | 2026-01-03 | Week 8 完成：Supabase Schema (database/supabase_schema.sql) + Render 部署配置 (render.yaml) | Claude Code |
 | 3.4 | 2026-01-03 | Week 8 完成：前端构建配置 (Dockerfile + next.config.ts + API客户端优化 + 类型修复) | Claude Code |
 | 3.5 | 2026-01-03 | Week 8 完成：端到端测试脚本 (test_e2e.py + health_check.py + pytest.ini) | Claude Code |
+| 3.6 | 2026-01-03 | Week 8 修复：前端 API 路由配置 (.env.local + auth.ts 使用 authApiClient) | Claude Code |
+| 3.7 | 2026-01-03 | Week 8 修复：Token Refresh 500 错误 (添加 jti 确保 token 唯一性) | Claude Code |
 
 ---
 
-> **文档状态**: ✅ Phase 4 完成 (Week 8 部署与测试)
+> **文档状态**: ✅ Phase 4 完成 (Week 8 部署与测试) - 14/14 测试通过
 > **最后更新**: 2026-01-03
 > **下一步**: Phase 5 - AI 生成 PPT / 扩展功能 (待定)

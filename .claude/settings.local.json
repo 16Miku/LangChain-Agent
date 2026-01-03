@@ -1,12 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "mcp__upstash-context7-mcp__resolve-library-id",
-      "mcp__upstash-context7-mcp__get-library-docs",
-      "Bash(mkdir:*)",
-      "Bash(ls:*)",
-      "Bash(\"A:/Anaconda/envs/My-Chat-LangChain/python.exe\" -m pytest tests/ -v --tb=short)",
-      "Bash(npm run build)"
+      "Bash(\"A:/Anaconda/envs/My-Chat-LangChain/python.exe\" -m pytest \"A:/study/AI/LLM/LangChain-Agent/tests/test_e2e.py\" -v --tb=short)"
     ],
     "deny": [],
     "ask": []
