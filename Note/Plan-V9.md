@@ -2228,45 +2228,210 @@ Phase 5: 扩展功能 (待定)
 - [ ] Nginx 反向代理配置
 - [ ] 本地 Milvus 配置
 
-#### Phase 5: 扩展功能 (待定)
+#### Phase 5: AI 生成 PPT 完整方案
 
-**Week 9+: AI 生成 PPT / 文档生成**
+> 目标: 打造精美实用、图文并茂、可自定义模板和风格、具备迭代优化功能的 AI 演示文稿生成系统
 
-> 基于 E2B 代码执行能力，扩展为完整的文档生成功能
-
-**Phase 5.1: Reveal.js 网页演示 (快速验证)** ✅ 已完成 (2026-01-03)
+**Phase 5.1: Reveal.js 网页演示 (基础版)** ✅ 已完成 (2026-01-03)
 - [x] 新增 `generate_presentation` 工具
 - [x] 支持基础幻灯片结构 (标题、内容、图片)
 - [x] 前端 PPT 预览组件 (iframe 嵌入)
 - [x] 主题选择 (black, white, league 等 9种主题)
 
-**Phase 5.2: python-pptx 生成标准 PPT**
-- [ ] 新增 `generate_pptx` 工具
-- [ ] 集成 python-pptx 库到 E2B 沙箱
-- [ ] 实现文件下载功能 (前端+后端)
-- [ ] 基础模板支持 (商务、学术、简约)
-- [ ] 图表自动嵌入 (复用 matplotlib 能力)
+**Phase 5.2: 智能布局系统** (核心升级)
+- [x] 设计 15+ 种专业布局类型
+- [ ] 实现布局智能选择引擎
+- [ ] 内容分析 → 自动匹配最佳布局
+- [ ] 支持 Markdown 高级语法 (表格、代码块、公式)
 
-**Phase 5.3: 高级功能 (长期)**
-- [ ] 智能布局引擎 (内容分析 → 自动选择布局)
-- [ ] 模板库管理 (用户自定义模板)
-- [ ] 图片智能配图 (集成图片搜索 API)
+**布局类型清单:**
+```python
+LAYOUT_TYPES = {
+    # === 基础布局 ===
+    "title_cover": "封面页 - 大标题 + 副标题 + 作者",
+    "title_section": "章节页 - 居中大标题",
+    "bullet_points": "列表页 - 标题 + 3-6 个要点",
+    "two_column": "双栏布局 - 左文右图/双列表",
+    "image_text": "图文混排 - 大图配文字说明",
+
+    # === 数据展示 ===
+    "chart_single": "单图表 - 标题 + 图表区域",
+    "chart_dual": "双图表对比 - 并排两个图表",
+    "data_table": "数据表格 - 标题 + 表格 + 说明",
+    "metric_card": "指标卡片 - 3-4 个关键指标",
+
+    # === 特殊效果 ===
+    "quote_center": "引用页 - 居中引用文字",
+    "timeline": "时间线 - 垂直/水平时间轴",
+    "process_flow": "流程图 - 步骤流程展示",
+    "comparison": "对比布局 - 左右对比两栏",
+    "gallery": "图片画廊 - 网格图片展示",
+
+    # === 结尾 ===
+    "thank_you": "结尾页 - 感谢 + Q&A",
+    "contact": "联系方式 - 社交媒体/邮箱/二维码",
+}
+```
+
+**Phase 5.3: 图片智能集成**
+- [ ] 集成 Unsplash API (免费高质量图片)
+- [ ] 集成 Pexels API (备选)
+- [ ] 关键词 → 图片自动匹配
+- [ ] 图片裁剪适配不同布局
+- [ ] 支持用户自定义图片上传
+
+**图片来源策略:**
+```python
+IMAGE_SOURCES = {
+    "unsplash": "https://source.unsplash.com/featured/{keyword}",  # 免费
+    "pexels": "Pexels API",  # 需要 API Key，免费额度大
+    "user_upload": "用户上传的图片",
+    "ai_generated": "AI 生成的图表/图片",
+}
+
+# 关键词映射
+KEYWORD_MAPPING = {
+    "科技": ["technology", "innovation", "digital", "futuristic"],
+    "商业": ["business", "meeting", "office", "corporate"],
+    "自然": ["nature", "landscape", "environment", "outdoor"],
+    "人物": ["people", "team", "person", "professional"],
+}
+```
+
+**Phase 5.4: 高级主题系统**
+- [ ] 预设主题库 (4-6 种精品主题)
+- [ ] 自定义主题编辑器
+- [ ] 配色方案智能推荐
+- [ ] 字体选择与搭配
+
+**主题预设:**
+```python
+THEME_PRESETS = {
+    "modern_business": {
+        "colors": {"primary": "#1e3a8a", "accent": "#3b82f6", "background": "#ffffff"},
+        "fonts": {"title": "Montserrat", "body": "Open Sans"},
+        "style": "clean, professional, gradient accents",
+    },
+    "dark_tech": {
+        "colors": {"primary": "#00ff88", "accent": "#00d4ff", "background": "#0a0a0a"},
+        "fonts": {"title": "Rajdhani", "body": "Roboto Mono"},
+        "style": "cyberpunk, neon, grid background",
+    },
+    "creative_colorful": {
+        "colors": {"primary": "#ff6b6b", "accent": "#feca57", "background": "#f8f9fa"},
+        "fonts": {"title": "Poppins", "body": "Lato"},
+        "style": "vibrant, playful, illustrations",
+    },
+    "minimal_academic": {
+        "colors": {"primary": "#2c3e50", "accent": "#3498db", "background": "#ffffff"},
+        "fonts": {"title": "Georgia", "body": "Helvetica"},
+        "style": "minimal, serif headers, clean",
+    },
+    "elegant_dark": {
+        "colors": {"primary": "#d4af37", "accent": "#f4e4bc", "background": "#1a1a1a"},
+        "fonts": {"title": "Playfair Display", "body": "Lora"},
+        "style": "luxury, gold accents, dark",
+    },
+}
+```
+
+**Phase 5.5: 迭代优化功能**
+- [ ] 单页重新生成 (`regenerate_slide`)
+- [ ] 全局主题更换 (`change_presentation_theme`)
+- [ ] 版本管理与回滚
+- [ ] 增量编辑 (在现有内容上修改)
+
+**优化工具清单:**
+```python
+# 新增工具
+@tool
+async def regenerate_slide(
+    slide_index: int,
+    feedback: str
+) -> str:
+    """根据反馈重新生成指定幻灯片"""
+
+@tool
+async def change_presentation_theme(
+    presentation_id: str,
+    new_theme: str
+) -> str:
+    """更换演示文稿主题"""
+
+@tool
+async def optimize_slide_layout(
+    slide_index: int,
+    preferred_layout: str = None
+) -> str:
+    """优化指定幻灯片的布局"""
+
+@tool
+async def add_slide_images(
+    slide_index: int,
+    image_keywords: List[str],
+    image_source: str = "unsplash"
+) -> str:
+    """为指定幻灯片添加图片"""
+```
+
+**Phase 5.6: 高级特性 (长期)**
+- [ ] 动画效果配置 (Auto-Animate)
 - [ ] 演讲者备注自动生成
-- [ ] 多格式导出 (PPT, PDF, HTML)
+- [ ] 多格式导出 (PDF, PPTX, HTML)
+- [ ] 协作编辑功能
+- [ ] AI 演讲练习 (语音评分)
 
-**技术方案:**
+**完整数据结构:**
+```python
+class Slide(BaseModel):
+    title: str
+    content: str  # 支持 Markdown
+    layout: str = "bullet_points"  # 布局类型
+    background: Optional[str] = None  # 颜色或图片 URL
+    notes: Optional[str] = None  # 演讲者备注
+    images: List[SlideImage] = []
+    charts: List[ChartConfig] = []
+    fragments: List[str] = []  # 逐步显示的片段
+    transition: str = "slide"  # 切换动画
+
+class SlideImage(BaseModel):
+    url: str
+    position: str  # left, right, top, bottom, background
+    size: str = "medium"  # small, medium, large, full
+    caption: Optional[str] = None
+
+class PresentationConfig(BaseModel):
+    topic: str
+    theme: str = "modern_business"
+    slide_count: int = 10
+    target_audience: str = "general"
+    presentation_type: str = "informative"  # persuasive, informative, instructional
+    include_images: bool = True
+    image_style: str = "professional"
 ```
-用户输入主题
-    ↓
-AI 生成结构化 JSON (slides: [{title, content, image?}])
-    ↓
-┌─────────────────────────────────────────────┐
-│ 方案 A: Reveal.js    │ 方案 B: python-pptx │
-│ - 网页预览           │ - .pptx 文件下载    │
-│ - 动画效果           │ - 标准格式兼容      │
-│ - 快速实现           │ - 模板丰富          │
-└─────────────────────────────────────────────┘
+
+**开发优先级:**
+1. **P0 (核心)**: 布局系统、图片集成、主题系统
+2. **P1 (增强)**: 迭代优化、单页重生成
+3. **P2 (长期)**: 高级动画、多格式导出、协作功能
+
+**技术方案对比:**
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                    方案选择                                      │
+├─────────────────────────────────────────────────────────────────┤
+│ Reveal.js (当前)       │ python-pptx (未来可选)                  │
+│ - 网页预览             │ - 标准 .pptx 文件                      │
+│ - 丰富动画             │ - PowerPoint 兼容                       │
+│ - 快速迭代             │ - 离线编辑                             │
+│ - CDN 部署             │ - 打印友好                             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**API 集成需求:**
+- Unsplash API: 免费，无需注册 (source.unsplash.com)
+- Pexels API: 免费，需注册 (https://www.pexels.com/api/)
+- 备选: Pixabay API, Flickr API
 
 ---
 
@@ -2405,8 +2570,9 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 3.9 | 2026-01-03 | Phase 5.1 完成：AI生成PPT功能 (generate_presentation工具 + Reveal.js + 前端PresentationPreview组件) | Claude Code |
 | 4.0 | 2026-01-03 | Phase 5.1 修复：PPT预览不显示 (agent_service.py 保护 [PRESENTATION_HTML:] 标记不被截断) | Claude Code |
 | 4.1 | 2026-01-03 | Phase 5.1 修复：PPT中文乱码 (前端使用 TextDecoder 正确解码 UTF-8 base64) | Claude Code |
+| 4.2 | 2026-01-03 | Phase 5 规划：AI生成PPT完整方案 (15+布局类型、图片集成、主题系统、迭代优化) | Claude Code |
 
 ---
-> **文档状态**: ✅ Phase 5.1 完成 (AI 生成 PPT - Reveal.js 方案)
+> **文档状态**: 🚧 Phase 5.2 进行中 (AI 生成 PPT - 高级功能规划)
 > **最后更新**: 2026-01-03
-> **下一步**: Phase 5.2 - python-pptx 生成标准 PPT (可选)
+> **下一步**: 实现智能布局系统 (Phase 5.2)
