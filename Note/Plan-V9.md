@@ -2396,19 +2396,31 @@ CREATE INDEX idx_slide_versions_presentation ON slide_versions(presentation_id);
 - [x] 前端 PPT 预览组件 (iframe 嵌入)
 - [x] 主题选择 (black, white, league 等 9种主题)
 
-**Phase 5.2: 独立服务基础设施** (当前阶段)
-- [ ] 创建 presentation-service 项目结构
-- [ ] 实现数据模型 (Presentation, SlideVersion)
-- [ ] 实现 CRUD API
-- [ ] 数据库迁移脚本
-- [ ] 健康检查端点
+**Phase 5.2: 独立服务基础设施** ✅ 已完成 (2026-01-03)
+- [x] 创建 presentation-service 项目结构
+- [x] 实现数据模型 (Presentation, SlideVersion)
+- [x] 实现 CRUD API (presentations.py)
+- [x] 实现编辑器 API (editor.py - 换主题/重生成/增删幻灯片)
+- [x] 实现服务层 (PresentationService - AI生成幻灯片)
+- [x] 支持 OpenAI 兼容模式 LLM (ChatOpenAI 集成)
+- [x] 健康检查端点 (/health)
+- [x] SQLite UUID 兼容性修复
+- [x] Token 验证超时优化 (5s → 10s)
 
-**Phase 5.3: 前端独立页面**
-- [ ] 创建 `/presentations` 路由和页面
-- [ ] 创建 `/presentations/[id]` 编辑器页面
-- [ ] 创建 `/presentations/new` 创建页面
-- [ ] 实现 presentationStore 状态管理
-- [ ] 实现 API 客户端
+**Phase 5.3: 前端独立页面** ✅ 已完成 (2026-01-03)
+- [x] 创建 `/presentations` 路由和页面
+- [x] 创建 `/presentations/[id]` 编辑器页面
+- [x] 实现 presentationStore 状态管理
+- [x] 实现 API 客户端 (presentations.ts)
+- [x] 创建演示文稿列表页 (PresentationListPage)
+- [x] 创建演示文稿编辑器页面 (PresentationEditorPage)
+- [x] 创建幻灯片缩略图组件
+- [x] 创建幻灯片编辑器组件 (SlideEditor - 标题/内容/布局/备注)
+- [x] 创建幻灯片预览组件 (SlidePreview)
+- [x] 创建主题选择器 (ThemeSelector)
+- [x] 创建演示文稿播放器 (PresentationPlayer)
+- [x] 创建对话框组件 (Dialog - 用于创建/换主题/重新生成)
+- [x] 缺失组件补齐 (Select - Radix UI)
 
 **Phase 5.4: 高级生成功能**
 - [ ] 智能布局引擎 (15+ 布局类型)
@@ -2707,8 +2719,10 @@ class PresentationConfig(BaseModel):
 | 4.1 | 2026-01-03 | Phase 5.1 修复：PPT中文乱码 (前端使用 TextDecoder 正确解码 UTF-8 base64) | Claude Code |
 | 4.2 | 2026-01-03 | Phase 5 规划：AI生成PPT完整方案 (15+布局类型、图片集成、主题系统、迭代优化) | Claude Code |
 | 4.3 | 2026-01-03 | Phase 5 重构：采用方案 B - 独立 presentation-service 架构 (完整设计文档) | Claude Code |
+| 4.4 | 2026-01-03 | Phase 5.2 完成：独立服务基础设施 (数据模型/CRUD/编辑器API/AI生成/SQLite兼容) | Claude Code |
+| 4.5 | 2026-01-03 | Phase 5.3 完成：前端独立页面 (列表/编辑器/预览/状态管理/组件补齐) | Claude Code |
 
 ---
-> **文档状态**: 🚧 Phase 5.2 进行中 (presentation-service 基础设施)
+> **文档状态**: ✅ Phase 5.3 已完成 (AI PPT 独立服务功能)
 > **最后更新**: 2026-01-03
-> **下一步**: 创建 presentation-service 项目结构
+> **下一步**: Phase 5.4 高级生成功能 (智能布局引擎/图片集成/主题系统)

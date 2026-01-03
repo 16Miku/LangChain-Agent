@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useEffect } from 'react';
-import { PlusCircle, MessageSquare, Settings, LogOut, Menu } from 'lucide-react';
+import { PlusCircle, MessageSquare, Settings, LogOut, Menu, Presentation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -139,10 +139,16 @@ export function Sidebar() {
         </div>
 
         {/* New Chat Button */}
-        <div className="p-4">
+        <div className="p-4 space-y-2">
           <Button onClick={handleNewChat} className="w-full justify-start gap-2" variant="outline">
             <PlusCircle className="h-4 w-4" />
             New Chat
+          </Button>
+          <Button asChild className="w-full justify-start gap-2" variant="ghost">
+            <Link href="/presentations">
+              <Presentation className="h-4 w-4" />
+              Presentations
+            </Link>
           </Button>
         </div>
 

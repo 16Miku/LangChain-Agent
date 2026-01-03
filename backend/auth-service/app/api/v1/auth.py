@@ -4,16 +4,21 @@
 
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.user import UserCreate, UserResponse, UserLogin
 from app.schemas.token import TokenResponse, TokenRefresh
 from app.services.user_service import UserService
 from app.core.deps import get_db, get_current_user
+from app.core.security import verify_token
 from app.models.user import User
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# HTTP Bearer token scheme for verify endpoint
+security = HTTPBearer()
 
 
 @router.post(
@@ -151,3 +156,62 @@ async def get_current_user_info(
     Requires authentication.
     """
     return UserResponse.model_validate(current_user)
+
+
+@router.get(
+    "/verify",
+    summary="Verify JWT token",
+)
+async def verify_token_endpoint(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    """
+    Verify a JWT token and return user information.
+
+    This endpoint is used by other services to validate tokens.
+
+    Returns:
+        dict with user_id and username if valid
+    """
+    token = credentials.credentials
+    payload = verify_token(token, token_type="access")
+
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id: str = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    # Get user from database
+    from sqlalchemy import select
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is deactivated",
+        )
+
+    return {
+        "user_id": str(user.id),
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "is_active": user.is_active,
+    }

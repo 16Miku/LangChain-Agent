@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"A:/Anaconda/envs/My-Chat-LangChain/python.exe\":*)"
+      "Bash(A:/Anaconda/envs/My-Chat-LangChain/python.exe -c:*)",
+      "Bash(curl -s http://127.0.0.1:8001/health)",
+      "Bash(npm install @radix-ui/react-select)"
     ],
     "deny": [],
     "ask": []
