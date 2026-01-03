@@ -100,10 +100,13 @@ async def stream_chat(
         """Generate stream and save final response."""
         import base64
         import json
+        import time
 
         full_response = ""
         tool_calls = []
+        citations = []
         current_tool = None
+        tool_start_time = None
 
         async for chunk in chat_with_agent_stream(
             message=request.content,
@@ -134,6 +137,7 @@ async def stream_chat(
                         encoded = line[6:]
                         try:
                             tool_name = base64.b64decode(encoded).decode("utf-8")
+                            tool_start_time = time.time()
                             current_tool = {
                                 "id": f"tool_{len(tool_calls)}",
                                 "name": tool_name,
@@ -154,8 +158,33 @@ async def stream_chat(
                             if current_tool:
                                 current_tool["status"] = "success"
                                 current_tool["output"] = tool_data.get("output", "")
+                                # Calculate duration
+                                if tool_start_time:
+                                    current_tool["duration"] = round(time.time() - tool_start_time, 2)
                                 tool_calls.append(current_tool)
                                 current_tool = None
+                                tool_start_time = None
+                        except Exception:
+                            pass
+
+            elif chunk.startswith("event: citation"):
+                lines = chunk.strip().split("\n")
+                for line in lines:
+                    if line.startswith("data: "):
+                        encoded = line[6:]
+                        try:
+                            decoded = base64.b64decode(encoded).decode("utf-8")
+                            citation_data = json.loads(decoded)
+                            citations.append({
+                                "chunk_id": citation_data.get("chunk_id", ""),
+                                "document_id": citation_data.get("document_id", ""),
+                                "document_name": citation_data.get("document_name", ""),
+                                "page_number": citation_data.get("page_number"),
+                                "section": citation_data.get("section"),
+                                "content": citation_data.get("content", ""),
+                                "content_preview": citation_data.get("content_preview", ""),
+                                "score": citation_data.get("score", 0),
+                            })
                         except Exception:
                             pass
 
@@ -166,6 +195,7 @@ async def stream_chat(
                         role="assistant",
                         content=full_response,
                         tool_calls=tool_calls if tool_calls else None,
+                        citations=citations if citations else None,
                     )
                     # Create a new session for the final save
                     from app.database import AsyncSessionLocal

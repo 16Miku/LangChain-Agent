@@ -19,13 +19,16 @@ class ToolCall(BaseModel):
 
 
 class Citation(BaseModel):
-    """Schema for citation/reference information."""
+    """Schema for citation/reference information from RAG."""
 
-    source_id: str = Field(alias="sourceId")
-    source_name: str = Field(alias="sourceName")
+    chunk_id: str = Field(default="", alias="chunkId")
+    document_id: str = Field(default="", alias="documentId")
+    document_name: str = Field(default="", alias="documentName")
     page_number: Optional[int] = Field(default=None, alias="pageNumber")
-    content: str
-    confidence: float
+    section: Optional[str] = None
+    content: str = ""
+    content_preview: Optional[str] = Field(default=None, alias="contentPreview")
+    score: float = 0
 
     class Config:
         populate_by_name = True
@@ -37,8 +40,8 @@ class MessageCreate(BaseModel):
     role: Literal["user", "assistant", "system"]
     content: str
     images: Optional[List[str]] = None
-    tool_calls: Optional[List[ToolCall]] = Field(default=None, alias="toolCalls")
-    citations: Optional[List[Citation]] = None
+    tool_calls: Optional[List[Any]] = Field(default=None, alias="toolCalls")  # Accept ToolCall or dict
+    citations: Optional[List[Any]] = None  # Accept Citation or dict
 
     class Config:
         populate_by_name = True

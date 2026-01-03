@@ -2401,6 +2401,7 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 3.5 | 2026-01-03 | Week 8 完成：端到端测试脚本 (test_e2e.py + health_check.py + pytest.ini) | Claude Code |
 | 3.6 | 2026-01-03 | Week 8 修复：前端 API 路由配置 (.env.local + auth.ts 使用 authApiClient) | Claude Code |
 | 3.7 | 2026-01-03 | Week 8 修复：Token Refresh 500 错误 (添加 jti 确保 token 唯一性) | Claude Code |
+| 3.8 | 2026-01-03 | Week 8 修复：工具调用/引用持久化 (后端 citation 收集 + 前端字段名驼峰匹配) | Claude Code |
 
 ---
 

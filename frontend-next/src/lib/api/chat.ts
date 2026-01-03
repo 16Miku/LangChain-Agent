@@ -46,7 +46,8 @@ interface BackendMessage {
   content: string;
   created_at: string;
   images?: string[];
-  tool_calls?: Array<{
+  // Note: Backend returns camelCase due to Pydantic alias
+  toolCalls?: Array<{
     id: string;
     name: string;
     args: Record<string, unknown>;
@@ -98,7 +99,7 @@ function toMessage(backend: BackendMessage): Message {
     content: backend.content,
     timestamp: new Date(backend.created_at),
     images: backend.images,
-    toolCalls: backend.tool_calls,
+    toolCalls: backend.toolCalls,  // Backend returns camelCase
     citations: backend.citations?.map((c) => ({
       chunkId: c.chunk_id,
       documentId: c.document_id,

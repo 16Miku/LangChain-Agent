@@ -46,13 +46,28 @@ class MessageService:
             return None
 
         # Create message
+        # Handle both Pydantic models and raw dicts for tool_calls and citations
+        tool_calls_data = None
+        if data.tool_calls:
+            tool_calls_data = [
+                tc.model_dump() if hasattr(tc, 'model_dump') else tc
+                for tc in data.tool_calls
+            ]
+
+        citations_data = None
+        if data.citations:
+            citations_data = [
+                c.model_dump() if hasattr(c, 'model_dump') else c
+                for c in data.citations
+            ]
+
         message = Message(
             conversation_id=conversation_id,
             role=data.role,
             content=data.content,
             images=data.images,
-            tool_calls=[tc.model_dump() for tc in data.tool_calls] if data.tool_calls else None,
-            citations=[c.model_dump() for c in data.citations] if data.citations else None,
+            tool_calls=tool_calls_data,
+            citations=citations_data,
         )
         self.db.add(message)
 

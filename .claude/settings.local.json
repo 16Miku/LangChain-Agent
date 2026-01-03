@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"A:/Anaconda/envs/My-Chat-LangChain/python.exe\" -m pytest \"A:/study/AI/LLM/LangChain-Agent/tests/test_e2e.py\" -v --tb=short)"
+      "Bash(\"A:/Anaconda/envs/My-Chat-LangChain/python.exe\":*)"
     ],
     "deny": [],
     "ask": []
