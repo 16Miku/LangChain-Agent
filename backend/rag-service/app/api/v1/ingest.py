@@ -122,7 +122,7 @@ async def process_document(
     content: str,
     filename: str,
     db: Session,
-    milvus_service: MilvusService,
+    vector_service,  # MilvusService 或 PgvectorService
     embedding_service: EmbeddingService
 ):
     """
@@ -134,7 +134,7 @@ async def process_document(
         content: 文档内容
         filename: 文件名
         db: 数据库会话
-        milvus_service: Milvus 服务
+        vector_service: 向量服务 (MilvusService 或 PgvectorService)
         embedding_service: 嵌入服务
     """
     try:
@@ -182,9 +182,9 @@ async def process_document(
                 metadata=metadata
             ))
 
-        # 插入 Milvus (如果启用)
-        if milvus_service is not None:
-            milvus_service.insert(chunk_data_list)
+        # 插入向量存储 (如果启用)
+        if vector_service is not None:
+            vector_service.insert(chunk_data_list)
 
         # 保存分块到数据库 (用于 BM25)
         chunk_dicts = [
@@ -283,8 +283,9 @@ async def upload_document(
         file_size=file_size
     )
 
-    # 获取服务实例
-    milvus_service = http_request.app.state.milvus_service
+    # 获取服务实例 (优先使用 vector_service，兼容旧的 milvus_service)
+    vector_service = getattr(http_request.app.state, 'vector_service', None) or \
+                     getattr(http_request.app.state, 'milvus_service', None)
     embedding_service = http_request.app.state.embedding_service
 
     # 后台处理文档
@@ -295,7 +296,7 @@ async def upload_document(
         content=content,
         filename=filename,
         db=db,
-        milvus_service=milvus_service,
+        vector_service=vector_service,
         embedding_service=embedding_service
     )
 
@@ -343,8 +344,9 @@ async def ingest_text(
         file_size=len(text.encode('utf-8'))
     )
 
-    # 获取服务实例
-    milvus_service = http_request.app.state.milvus_service
+    # 获取服务实例 (优先使用 vector_service，兼容旧的 milvus_service)
+    vector_service = getattr(http_request.app.state, 'vector_service', None) or \
+                     getattr(http_request.app.state, 'milvus_service', None)
     embedding_service = http_request.app.state.embedding_service
 
     # 后台处理
@@ -355,7 +357,7 @@ async def ingest_text(
         content=text,
         filename=filename,
         db=db,
-        milvus_service=milvus_service,
+        vector_service=vector_service,
         embedding_service=embedding_service
     )
 

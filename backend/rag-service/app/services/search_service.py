@@ -3,20 +3,22 @@
 # 结合向量检索和 BM25 关键词检索
 # ============================================================
 
-from typing import List, Dict, Any, Optional, TYPE_CHECKING
+from typing import List, Dict, Any, Optional, TYPE_CHECKING, Union
 from dataclasses import dataclass
 import time
 
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.services.milvus_service import MilvusService, VectorSearchResult
+from app.services.milvus_service import VectorSearchResult
 from app.services.bm25_service import BM25Service, BM25Result
 from app.services.embedding_service import EmbeddingService
 from app.schemas.search import SearchResult
 
 if TYPE_CHECKING:
     from app.services.rerank_service import RerankService
+    from app.services.milvus_service import MilvusService
+    from app.services.pgvector_service import PgvectorService
 
 
 @dataclass
@@ -38,7 +40,7 @@ class HybridSearchService:
     混合检索服务
 
     支持:
-    - 向量相似度检索 (Milvus)
+    - 向量相似度检索 (Milvus 或 pgvector)
     - BM25 关键词检索
     - RRF (Reciprocal Rank Fusion) 融合
     - Reranker 重排序 (可选)
@@ -46,7 +48,7 @@ class HybridSearchService:
 
     def __init__(
         self,
-        milvus_service: MilvusService,
+        milvus_service,  # MilvusService 或 PgvectorService
         embedding_service: EmbeddingService,
         bm25_service: Optional[BM25Service] = None,
         reranker=None
@@ -55,7 +57,7 @@ class HybridSearchService:
         初始化混合检索服务
 
         Args:
-            milvus_service: Milvus 向量检索服务
+            milvus_service: 向量检索服务 (MilvusService 或 PgvectorService)
             embedding_service: 嵌入服务
             bm25_service: BM25 检索服务 (可选)
             reranker: 重排序模型 (可选)

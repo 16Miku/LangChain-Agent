@@ -17,11 +17,17 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./rag_test.db"
     # PostgreSQL: "postgresql://postgres:postgres@localhost:5432/streamagent"
 
-    # Milvus (可选)
+    # Vector Store Backend: "milvus" or "pgvector"
+    VECTOR_STORE_BACKEND: str = "pgvector"  # 默认使用 pgvector
+
+    # Milvus (可选 - 仅当 VECTOR_STORE_BACKEND="milvus" 时使用)
     MILVUS_ENABLED: bool = False  # 设为 False 可跳过 Milvus
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530
     MILVUS_COLLECTION: str = "document_chunks"
+
+    # pgvector (使用 DATABASE_URL 连接，需要 PostgreSQL + pgvector 扩展)
+    PGVECTOR_ENABLED: bool = True  # 使用 pgvector 作为向量存储
 
     # Embedding
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"

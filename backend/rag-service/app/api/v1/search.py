@@ -52,8 +52,9 @@ async def hybrid_search(
             - rerank: 是否重排序 (默认 True)
             - document_ids: 限定文档ID列表
     """
-    # 获取服务实例
-    milvus_service = http_request.app.state.milvus_service
+    # 获取服务实例 (优先使用 vector_service，兼容旧的 milvus_service)
+    vector_service = getattr(http_request.app.state, 'vector_service', None) or \
+                     getattr(http_request.app.state, 'milvus_service', None)
     embedding_service = http_request.app.state.embedding_service
 
     # 获取 Reranker (如果启用)
@@ -71,7 +72,7 @@ async def hybrid_search(
 
     # 创建混合检索服务
     search_service = HybridSearchService(
-        milvus_service=milvus_service,
+        milvus_service=vector_service,  # 兼容旧参数名
         embedding_service=embedding_service,
         bm25_service=bm25_service,
         reranker=reranker
@@ -123,7 +124,8 @@ async def vector_search(
 
     使用向量相似度进行检索，不使用 BM25。
     """
-    milvus_service = http_request.app.state.milvus_service
+    vector_service = getattr(http_request.app.state, 'vector_service', None) or \
+                     getattr(http_request.app.state, 'milvus_service', None)
     embedding_service = http_request.app.state.embedding_service
 
     # 转换 document_ids
@@ -132,7 +134,7 @@ async def vector_search(
         document_ids = [str(doc_id) for doc_id in request.document_ids]
 
     search_service = HybridSearchService(
-        milvus_service=milvus_service,
+        milvus_service=vector_service,  # 兼容旧参数名
         embedding_service=embedding_service
     )
 

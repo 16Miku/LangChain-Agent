@@ -28,19 +28,36 @@ async def lifespan(app: FastAPI):
     app.state.embedding_service = EmbeddingService()
     print("Embedding service initialized")
 
-    # 初始化 Milvus 服务（可选）
-    if settings.MILVUS_ENABLED:
+    # 初始化向量存储服务
+    # 支持两种后端: milvus 和 pgvector
+    app.state.milvus_service = None  # 兼容旧代码
+
+    if settings.VECTOR_STORE_BACKEND == "milvus" and settings.MILVUS_ENABLED:
+        # 使用 Milvus 后端
         from app.services.milvus_service import MilvusService
         app.state.milvus_service = MilvusService()
+        app.state.vector_service = app.state.milvus_service
         try:
             app.state.milvus_service.ensure_collection()
             print(f"Milvus collection '{settings.MILVUS_COLLECTION}' ready")
         except Exception as e:
             print(f"Warning: Failed to connect to Milvus: {e}")
             app.state.milvus_service = None
+            app.state.vector_service = None
+    elif settings.VECTOR_STORE_BACKEND == "pgvector" or settings.PGVECTOR_ENABLED:
+        # 使用 pgvector 后端 (默认)
+        from app.services.pgvector_service import PgvectorService
+        app.state.vector_service = PgvectorService()
+        try:
+            app.state.vector_service.connect()
+            stats = app.state.vector_service.get_collection_stats()
+            print(f"PgvectorService ready: {stats}")
+        except Exception as e:
+            print(f"Warning: Failed to initialize PgvectorService: {e}")
+            app.state.vector_service = None
     else:
-        app.state.milvus_service = None
-        print("Milvus disabled (MILVUS_ENABLED=False)")
+        app.state.vector_service = None
+        print("Vector store disabled")
 
     yield
 
@@ -76,7 +93,9 @@ async def root():
         "service": settings.SERVICE_NAME,
         "status": "running",
         "debug": settings.DEBUG,
+        "vector_backend": settings.VECTOR_STORE_BACKEND,
         "milvus_enabled": settings.MILVUS_ENABLED,
+        "pgvector_enabled": settings.PGVECTOR_ENABLED,
         "jwt_enabled": settings.JWT_ENABLED
     }
 
@@ -87,20 +106,25 @@ async def health_check():
     health = {
         "status": "healthy",
         "service": settings.SERVICE_NAME,
-        "milvus": "disabled" if not settings.MILVUS_ENABLED else "unknown",
+        "vector_backend": settings.VECTOR_STORE_BACKEND,
+        "vector_store": "unknown",
         "embedding": "ready",
         "database": "sqlite" if "sqlite" in settings.DATABASE_URL else "postgresql"
     }
 
-    # 检查 Milvus 连接
-    if settings.MILVUS_ENABLED and hasattr(app.state, 'milvus_service') and app.state.milvus_service:
+    # 检查向量服务连接
+    if hasattr(app.state, 'vector_service') and app.state.vector_service:
         try:
-            if app.state.milvus_service.is_connected():
-                health["milvus"] = "connected"
+            if app.state.vector_service.is_connected():
+                stats = app.state.vector_service.get_collection_stats()
+                health["vector_store"] = "connected"
+                health["vector_entities"] = stats.get("num_entities", 0)
+                if "backend" in stats:
+                    health["vector_backend"] = stats["backend"]
             else:
-                health["milvus"] = "disconnected"
-        except Exception:
-            health["milvus"] = "error"
+                health["vector_store"] = "disconnected"
+        except Exception as e:
+            health["vector_store"] = f"error: {str(e)}"
 
     return health
 

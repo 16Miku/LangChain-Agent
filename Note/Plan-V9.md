@@ -2212,9 +2212,10 @@ Phase 5: 扩展功能 (待定)
 
 > 部署方案: Render (计算) + Supabase (数据库 + pgvector 向量存储)
 
-- [ ] PgvectorService 实现 (替代 MilvusService)
+- [x] PgvectorService 实现 (替代 MilvusService) ✅ 2026-01-03
+- [x] rag-service 适配 pgvector (API 层兼容) ✅ 2026-01-03
+- [x] PgvectorService 自动化测试 (11 项测试全通过) ✅ 2026-01-03
 - [ ] Supabase 数据库 Schema 设计与迁移
-- [ ] rag-service 适配 pgvector
 - [ ] Render 部署配置 (render.yaml)
 - [ ] 服务健康检查实现
 - [ ] 环境变量管理 (.env.example 更新)
@@ -2394,9 +2395,10 @@ AI 生成结构化 JSON (slides: [{title, content, image?}])
 | 2.9 | 2026-01-03 | Week 7 完成：LLM RAG结果利用优化(System Prompt + 引用数据传递 + citation SSE事件) | Claude Code |
 | 3.0 | 2026-01-03 | Week 7 完成：文档目录提取功能(extract_toc + chunk_with_toc) + 前端文档列表UI修复 | Claude Code |
 | 3.1 | 2026-01-03 | Week 8 规划：新增 Render + Supabase 云部署方案 (pgvector 替代 Milvus) | Claude Code |
+| 3.2 | 2026-01-03 | Week 8 实现：PgvectorService 完成 (SQLite暴力搜索 + PostgreSQL pgvector双模式支持) | Claude Code |
 
 ---
 
 > **文档状态**: 🚧 开发中 (Phase 4: Week 8 进行中)
 > **最后更新**: 2026-01-03
-> **下一步**: Week 8 - Render + Supabase 部署 (PgvectorService 实现 + 部署配置)
+> **下一步**: Week 8 - Supabase Schema 迁移 + Render 部署配置
