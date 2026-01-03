@@ -12,9 +12,11 @@ My-Chat-LangChain (Stream-Agent) 是一个全栈 AI 研究助理应用，基于 
 ## 开发环境
 
 - **Conda 环境**: `My-Chat-LangChain`
-- **Python 路径**: `A:/Anaconda/envs/My-Chat-LangChain/python.exe`
+- **Python 完整路径**: `A:/Anaconda/envs/My-Chat-LangChain/python.exe`
 - **激活命令**: `conda activate My-Chat-LangChain`
 - **Node.js**: v18+ (前端开发)
+
+> **注意**: Claude Code 可使用 Python 完整路径直接执行命令，无需手动激活 conda 环境。
 
 ## 系统架构
 
@@ -84,6 +86,11 @@ cd backend/whisper-service && uvicorn app.main:app --port 8003 --reload
 cd frontend-next && npm run dev
 
 # ============ 测试 ============
+# Claude Code 自动执行 (使用完整路径)
+cd backend/rag-service && A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/ -v --tb=short
+
+# 或手动执行
+conda activate My-Chat-LangChain
 cd backend/rag-service && python -m pytest tests/ -v --tb=short
 
 # ============ Docker ============
