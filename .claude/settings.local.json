@@ -4,7 +4,8 @@
       "mcp__upstash-context7-mcp__resolve-library-id",
       "mcp__upstash-context7-mcp__get-library-docs",
       "Bash(mkdir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(\"A:/Anaconda/envs/My-Chat-LangChain/python.exe\" -m pytest tests/ -v --tb=short)"
     ],
     "deny": [],
     "ask": []

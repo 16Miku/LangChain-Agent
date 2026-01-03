@@ -1,0 +1,183 @@
+# ============================================================
+# Render Blueprint - My-Chat-LangChain V9.0
+# ============================================================
+# 部署方式:
+#   1. 将此文件放在项目根目录
+#   2. 在 Render Dashboard 中选择 "New Blueprint"
+#   3. 连接 GitHub 仓库
+#   4. Render 将自动检测并部署所有服务
+# ============================================================
+
+services:
+  # ============================================================
+  # Frontend - Next.js
+  # ============================================================
+  - type: web
+    name: frontend-next
+    runtime: node
+    region: singapore  # 可选: oregon, frankfurt, singapore
+    plan: starter  # free, starter, standard
+    rootDir: frontend-next
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        sync: false  # 需要手动设置为后端服务 URL
+    healthCheckPath: /
+
+  # ============================================================
+  # Auth Service - FastAPI
+  # ============================================================
+  - type: web
+    name: auth-service
+    runtime: python
+    region: singapore
+    plan: starter
+    rootDir: backend/auth-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Supabase 连接字符串
+      - key: JWT_SECRET
+        generateValue: true  # 自动生成
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+    healthCheckPath: /health
+
+  # ============================================================
+  # Chat Service - FastAPI (LangGraph Agent)
+  # ============================================================
+  - type: web
+    name: chat-service
+    runtime: python
+    region: singapore
+    plan: standard  # 需要更多内存运行 Agent
+    rootDir: backend/chat-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Supabase 连接字符串
+      - key: JWT_SECRET
+        sync: false  # 与 auth-service 相同
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: AUTH_SERVICE_URL
+        fromService:
+          name: auth-service
+          type: web
+          property: host
+      - key: RAG_SERVICE_URL
+        fromService:
+          name: rag-service
+          type: web
+          property: host
+      # LLM 配置
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        value: google  # 或 openai_compatible
+      - key: OPENAI_BASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      # 工具 API Keys
+      - key: E2B_API_KEY
+        sync: false
+      - key: BRIGHT_DATA_API_KEY
+        sync: false
+    healthCheckPath: /health
+
+  # ============================================================
+  # RAG Service - FastAPI (pgvector)
+  # ============================================================
+  - type: web
+    name: rag-service
+    runtime: python
+    region: singapore
+    plan: standard  # 需要内存运行 Embedding 模型
+    rootDir: backend/rag-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Supabase 连接字符串
+      - key: JWT_SECRET
+        sync: false  # 与 auth-service 相同
+      - key: JWT_ENABLED
+        value: "true"
+      - key: VECTOR_STORE_BACKEND
+        value: pgvector
+      - key: PGVECTOR_ENABLED
+        value: "true"
+      - key: EMBEDDING_MODEL
+        value: all-MiniLM-L6-v2
+      - key: EMBEDDING_DIMENSION
+        value: "384"
+      - key: DEFAULT_TOP_K
+        value: "10"
+      - key: ENABLE_RERANK
+        value: "true"
+      - key: RERANKER_ENABLED
+        value: "false"  # 云端暂不启用重型模型
+      # Supabase Storage (可选)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+    healthCheckPath: /health
+
+  # ============================================================
+  # Whisper Service - FastAPI (可选)
+  # ============================================================
+  # 注意: faster-whisper 需要较大内存，建议使用 standard 计划
+  # 或者使用 OpenAI Whisper API 替代
+  # - type: web
+  #   name: whisper-service
+  #   runtime: python
+  #   region: singapore
+  #   plan: standard
+  #   rootDir: backend/whisper-service
+  #   buildCommand: pip install -r requirements.txt
+  #   startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  #   envVars:
+  #     - key: WHISPER_MODEL
+  #       value: base
+  #     - key: DEVICE
+  #       value: cpu
+  #   healthCheckPath: /health
+
+# ============================================================
+# 说明
+# ============================================================
+#
+# 1. 数据库: 使用 Supabase PostgreSQL (需手动配置)
+#    - 在 Supabase 创建项目
+#    - 执行 database/supabase_schema.sql
+#    - 将连接字符串填入 DATABASE_URL
+#
+# 2. 环境变量标记:
+#    - sync: false  = 需要手动在 Dashboard 中设置
+#    - generateValue: true = Render 自动生成
+#    - fromService = 自动从其他服务获取
+#
+# 3. 计划选择:
+#    - free: 0$/月，休眠后冷启动慢
+#    - starter: 7$/月，不休眠
+#    - standard: 25$/月，更多资源
+#
+# 4. 区域选择:
+#    - singapore: 亚太用户推荐
+#    - oregon: 美国西部
+#    - frankfurt: 欧洲
+#
+# ============================================================

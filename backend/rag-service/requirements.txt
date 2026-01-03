@@ -12,7 +12,8 @@ psycopg2-binary>=2.9.9
 alembic>=1.13.0
 
 # Vector Database
-pymilvus>=2.4.0
+pymilvus>=2.4.0          # Milvus 支持 (可选)
+pgvector>=0.3.0          # PostgreSQL pgvector 支持
 
 # Embedding & NLP
 sentence-transformers>=2.7.0
