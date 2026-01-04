@@ -4,6 +4,7 @@
 # ============================================================
 
 import uuid
+from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -263,8 +264,9 @@ async def update_slide(
             detail=f"Invalid slide index"
         )
 
-    # 更新幻灯片
-    slide = presentation.slides[slide_index]
+    # 更新幻灯片 - 需要创建新的 list 来触发 SQLAlchemy 检测变化
+    slides = list(presentation.slides)  # 复制列表
+    slide = dict(slides[slide_index])   # 复制字典
 
     if data.title is not None:
         slide["title"] = data.title
@@ -279,8 +281,9 @@ async def update_slide(
     if data.images is not None:
         slide["images"] = [img.model_dump() for img in data.images]
 
-    presentation.slides[slide_index] = slide
-    presentation.updated_at = presentation.updated_at
+    slides[slide_index] = slide
+    presentation.slides = slides  # 赋值新列表触发 SQLAlchemy 更新检测
+    presentation.updated_at = datetime.utcnow()
 
     await db.commit()
     await db.refresh(presentation)
@@ -340,7 +343,7 @@ async def add_slide(
 
     # 添加幻灯片
     slide_data = data.slide.model_dump()
-    slides = presentation.slides.copy()
+    slides = list(presentation.slides)  # 复制列表
 
     if data.position is not None:
         if data.position < 0 or data.position > len(slides):
@@ -352,9 +355,9 @@ async def add_slide(
     else:
         slides.append(slide_data)
 
-    presentation.slides = slides
+    presentation.slides = slides  # 赋值新列表触发 SQLAlchemy 更新检测
     presentation.slide_count = len(slides)
-    presentation.updated_at = presentation.updated_at
+    presentation.updated_at = datetime.utcnow()
 
     await db.commit()
     await db.refresh(presentation)
@@ -426,10 +429,12 @@ async def delete_slide(
             detail="Cannot delete the last slide"
         )
 
-    # 删除幻灯片
-    presentation.slides.pop(slide_index)
-    presentation.slide_count = len(presentation.slides)
-    presentation.updated_at = presentation.updated_at
+    # 删除幻灯片 - 创建新列表触发 SQLAlchemy 检测
+    slides = list(presentation.slides)
+    slides.pop(slide_index)
+    presentation.slides = slides
+    presentation.slide_count = len(slides)
+    presentation.updated_at = datetime.utcnow()
 
     await db.commit()
     await db.refresh(presentation)

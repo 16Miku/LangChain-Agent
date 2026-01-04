@@ -10,23 +10,12 @@ import {
   ArrowLeft,
   Save,
   Play,
-  Settings,
   Plus,
-  Trash2,
-  Wand2,
   Palette,
-  MoreVertical,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -80,6 +69,8 @@ export default function PresentationEditorPage() {
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+  // 本地标题状态：null 表示使用 store 的标题，非 null 表示用户正在编辑
+  const [localTitle, setLocalTitle] = useState<string | null>(null);
 
   useEffect(() => {
     if (presentationId) {
@@ -87,12 +78,21 @@ export default function PresentationEditorPage() {
     }
   }, [presentationId, fetchPresentation]);
 
+  // 获取显示的标题（优先使用本地编辑状态）
+  const displayTitle = localTitle ?? currentPresentation?.title ?? '';
+
+  const handleTitleChange = (value: string) => {
+    setLocalTitle(value);
+    setHasChanges(true);
+  };
+
   const handleSave = async () => {
     if (currentPresentation) {
       await updatePresentation(currentPresentation.id, {
-        title: currentPresentation.title,
+        title: displayTitle,
         description: currentPresentation.description,
       });
+      setLocalTitle(null); // 保存后重置本地状态
       setHasChanges(false);
     }
   };
@@ -181,13 +181,9 @@ export default function PresentationEditorPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Input
-            value={currentPresentation.title}
-            onChange={(e) => {
-              currentPresentation.title = e.target.value;
-              setHasChanges(true);
-            }}
-            className="w-64 font-semibold"
-            variant="ghost"
+            value={displayTitle}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            className="w-64 font-semibold border-none shadow-none focus-visible:ring-0"
           />
           {hasChanges && (
             <span className="text-xs text-muted-foreground">未保存</span>
@@ -271,6 +267,7 @@ export default function PresentationEditorPage() {
           {/* Editor Panel */}
           <div className="flex-1 p-4 overflow-y-auto">
             <SlideEditor
+              key={currentSlideIndex}
               slide={currentSlide}
               slideIndex={currentSlideIndex}
               totalSlides={currentPresentation.slides.length}
@@ -278,6 +275,7 @@ export default function PresentationEditorPage() {
               onAddSlide={handleAddSlide}
               onDeleteSlide={handleDeleteSlide}
               canDelete={currentPresentation.slides.length > 1}
+              isSaving={isLoading}
             />
           </div>
 
