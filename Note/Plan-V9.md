@@ -2922,8 +2922,9 @@ class PresentationConfig(BaseModel):
 | 4.8 | 2026-01-04 | Phase 5.4 完成：在线编辑器功能 (实时编辑/插入删除/自动保存防抖/SQLAlchemy JSON更新修复) | Claude Code |
 | 4.9 | 2026-01-04 | Phase 5.4 修复：SQLite 数据库查询类型不匹配 (String vs UUID 对象比较问题) | Claude Code |
 | 5.0 | 2026-01-04 | Phase 5.5 完成：AI 对话式修改基础功能 (IntentParserService + AssistantPanel + 14项测试全通过) | Claude Code |
+| 5.1 | 2026-01-04 | Phase 5.5 修复：AI 助手对话记录消失问题 (db.commit + 静默更新 + ScrollArea 修复) | Claude Code |
 
 ---
-> **文档状态**: ✅ Phase 5.5 AI 对话式修改基础功能已完成，高级功能待后续完善
+> **文档状态**: ✅ Phase 5.5 AI 对话式修改功能已完成并测试通过
 > **最后更新**: 2026-01-04
 > **下一步**: Phase 5.7 高级生成功能 (智能布局引擎/图片集成/高级主题系统)
