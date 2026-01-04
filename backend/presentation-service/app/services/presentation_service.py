@@ -51,7 +51,7 @@ class PresentationService:
 
     async def generate_presentation(
         self,
-        user_id: uuid.UUID,
+        user_id: str,  # 接受字符串类型的 user_id
         topic: str,
         slide_count: int = 10,
         target_audience: str = "general",
@@ -78,7 +78,7 @@ class PresentationService:
 
         # 创建演示文稿记录
         presentation = Presentation(
-            user_id=str(user_id),  # 确保 UUID 转换为字符串
+            user_id=user_id,  # 已经是字符串类型
             title=custom_title or topic,
             description=f"关于 {topic} 的演示文稿",
             slides=slides_data,
@@ -92,8 +92,11 @@ class PresentationService:
         )
 
         self.db.add(presentation)
-        await self.db.commit()
+        await self.db.flush()  # 只 flush 不 commit，让 get_db 统一管理事务
         await self.db.refresh(presentation)
+
+        print(f"[Service] Generated presentation ID: {presentation.id}")
+        print(f"[Service] User ID: {presentation.user_id}")
 
         return presentation
 

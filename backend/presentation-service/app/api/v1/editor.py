@@ -94,18 +94,19 @@ async def regenerate_slide(
     重新生成指定幻灯片
     根据用户反馈重新生成特定幻灯片的内容
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
-    # 检查权限并获取演示文稿
+    # 检查权限并获取演示文稿（使用字符串查询）
     result = await db.execute(
         select(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )
@@ -176,17 +177,19 @@ async def change_theme(
     """
     更换演示文稿主题
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
+    # 使用字符串查询
     result = await db.execute(
         select(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )
@@ -235,17 +238,19 @@ async def update_slide(
     """
     更新指定幻灯片内容
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
+    # 使用字符串查询
     result = await db.execute(
         select(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )
@@ -319,17 +324,19 @@ async def add_slide(
     """
     添加新幻灯片
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
+    # 使用字符串查询
     result = await db.execute(
         select(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )
@@ -393,17 +400,19 @@ async def delete_slide(
     """
     删除指定幻灯片
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
+    # 使用字符串查询
     result = await db.execute(
         select(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )

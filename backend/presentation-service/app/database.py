@@ -8,11 +8,18 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 
+# 转换数据库 URL 为异步格式
+db_url = settings.DATABASE_URL
+if db_url.startswith("sqlite://"):
+    db_url = db_url.replace("sqlite://", "sqlite+aiosqlite://")
+
 # 创建异步引擎
 engine = create_async_engine(
-    settings.DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://"),
+    db_url,
     echo=settings.DEBUG,
     future=True,
+    # SQLite 需要特殊配置
+    connect_args={"check_same_thread": False} if "sqlite" in db_url else {},
 )
 
 # 创建异步会话工厂
@@ -20,6 +27,8 @@ AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
 )
 
 
@@ -32,11 +41,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         try:
             yield session
             await session.commit()
-        except Exception:
+            print("[DB] Transaction committed successfully")
+        except Exception as e:
+            print(f"[DB] Transaction rollback due to: {e}")
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
 
 async def get_db_sync() -> Session:

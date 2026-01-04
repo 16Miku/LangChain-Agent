@@ -147,17 +147,19 @@ async def get_presentation(
     """
     获取演示文稿详情
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
+    # 使用字符串进行查询（因为数据库中 id 是 String 类型）
     result = await db.execute(
         select(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )
@@ -200,17 +202,19 @@ async def update_presentation(
     """
     更新演示文稿
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
+    # 使用字符串进行查询
     result = await db.execute(
         select(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )
@@ -275,17 +279,19 @@ async def delete_presentation(
     """
     删除演示文稿
     """
+    # 验证 ID 格式
     try:
-        p_id = uuid.UUID(presentation_id)
+        uuid.UUID(presentation_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid presentation ID"
         )
 
+    # 使用字符串进行删除
     result = await db.execute(
         delete(Presentation).where(
-            Presentation.id == p_id,
+            Presentation.id == presentation_id,
             Presentation.user_id == user_id
         )
     )
