@@ -6,7 +6,9 @@
       "Bash(npm install @radix-ui/react-select)",
       "mcp__ide__getDiagnostics",
       "Bash(npm run lint)",
-      "Bash(npx eslint src/app/(main)/presentations/[id]/page.tsx src/components/presentations/SlideEditor.tsx src/hooks/useDebounce.ts)"
+      "Bash(npx eslint src/app/(main)/presentations/[id]/page.tsx src/components/presentations/SlideEditor.tsx src/hooks/useDebounce.ts)",
+      "Bash(A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_assistant.py -v --tb=short)",
+      "Bash(git add .)"
     ],
     "deny": [],
     "ask": []

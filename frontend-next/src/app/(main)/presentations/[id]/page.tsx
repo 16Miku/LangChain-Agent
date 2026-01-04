@@ -4,7 +4,7 @@
 // Presentation Editor Page
 // ============================================================
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
   Play,
   Plus,
   Palette,
+  Bot,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ import { SlidePreview } from '@/components/presentations/SlidePreview';
 import { SlideEditor } from '@/components/presentations/SlideEditor';
 import { ThemeSelector } from '@/components/presentations/ThemeSelector';
 import { PresentationPlayer } from '@/components/presentations/PresentationPlayer';
+import { AssistantPanel } from '@/components/presentations/AssistantPanel';
 
 const THEMES: { value: PresentationTheme; label: string }[] = [
   { value: 'modern_business', label: '现代商务' },
@@ -67,6 +69,7 @@ export default function PresentationEditorPage() {
   const [showPlayer, setShowPlayer] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   // 本地标题状态：null 表示使用 store 的标题，非 null 表示用户正在编辑
@@ -142,6 +145,15 @@ export default function PresentationEditorPage() {
     }
   };
 
+  // AI 助手更新演示文稿的回调
+  const handleAssistantUpdate = useCallback((_updatedSlides: unknown[]) => {
+    // 重新获取演示文稿以同步最新数据
+    if (presentationId) {
+      fetchPresentation(presentationId);
+      setHasChanges(true);
+    }
+  }, [presentationId, fetchPresentation]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -214,6 +226,16 @@ export default function PresentationEditorPage() {
           </Button>
 
           <Button
+            variant={showAssistant ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowAssistant(!showAssistant)}
+            className="gap-2"
+          >
+            <Bot className="h-4 w-4" />
+            AI 助手
+          </Button>
+
+          <Button
             variant="outline"
             size="sm"
             onClick={handleSave}
@@ -282,7 +304,7 @@ export default function PresentationEditorPage() {
           <Separator orientation="vertical" />
 
           {/* Preview Panel */}
-          <div className="w-1/2 p-4 bg-muted/10 overflow-y-auto">
+          <div className={`${showAssistant ? 'w-1/3' : 'w-1/2'} p-4 bg-muted/10 overflow-y-auto transition-all`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium">预览</h3>
               <div className="flex gap-1">
@@ -317,6 +339,19 @@ export default function PresentationEditorPage() {
             />
           </div>
         </div>
+
+        {/* AI Assistant Panel */}
+        {showAssistant && (
+          <div className="w-80">
+            <AssistantPanel
+              presentationId={currentPresentation.id}
+              currentSlideIndex={currentSlideIndex}
+              onPresentationUpdate={handleAssistantUpdate}
+              isOpen={showAssistant}
+              onClose={() => setShowAssistant(false)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Theme Selector Dialog */}

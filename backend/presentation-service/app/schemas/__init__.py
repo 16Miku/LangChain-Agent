@@ -19,7 +19,20 @@ from .presentation import (
     ExportResponse,
 )
 
+from .assistant import (
+    IntentType,
+    ParsedIntent,
+    ChatMessage,
+    ConversationContext,
+    AssistantChatRequest,
+    AssistantAction,
+    AssistantChatResponse,
+    ConfirmActionRequest,
+    ConfirmActionResponse,
+)
+
 __all__ = [
+    # Presentation schemas
     "SlideImage",
     "Slide",
     "PresentationBase",
@@ -34,4 +47,14 @@ __all__ = [
     "UpdateSlideRequest",
     "AddSlideRequest",
     "ExportResponse",
+    # Assistant schemas
+    "IntentType",
+    "ParsedIntent",
+    "ChatMessage",
+    "ConversationContext",
+    "AssistantChatRequest",
+    "AssistantAction",
+    "AssistantChatResponse",
+    "ConfirmActionRequest",
+    "ConfirmActionResponse",
 ]

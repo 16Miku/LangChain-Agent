@@ -2432,13 +2432,15 @@ CREATE INDEX idx_slide_versions_presentation ON slide_versions(presentation_id);
 - [ ] 幻灯片拖拽排序 (待后续实现)
 - [ ] 撤销/重做操作 (待后续实现)
 
-**Phase 5.5: AI 对话式修改** ⏳ 待开发
-- [ ] AI 助手对话面板 (右侧边栏)
-- [ ] 自然语言指令解析 (如："把第3页的标题改成xxx")
-- [ ] 多轮对话上下文理解
-- [ ] AI 自动修改幻灯片内容
-- [ ] AI 自动调整布局和风格
-- [ ] 修改历史记录和回滚
+**Phase 5.5: AI 对话式修改** ✅ 基础功能已完成 (2026-01-04)
+- [x] AI 助手对话面板 (右侧边栏 - AssistantPanel.tsx)
+- [x] 自然语言指令解析 (IntentParserService - 支持10种意图类型)
+- [x] AI 助手后端 API (assistant.py - POST /assistant/{id}/chat)
+- [x] 前端集成到编辑器页面 (AI 助手按钮 + 右侧面板)
+- [x] 自动化测试 (14项测试全通过)
+- [ ] 多轮对话上下文优化 (待后续完善)
+- [ ] AI 自动调整布局和风格 (待后续完善)
+- [ ] 修改历史记录和回滚 (待后续完善)
 
 **Phase 5.7: 高级生成功能**
 - [ ] 智能布局引擎 (15+ 布局类型)
@@ -2919,8 +2921,9 @@ class PresentationConfig(BaseModel):
 | 4.7 | 2026-01-03 | Phase 5.5 规划：AI 对话式修改 (自然语言指令解析/多轮对话/AI自动修改PPT) | Claude Code |
 | 4.8 | 2026-01-04 | Phase 5.4 完成：在线编辑器功能 (实时编辑/插入删除/自动保存防抖/SQLAlchemy JSON更新修复) | Claude Code |
 | 4.9 | 2026-01-04 | Phase 5.4 修复：SQLite 数据库查询类型不匹配 (String vs UUID 对象比较问题) | Claude Code |
+| 5.0 | 2026-01-04 | Phase 5.5 完成：AI 对话式修改基础功能 (IntentParserService + AssistantPanel + 14项测试全通过) | Claude Code |
 
 ---
-> **文档状态**: ✅ Phase 5.4 已完成并测试通过，Phase 5.5 待开发
+> **文档状态**: ✅ Phase 5.5 AI 对话式修改基础功能已完成，高级功能待后续完善
 > **最后更新**: 2026-01-04
-> **下一步**: Phase 5.5 AI 对话式修改 (自然语言指令解析/多轮对话/AI自动修改PPT)
+> **下一步**: Phase 5.7 高级生成功能 (智能布局引擎/图片集成/高级主题系统)

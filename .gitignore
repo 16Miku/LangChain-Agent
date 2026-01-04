@@ -123,6 +123,9 @@ test_tts.mp3
 test_*.mp3
 test_*.wav
 test_*.webm
+.pytest_cache/
+htmlcov/
+.coverage
 
 # -------------------- 日志文件 --------------------
 *.log

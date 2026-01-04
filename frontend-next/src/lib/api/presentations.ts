@@ -105,6 +105,50 @@ function convertPresentation(backend: BackendPresentation): Presentation {
   };
 }
 
+// ============================================================
+// AI Assistant Types
+// ============================================================
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp?: string;
+}
+
+export interface ParsedIntent {
+  intent_type: string;
+  target_slide?: number | null;
+  new_value?: string | null;
+  layout?: string | null;
+  theme?: string | null;
+  position?: number | null;
+  response_message: string;
+  confidence: number;
+  requires_confirmation: boolean;
+}
+
+export interface AssistantAction {
+  action_type: string;
+  target_slide?: number | null;
+  changes: Record<string, unknown>;
+  success: boolean;
+  error_message?: string | null;
+}
+
+export interface AssistantChatRequest {
+  message: string;
+  current_slide_index: number;
+  conversation_history?: ChatMessage[];
+}
+
+export interface AssistantChatResponse {
+  response: string;
+  intent: ParsedIntent;
+  actions: AssistantAction[];
+  presentation_updated: boolean;
+  updated_slides?: unknown[] | null;
+}
+
 export const presentationApi = {
   /**
    * 获取演示文稿列表
@@ -234,6 +278,25 @@ export const presentationApi = {
       `/api/v1/editor/${presentationId}/slides/${slideIndex}`
     );
     return convertPresentation(response.data);
+  },
+
+  // ============================================================
+  // AI Assistant API
+  // ============================================================
+
+  /**
+   * AI 助手对话
+   * 解析用户的自然语言指令并执行相应操作
+   */
+  async assistantChat(
+    presentationId: string,
+    data: AssistantChatRequest
+  ): Promise<AssistantChatResponse> {
+    const response = await presentationClient.post<AssistantChatResponse>(
+      `/api/v1/assistant/${presentationId}/chat`,
+      data
+    );
+    return response.data;
   },
 };
 
