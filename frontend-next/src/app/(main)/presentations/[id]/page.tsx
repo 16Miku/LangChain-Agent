@@ -64,6 +64,7 @@ export default function PresentationEditorPage() {
     regenerateSlide,
     changeTheme,
     updatePresentation,
+    updateCurrentPresentationSlides,
   } = usePresentationStore();
 
   const [showPlayer, setShowPlayer] = useState(false);
@@ -145,14 +146,12 @@ export default function PresentationEditorPage() {
     }
   };
 
-  // AI 助手更新演示文稿的回调
-  const handleAssistantUpdate = useCallback((_updatedSlides: unknown[]) => {
-    // 重新获取演示文稿以同步最新数据
-    if (presentationId) {
-      fetchPresentation(presentationId);
-      setHasChanges(true);
-    }
-  }, [presentationId, fetchPresentation]);
+  // AI 助手更新演示文稿的回调（静默更新，不触发 isLoading）
+  const handleAssistantUpdate = useCallback((updatedSlides: unknown[]) => {
+    // 直接更新 store 中的幻灯片数据，不重新获取
+    updateCurrentPresentationSlides(updatedSlides as Slide[]);
+    setHasChanges(true);
+  }, [updateCurrentPresentationSlides]);
 
   if (isLoading) {
     return (

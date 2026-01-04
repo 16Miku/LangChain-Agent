@@ -8,7 +8,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Bot,
   Send,
@@ -52,15 +51,17 @@ export function AssistantPanel({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>([]);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 自动滚动到底部
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   // 打开时聚焦输入框
   useEffect(() => {
@@ -205,7 +206,7 @@ export function AssistantPanel({
       </div>
 
       {/* 消息列表 */}
-      <ScrollArea className="flex-1 p-3" ref={scrollAreaRef}>
+      <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-4">
           {messages.map((message) => (
             <div
@@ -271,8 +272,11 @@ export function AssistantPanel({
               </div>
             </div>
           )}
+
+          {/* 滚动锚点 */}
+          <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+      </div>
 
       {/* 输入区域 */}
       <div className="p-3 border-t">

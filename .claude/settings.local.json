@@ -8,7 +8,10 @@
       "Bash(npm run lint)",
       "Bash(npx eslint src/app/(main)/presentations/[id]/page.tsx src/components/presentations/SlideEditor.tsx src/hooks/useDebounce.ts)",
       "Bash(A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_assistant.py -v --tb=short)",
-      "Bash(git add .)"
+      "Bash(git add .)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat(presentation): Phase 5.5 AI 对话式修改功能\n\n## 新增功能\n\n### 后端 (presentation-service)\n- 新增 IntentParserService 自然语言指令解析服务\n  - 使用 LLM 解析用户自然语言指令\n  - 支持 10 种意图类型：edit_title, edit_content, edit_notes,\n    insert_slide, delete_slide, change_layout, change_theme,\n    regenerate, reorder_slides, chat\n  - 智能验证和修正：幻灯片索引边界检查、布局/主题类型验证\n  - 支持对话历史上下文\n\n- 新增 AI 助手 API 端点 (POST /assistant/{id}/chat)\n  - 解析用户意图并执行相应操作\n  - 返回结构化响应（意图、操作结果、更新后的幻灯片）\n  - 完整的错误处理和用户友好提示\n\n- 新增 Pydantic Schema\n  - ParsedIntent: 解析后的用户意图\n  - AssistantChatRequest/Response: API 请求响应模型\n  - ChatMessage, ConversationContext: 对话上下文\n\n### 前端 (frontend-next)\n- 新增 AssistantPanel 组件\n  - 右侧边栏对话面板界面\n  - 消息历史展示（用户消息/AI回复）\n  - 操作结果指示器（成功/失败状态）\n  - 自动滚动和欢迎消息\n\n- 编辑器页面集成\n  - 添加 AI 助手按钮控制面板显示/隐藏\n  - 演示文稿更新自动同步\n  - 响应式布局适配\n\n### 测试\n- 新增 14 项自动化测试 (全部通过)\n  - JSON 解析测试（有效/无效/markdown格式）\n  - 意图验证测试（索引边界、类型验证、默认值）\n  - LLM Mock 测试（正常响应、错误处理）\n  - 单例模式测试\n\n### 其他\n- 更新 .gitignore 添加 pytest 缓存目录\n- 更新 Plan-V9.md 开发进度\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(npx eslint src/components/presentations/AssistantPanel.tsx)",
+      "Bash(npx eslint src/app/(main)/presentations/[id]/page.tsx src/lib/stores/presentationStore.ts --max-warnings 20)"
     ],
     "deny": [],
     "ask": []

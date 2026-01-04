@@ -10,6 +10,7 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core import get_current_user_id
 from app.database import get_db
@@ -147,8 +148,10 @@ async def assistant_chat(
             )
             actions.append(action)
 
-        # 如果有更新，获取最新的幻灯片数据
+        # 如果有更新，提交到数据库并获取最新的幻灯片数据
         if presentation_updated:
+            flag_modified(presentation, "slides")
+            await db.commit()
             await db.refresh(presentation)
             updated_slides = presentation.slides
 

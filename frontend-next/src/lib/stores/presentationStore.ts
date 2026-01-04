@@ -82,6 +82,9 @@ interface PresentationState {
   // 更换主题
   changeTheme: (presentationId: string, theme: PresentationTheme) => Promise<void>;
 
+  // 静默更新当前演示文稿的幻灯片（不触发 isLoading）
+  updateCurrentPresentationSlides: (slides: Slide[]) => void;
+
   // 清除错误
   clearError: () => void;
 
@@ -337,6 +340,20 @@ export const usePresentationStore = create<PresentationState>()(
             isLoading: false,
           });
         }
+      },
+
+      // 静默更新当前演示文稿的幻灯片（不触发 isLoading，用于 AI 助手更新）
+      updateCurrentPresentationSlides: (slides: Slide[]) => {
+        set((state) => {
+          if (!state.currentPresentation) return state;
+          return {
+            currentPresentation: {
+              ...state.currentPresentation,
+              slides,
+              slide_count: slides.length,
+            },
+          };
+        });
       },
 
       // 清除错误
