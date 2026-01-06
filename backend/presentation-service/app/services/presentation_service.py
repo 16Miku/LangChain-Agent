@@ -13,6 +13,7 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.config import settings
+from app.services.layout_engine import layout_engine, LayoutType, LAYOUT_CONFIGS
 
 
 class PresentationService:
@@ -153,6 +154,12 @@ class PresentationService:
         }
         lang = lang_map.get(language, "中文")
 
+        # 获取所有布局类型及说明
+        layout_descriptions = "\n".join([
+            f"- {layout_type}: {config.name} - {config.description}"
+            for layout_type, config in LAYOUT_CONFIGS.items()
+        ])
+
         return f"""你是一个专业的演示文稿内容生成助手。
 
 ## 任务
@@ -169,28 +176,45 @@ class PresentationService:
 - title: 幻灯片标题
 - content: 内容（使用 Markdown 列表格式，用 \\n 分行）
 - layout: 布局类型（可选，默认 bullet_points）
-  可选值：title_cover, title_section, bullet_points, two_column, image_text, quote_center, thank_you
 - notes: 演讲者备注（可选）
 
-## 布局类型说明
-- title_cover: 封面页（第一张）
-- title_section: 章节页（新章节开始）
-- bullet_points: 列表页（默认）
-- two_column: 双栏布局
-- image_text: 图文混排
-- quote_center: 引用页
-- thank_you: 结尾页（最后一张）
+## 支持的布局类型（共 {len(LAYOUT_CONFIGS)} 种）
+{layout_descriptions}
+
+## 布局选择指南
+1. 封面页 (title_cover) - 第一张，展示标题和副标题
+2. 章节页 (title_section) - 大章节开始时使用
+3. 列表页 (bullet_points) - 最常用，展示要点
+4. 双栏布局 (two_column) - 对比或图文并列
+5. 三栏布局 (three_column) - 多项功能/选项展示
+6. 图文混排 (image_text) - 图片配说明文字
+7. 全屏图片 (image_full) - 视觉冲击力强的展示
+8. 单图表 (chart_single) - 数据可视化
+9. 双图表 (chart_dual) - 数据对比
+10. 数据表格 (data_table) - 详细数据展示
+11. 指标卡片 (metric_card) - 关键数字/KPI
+12. 引用页 (quote_center) - 名言/重点引用
+13. 时间线 (timeline) - 发展历程/里程碑
+14. 流程图 (process_flow) - 步骤/流程展示
+15. 对比布局 (comparison) - 优缺点/方案对比
+16. 图片画廊 (gallery) - 多图展示
+17. 结尾页 (thank_you) - 最后一张
+18. 联系方式 (contact) - 联系信息
+19. 空白页 (blank) - 自由布局
 
 ## 示例
 [
   {{"title": "欢迎", "content": "- 感谢参加\\n- 今天我们将讨论...", "layout": "title_cover"}},
   {{"title": "议程", "content": "- 介绍\\n- 核心内容\\n- 总结", "layout": "bullet_points"}},
+  {{"title": "发展历程", "content": "- 2020: 项目启动\\n- 2021: 首个版本\\n- 2022: 用户破万", "layout": "timeline"}},
+  {{"title": "关键指标", "content": "- 用户数: 10000+\\n- 满意度: 98%\\n- 增长率: 50%", "layout": "metric_card"}},
   {{"title": "总结", "content": "- 要点回顾\\n- Q&A", "layout": "thank_you"}}
 ]
 
 ## 注意
 - 第一张应该是封面页（title_cover）
-- 中间页使用 bullet_points 或其他内容布局
+- 根据内容类型选择最合适的布局
+- 适当使用时间线、流程图、指标卡片等特殊布局增加视觉效果
 - 最后一张应该是结尾页（thank_you）
 - 内容要简洁有力，适合演讲展示
 - 必须确保输出是纯有效的 JSON，不要包含任何其他文字"""
