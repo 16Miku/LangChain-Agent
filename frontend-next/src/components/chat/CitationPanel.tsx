@@ -11,10 +11,8 @@ import {
   ChevronRight,
   BookOpen,
   Hash,
-  ExternalLink,
   Loader2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ragApi, type CitationDetail } from '@/lib/api/rag';
 

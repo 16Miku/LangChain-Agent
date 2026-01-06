@@ -4,7 +4,7 @@
 // Presentation Preview Component - Reveal.js PPT Viewer
 // ============================================================
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Maximize2,
   Minimize2,
