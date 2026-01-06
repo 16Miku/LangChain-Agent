@@ -10,7 +10,7 @@
    cd backend/rag-service && A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/ -v --tb=short
    ```
 7. 根据测试结果自动修复问题
-8. 测试通过后，更新 Plan-V9.md 开发进度。生成中文 git 提交信息（用户手动提交）
+8. 测试通过后，更新 Plan-V9.md 开发进度。生成中文 git 提交信息
 9. 更新 .gitignore（如需要）
 10. 更新 CLAUDE.md
 
