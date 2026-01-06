@@ -2442,11 +2442,11 @@ CREATE INDEX idx_slide_versions_presentation ON slide_versions(presentation_id);
 - [ ] AI 自动调整布局和风格 (待后续完善)
 - [ ] 修改历史记录和回滚 (待后续完善)
 
-**Phase 5.7: 高级生成功能**
-- [ ] 智能布局引擎 (15+ 布局类型)
-- [ ] 图片集成 (Unsplash API)
-- [ ] 高级主题系统 (5+ 精品主题)
-- [ ] Markdown 高级语法支持
+**Phase 5.7: 高级生成功能** ✅ 已完成 (2026-01-06)
+- [x] 智能布局引擎 (19 种布局类型) ✅ 42项测试通过
+- [x] 图片集成 (Unsplash API + 备用方案) ✅ 31项测试通过
+- [x] 高级主题系统 (12 种精品主题) ✅ 40项测试通过
+- [ ] Markdown 高级语法支持 (待后续)
 
 **Phase 5.8: 导出与协作**
 - [ ] 导出 HTML
