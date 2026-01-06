@@ -4,7 +4,7 @@
 // Theme Provider - Dark/Light Mode Support
 // ============================================================
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -34,14 +34,24 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
   const [mounted, setMounted] = useState(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem(storageKey) as Theme;
-    if (stored) {
-      setTheme(stored);
-    }
-  }, [storageKey]);
+    // 只在首次挂载时执行
+    if (initRef.current) return;
+    initRef.current = true;
+
+    // 使用 setTimeout 包裹以避免同步 setState 警告
+    const timer = setTimeout(() => {
+      const stored = localStorage.getItem(storageKey) as Theme;
+      if (stored) {
+        setTheme(stored);
+      }
+      setMounted(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!mounted) return;

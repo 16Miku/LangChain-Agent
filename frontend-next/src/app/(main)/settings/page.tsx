@@ -9,7 +9,6 @@ import { Moon, Sun, Monitor, Save, Loader2, Volume2, Database } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useSettingsStore, useAuthStore } from '@/lib/stores';

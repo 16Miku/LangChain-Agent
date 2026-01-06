@@ -27,13 +27,41 @@ export function VoiceRecorder({ onTranscript, disabled = false, className }: Voi
   // 清理定时器
   useEffect(() => {
     return () => {
-      if (timerRefRef.current) {
-        clearInterval(timerRefRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
       }
     };
   }, []);
 
-  const timerRefRef = useRef<NodeJS.Timeout | null>(null);
+  // 处理音频数据
+  const processAudio = useCallback(async (audioBlob: Blob) => {
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      // 转换为 WAV 文件格式（如果需要）
+      const audioFile = new File(
+        [audioBlob],
+        `recording-${Date.now()}.webm`,
+        { type: audioBlob.type }
+      );
+
+      // 调用 STT API
+      const result = await transcribeAudio(audioFile, 'auto');
+
+      if (result.text && result.text.trim().length > 0) {
+        onTranscript(result.text.trim());
+      } else {
+        setError('未能识别到语音，请重试');
+      }
+
+    } catch (err) {
+      console.error('语音识别失败:', err);
+      setError('语音识别失败，请稍后重试');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [onTranscript]);
 
   // 开始录音
   const startRecording = useCallback(async () => {
@@ -85,7 +113,7 @@ export function VoiceRecorder({ onTranscript, disabled = false, className }: Voi
 
       // 开始计时
       setRecordingTime(0);
-      timerRefRef.current = setInterval(() => {
+      timerRef.current = setInterval(() => {
         setRecordingTime((prev) => prev + 1);
       }, 1000);
 
@@ -94,7 +122,7 @@ export function VoiceRecorder({ onTranscript, disabled = false, className }: Voi
       setError('无法访问麦克风，请检查权限设置');
       setIsRecording(false);
     }
-  }, []);
+  }, [processAudio]);
 
   // 停止录音
   const stopRecording = useCallback(() => {
@@ -103,42 +131,12 @@ export function VoiceRecorder({ onTranscript, disabled = false, className }: Voi
       setIsRecording(false);
 
       // 停止计时
-      if (timerRefRef.current) {
-        clearInterval(timerRefRef.current);
-        timerRefRef.current = null;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     }
   }, []);
-
-  // 处理音频数据
-  const processAudio = useCallback(async (audioBlob: Blob) => {
-    setIsProcessing(true);
-    setError(null);
-
-    try {
-      // 转换为 WAV 文件格式（如果需要）
-      const audioFile = new File(
-        [audioBlob],
-        `recording-${Date.now()}.webm`,
-        { type: audioBlob.type }
-      );
-
-      // 调用 STT API
-      const result = await transcribeAudio(audioFile, 'auto');
-
-      if (result.text && result.text.trim().length > 0) {
-        onTranscript(result.text.trim());
-      } else {
-        setError('未能识别到语音，请重试');
-      }
-
-    } catch (err) {
-      console.error('语音识别失败:', err);
-      setError('语音识别失败，请稍后重试');
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [onTranscript]);
 
   // 获取支持的 MIME 类型
   function getSupportedMimeType(): string {

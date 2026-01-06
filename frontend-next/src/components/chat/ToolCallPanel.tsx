@@ -4,7 +4,7 @@
 // Tool Call Panel Component - Enhanced Tool Visualization
 // ============================================================
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Check,
   ChevronDown,
@@ -147,7 +147,9 @@ interface ToolCallItemProps {
 
 function ToolCallItem({ toolCall }: ToolCallItemProps) {
   const [outputExpanded, setOutputExpanded] = useState(false);
-  const Icon = getToolIcon(toolCall.name);
+
+  // 使用 useMemo 缓存 Icon 组件，避免在渲染期间创建新组件
+  const Icon = useMemo(() => getToolIcon(toolCall.name), [toolCall.name]);
 
   const statusStyles = {
     running: 'border-blue-500/30 bg-blue-500/10',

@@ -13,8 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock, InlineCode } from './CodeBlock';
 import { ToolCallPanel } from './ToolCallPanel';
-import { CitationPanel, type CitationInfo } from './CitationPanel';
-import { PlayButton, AudioPlayer } from '@/components/voice';
+import { CitationPanel } from './CitationPanel';
 import { synthesizeSpeech } from '@/lib/api/voice';
 
 interface MessageBubbleProps {
@@ -83,7 +82,6 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
         inline,
         className,
         children,
-        ...props
       }: {
         inline?: boolean;
         className?: string;
