@@ -8,6 +8,7 @@ from typing import List
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response, HTMLResponse
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -303,3 +304,139 @@ async def delete_presentation(
         )
 
     await db.commit()
+
+
+# ============================================================
+# 导出功能
+# ============================================================
+
+@router.get("/{presentation_id}/export/html", response_class=HTMLResponse)
+async def export_presentation_html(
+    presentation_id: str,
+    include_reveal_js: bool = Query(True, description="是否包含 Reveal.js 库"),
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    导出演示文稿为 HTML
+    返回完整的独立 HTML 文件，可直接在浏览器中打开
+    """
+    from app.services.export_service import export_service
+    from app.services.theme_service import theme_service
+
+    # 验证 ID 格式
+    try:
+        uuid.UUID(presentation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid presentation ID"
+        )
+
+    # 获取演示文稿
+    result = await db.execute(
+        select(Presentation).where(
+            Presentation.id == presentation_id,
+            Presentation.user_id == user_id
+        )
+    )
+    presentation = result.scalar_one_or_none()
+
+    if not presentation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Presentation not found"
+        )
+
+    # 获取主题 CSS
+    theme_css = theme_service.generate_reveal_theme_css(presentation.theme)
+
+    # 构建演示文稿字典
+    presentation_dict = {
+        "id": str(presentation.id),
+        "title": presentation.title,
+        "description": presentation.description,
+        "slides": presentation.slides,
+        "theme": presentation.theme,
+        "target_audience": presentation.target_audience,
+        "presentation_type": presentation.presentation_type,
+    }
+
+    # 生成 HTML
+    html = await export_service.export_to_html(
+        presentation=presentation_dict,
+        include_reveal_js=include_reveal_js,
+        theme_css=theme_css,
+    )
+
+    # 设置文件名
+    filename = export_service.generate_filename(presentation.title, "html")
+
+    return Response(
+        content=html,
+        media_type="text/html",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )
+
+
+@router.get("/{presentation_id}/export/preview", response_class=HTMLResponse)
+async def preview_presentation_html(
+    presentation_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    预览演示文稿 HTML
+    用于在浏览器中直接预览演示文稿效果
+    """
+    from app.services.export_service import export_service
+    from app.services.theme_service import theme_service
+
+    # 验证 ID 格式
+    try:
+        uuid.UUID(presentation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid presentation ID"
+        )
+
+    # 获取演示文稿
+    result = await db.execute(
+        select(Presentation).where(
+            Presentation.id == presentation_id,
+            Presentation.user_id == user_id
+        )
+    )
+    presentation = result.scalar_one_or_none()
+
+    if not presentation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Presentation not found"
+        )
+
+    # 获取主题 CSS
+    theme_css = theme_service.generate_reveal_theme_css(presentation.theme)
+
+    # 构建演示文稿字典
+    presentation_dict = {
+        "id": str(presentation.id),
+        "title": presentation.title,
+        "description": presentation.description,
+        "slides": presentation.slides,
+        "theme": presentation.theme,
+        "target_audience": presentation.target_audience,
+        "presentation_type": presentation.presentation_type,
+    }
+
+    # 生成 HTML (预览模式总是包含 Reveal.js)
+    html = await export_service.export_to_html(
+        presentation=presentation_dict,
+        include_reveal_js=True,
+        theme_css=theme_css,
+    )
+
+    return html
