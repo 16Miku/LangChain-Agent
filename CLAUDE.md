@@ -189,10 +189,49 @@ JWT_ALGORITHM=HS256
 
 ## 开发规范
 
+### Claude Code 自动化开发流程 (必须遵循)
+
+**每完成一个小模块，必须按以下顺序执行：**
+
+1. **获取文档** (必要时)
+   - 使用 Context7 MCP 工具获取相关库/框架的最新文档
+   - 示例: `mcp__upstash-context7-mcp__resolve-library-id` + `mcp__upstash-context7-mcp__get-library-docs`
+
+2. **编写代码**
+   - 编写功能代码和对应的测试用例
+   - 遵循代码风格规范
+
+3. **自动测试**
+   - 运行 pytest 测试，确保所有测试通过
+   - 测试命令: `A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_xxx.py -v --tb=short`
+
+4. **更新 .gitignore**
+   - 检查是否有新的需要忽略的文件类型
+   - 根据项目结构实时更新 `.gitignore`
+
+5. **自动提交代码**
+   - 生成详细的中文版 Git 提交信息
+   - 格式: `<type>(<scope>): <简短描述>\n\n<详细说明>`
+   - 自动执行 `git add` 和 `git commit`
+
+6. **更新开发文档**
+   - 更新 `Note/Plan-V9.md` 中对应任务的状态
+   - 标记完成项: `- [x] 任务名称 ✅ 测试通过`
+   - 添加变更记录到文档末尾的变更历史
+
+7. **提交文档更新**
+   - 单独提交文档更新: `docs(plan): 更新 xxx 完成状态`
+
 ### Git 提交规范
 - 使用中文提交信息
 - 格式: `<type>(<scope>): <description>`
 - 类型: feat / fix / docs / refactor / test / chore
+- 提交信息末尾添加:
+  ```
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+  Co-Authored-By: Claude <noreply@anthropic.com>
+  ```
 
 ### 代码风格
 - 使用中文注释和文档字符串
@@ -201,11 +240,10 @@ JWT_ALGORITHM=HS256
 
 ### 开发协作流程
 1. Claude 编写代码和测试脚本
-2. 用户在 conda 环境中运行测试
-3. 用户反馈测试结果
-4. 修复问题（如有）
-5. 用户手动 git commit
-6. 更新 `Note/Plan-V9.md` 开发进度
+2. Claude 自动运行测试 (使用完整 Python 路径)
+3. 测试通过后 Claude 自动提交代码
+4. Claude 更新开发文档并提交
+5. 如有测试失败，修复后重复步骤 2-4
 
 ## API 文档
 
