@@ -53,7 +53,6 @@ import type {
   ChangeThemeRequest,
   UpdateSlideRequest,
   AddSlideRequest,
-  toPresentation,
 } from '@/lib/types/presentations';
 
 // Backend response format

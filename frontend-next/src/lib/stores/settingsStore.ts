@@ -38,7 +38,7 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       // Default values
       theme: 'system',
       sidebarOpen: true,

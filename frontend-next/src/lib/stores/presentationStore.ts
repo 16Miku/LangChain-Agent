@@ -111,7 +111,7 @@ const initialState = {
 
 export const usePresentationStore = create<PresentationState>()(
   devtools(
-    (set, get) => ({
+    (set, _get) => ({
       ...initialState,
 
       // 获取演示文稿列表

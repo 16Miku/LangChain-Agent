@@ -137,7 +137,8 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== 'undefined') {
           const storedToken = localStorage.getItem('accessToken');
           const storedRefreshToken = localStorage.getItem('refreshToken');
-          const storedUser = localStorage.getItem('auth-storage-user');
+          // storedUser 保留以供将来使用，暂不使用
+          // const storedUser = localStorage.getItem('auth-storage-user');
 
           if (storedToken && storedRefreshToken) {
             // Has tokens, mark as authenticated

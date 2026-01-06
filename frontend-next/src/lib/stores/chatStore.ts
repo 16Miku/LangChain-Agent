@@ -146,7 +146,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (content: string, images?: string[]) => {
-    const { currentConversationId, messages, conversations } = get();
+    const { currentConversationId, messages } = get();
 
     // Create user message
     const userMessage: Message = {
