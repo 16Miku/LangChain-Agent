@@ -297,6 +297,58 @@ export const presentationApi = {
     );
     return response.data;
   },
+
+  // ============================================================
+  // Export API
+  // ============================================================
+
+  /**
+   * 导出演示文稿为 HTML (下载文件)
+   */
+  async exportToHtml(
+    presentationId: string,
+    includeRevealJs = true
+  ): Promise<void> {
+    const response = await presentationClient.get(`/api/v1/presentations/${presentationId}/export/html`, {
+      params: { include_reveal_js: includeRevealJs },
+      responseType: 'blob',
+    });
+
+    // 从响应头获取文件名
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'presentation.html';
+    if (contentDisposition) {
+      const matches = /filename="([^"]+)"/.exec(contentDisposition);
+      if (matches?.[1]) {
+        filename = matches[1];
+      }
+    }
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/html' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * 获取预览 HTML URL (用于在新标签页打开预览)
+   */
+  getPreviewUrl(presentationId: string): string {
+    return `${PRESENTATION_API_URL}/api/v1/presentations/${presentationId}/export/preview`;
+  },
+
+  /**
+   * 在新标签页打开预览
+   */
+  async openPreview(presentationId: string): Promise<void> {
+    const url = this.getPreviewUrl(presentationId);
+    window.open(url, '_blank');
+  },
 };
 
 export default presentationApi;

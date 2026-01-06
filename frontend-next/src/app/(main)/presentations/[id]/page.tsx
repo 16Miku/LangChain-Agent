@@ -13,10 +13,18 @@ import {
   Plus,
   Palette,
   Bot,
+  Download,
+  ExternalLink,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +38,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { usePresentationStore } from '@/lib/stores/presentationStore';
 import type { Slide, PresentationTheme } from '@/lib/types/presentations';
+import { presentationApi } from '@/lib/api/presentations';
 import { SlidePreview } from '@/components/presentations/SlidePreview';
 import { SlideEditor } from '@/components/presentations/SlideEditor';
 import { ThemeSelector } from '@/components/presentations/ThemeSelector';
@@ -146,6 +155,24 @@ export default function PresentationEditorPage() {
     }
   };
 
+  const handleExportHtml = async () => {
+    if (currentPresentation) {
+      await presentationApi.exportToHtml(currentPresentation.id, true);
+    }
+  };
+
+  const handleExportSimpleHtml = async () => {
+    if (currentPresentation) {
+      await presentationApi.exportToHtml(currentPresentation.id, false);
+    }
+  };
+
+  const handleOpenPreview = async () => {
+    if (currentPresentation) {
+      await presentationApi.openPreview(currentPresentation.id);
+    }
+  };
+
   // AI 助手更新演示文稿的回调（静默更新，不触发 isLoading）
   const handleAssistantUpdate = useCallback((updatedSlides: unknown[]) => {
     // 直接更新 store 中的幻灯片数据，不重新获取
@@ -243,6 +270,29 @@ export default function PresentationEditorPage() {
             <Save className="h-4 w-4 mr-2" />
             保存
           </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Download className="h-4 w-4" />
+                导出
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportHtml}>
+                <Download className="h-4 w-4 mr-2" />
+                导出 HTML (含 Reveal.js)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportSimpleHtml}>
+                <Download className="h-4 w-4 mr-2" />
+                导出 HTML (简洁版)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleOpenPreview}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                浏览器预览
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button
             size="sm"
