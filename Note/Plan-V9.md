@@ -2923,8 +2923,10 @@ class PresentationConfig(BaseModel):
 | 4.9 | 2026-01-04 | Phase 5.4 修复：SQLite 数据库查询类型不匹配 (String vs UUID 对象比较问题) | Claude Code |
 | 5.0 | 2026-01-04 | Phase 5.5 完成：AI 对话式修改基础功能 (IntentParserService + AssistantPanel + 14项测试全通过) | Claude Code |
 | 5.1 | 2026-01-04 | Phase 5.5 修复：AI 助手对话记录消失问题 (db.commit + 静默更新 + ScrollArea 修复) | Claude Code |
+| 5.2 | 2026-01-06 | Phase 5.7 完成：高级生成功能 (布局引擎19种/图片服务Unsplash/主题系统12种/测试113项全通过) | Claude Code |
+| 5.3 | 2026-01-06 | Phase 5.8 完成：导出 HTML 功能 (ExportService + 导出API + 34项测试全通过) | Claude Code |
 
 ---
-> **文档状态**: ✅ Phase 5.5 AI 对话式修改功能已完成并测试通过
-> **最后更新**: 2026-01-04
-> **下一步**: Phase 5.7 高级生成功能 (智能布局引擎/图片集成/高级主题系统)
+> **文档状态**: ✅ Phase 5.8 导出功能已完成并测试通过
+> **最后更新**: 2026-01-06
+> **下一步**: 前端导出按钮集成 (从聊天快速跳转 / 分享链接可选)
