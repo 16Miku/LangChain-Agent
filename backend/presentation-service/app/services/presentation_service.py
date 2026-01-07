@@ -332,6 +332,7 @@ class PresentationService:
         为幻灯片添加图片
 
         根据布局类型和内容，智能添加合适的图片。
+        为了让 PPT 更加图文并茂，大部分幻灯片都会添加图片。
 
         Args:
             slides: 幻灯片列表
@@ -341,34 +342,56 @@ class PresentationService:
         Returns:
             添加图片后的幻灯片列表
         """
-        # 需要图片的布局类型
-        image_layouts = {
+        # 必须添加图片的布局类型
+        required_image_layouts = {
             "title_cover": "cover",
             "image_text": "concept",
             "image_full": "landscape",
-            "two_column": "concept",
             "gallery": "collection",
-            "thank_you": "ending",
         }
 
-        # 可选添加图片的布局类型 (根据内容决定)
-        optional_image_layouts = {
+        # 推荐添加图片的布局类型 (大部分内容页)
+        recommended_image_layouts = {
+            "bullet_points": "concept",
+            "two_column": "concept",
             "title_section": "section",
             "timeline": "timeline",
             "process_flow": "process",
             "comparison": "comparison",
+            "metric_card": "data",
+            "chart_single": "data",
+            "chart_dual": "data",
+            "data_table": "data",
+            "three_column": "concept",
         }
 
+        # 不需要图片的布局类型
+        no_image_layouts = {"thank_you", "contact", "quote_center", "blank"}
+
         updated_slides = []
+        slide_count = len(slides)
 
         for i, slide in enumerate(slides):
             layout = slide.get("layout", "bullet_points")
             title = slide.get("title", "")
             content = slide.get("content", "")
 
-            # 检查是否需要添加图片
-            if layout in image_layouts:
-                content_type = image_layouts[layout]
+            # 跳过不需要图片的布局
+            if layout in no_image_layouts:
+                updated_slides.append(slide)
+                continue
+
+            # 确定内容类型
+            if layout in required_image_layouts:
+                content_type = required_image_layouts[layout]
+            elif layout in recommended_image_layouts:
+                content_type = recommended_image_layouts[layout]
+            else:
+                # 默认使用 concept 类型
+                content_type = "concept"
+
+            # 获取图片
+            try:
                 image_url = await self._get_image_for_slide(
                     content_type=content_type,
                     title=title,
@@ -383,27 +406,9 @@ class PresentationService:
                         "alt": f"{title} - {topic}",
                         "caption": "",
                     }]
-
-            # 可选布局：根据内容关键词决定是否添加图片
-            elif layout in optional_image_layouts:
-                # 检查内容是否包含图片相关关键词
-                keywords = image_service.suggest_keywords_for_slide(title, content, layout)
-                if keywords and len(keywords) > 0:
-                    content_type = optional_image_layouts[layout]
-                    image_url = await self._get_image_for_slide(
-                        content_type=content_type,
-                        title=title,
-                        content=content,
-                        topic=topic,
-                        image_style=image_style,
-                    )
-
-                    if image_url:
-                        slide["images"] = [{
-                            "url": image_url,
-                            "alt": f"{title} - {topic}",
-                            "caption": "",
-                        }]
+                    print(f"[Service] Added image to slide {i+1}: {image_url[:50]}...")
+            except Exception as e:
+                print(f"[Service] Error adding image to slide {i+1}: {e}")
 
             updated_slides.append(slide)
 
