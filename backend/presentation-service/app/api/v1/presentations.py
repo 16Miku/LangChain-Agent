@@ -6,6 +6,7 @@ import uuid
 import base64
 from typing import List
 from datetime import datetime
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response, HTMLResponse
@@ -369,14 +370,18 @@ async def export_presentation_html(
         theme_css=theme_css,
     )
 
-    # 设置文件名
+    # 设置文件名 (使用 RFC 5987 支持 UTF-8 文件名)
     filename = export_service.generate_filename(presentation.title, "html")
+    # ASCII 回退文件名
+    ascii_filename = "presentation.html"
+    # UTF-8 编码的文件名
+    encoded_filename = quote(filename)
 
     return Response(
         content=html,
         media_type="text/html",
         headers={
-            "Content-Disposition": f'attachment; filename="{filename}"'
+            "Content-Disposition": f"attachment; filename=\"{ascii_filename}\"; filename*=UTF-8''{encoded_filename}"
         }
     )
 

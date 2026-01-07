@@ -23,7 +23,10 @@
       "Bash(cmd /c \"taskkill /PID 15900 /F\")",
       "Bash(netstat -ano)",
       "Bash(findstr :8002)",
-      "Bash(powershell -Command \"Stop-Process -Id 15900 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 15900 -Force\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix(frontend): 修复 AuthProvider 初始化导致页面卡在 Loading\n\n问题原因:\n- 使用 useRef 防止重复初始化\n- React 18 Strict Mode 下组件挂载两次\n- 第二次挂载时 initRef.current 已为 true\n- setIsInitialized(true) 永远不会执行\n\n修复方案:\n- 移除 useRef 和 setTimeout 逻辑\n- 直接在 useEffect 中设置 isInitialized\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(findstr :8005)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://127.0.0.1:8005/api/v1/presentations\")"
     ],
     "deny": [],
     "ask": []
