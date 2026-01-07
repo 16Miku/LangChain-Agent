@@ -14,6 +14,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.config import settings
 from app.services.layout_engine import layout_engine, LayoutType, LAYOUT_CONFIGS
+from app.services.image_service import image_service
+from app.services.theme_service import theme_service
 
 
 class PresentationService:
@@ -62,11 +64,30 @@ class PresentationService:
         image_style: str = "professional",
         language: str = "zh-CN",
         custom_title: Optional[str] = None,
+        auto_theme: bool = False,  # 是否自动推荐主题
     ):
         """
         AI 生成演示文稿
+
+        Args:
+            user_id: 用户 ID
+            topic: 演示文稿主题
+            slide_count: 幻灯片数量
+            target_audience: 目标受众
+            presentation_type: 演示类型
+            theme: 主题样式
+            include_images: 是否包含图片
+            image_style: 图片风格
+            language: 语言
+            custom_title: 自定义标题
+            auto_theme: 是否自动推荐主题
         """
         from app.models import Presentation
+
+        # 如果启用自动主题推荐，根据主题内容推荐合适的主题
+        if auto_theme:
+            theme = theme_service.suggest_theme(topic)
+            print(f"[Service] Auto-suggested theme: {theme}")
 
         # 调用 AI 生成幻灯片内容
         slides_data = await self._generate_slides_with_ai(
@@ -76,6 +97,14 @@ class PresentationService:
             presentation_type=presentation_type,
             language=language,
         )
+
+        # 如果需要图片，为幻灯片添加图片
+        if include_images:
+            slides_data = await self._add_images_to_slides(
+                slides=slides_data,
+                topic=topic,
+                image_style=image_style,
+            )
 
         # 创建演示文稿记录
         presentation = Presentation(
@@ -98,6 +127,7 @@ class PresentationService:
 
         print(f"[Service] Generated presentation ID: {presentation.id}")
         print(f"[Service] User ID: {presentation.user_id}")
+        print(f"[Service] Theme: {theme}")
 
         return presentation
 
@@ -291,6 +321,155 @@ class PresentationService:
                 "layout": "thank_you"
             }
         ]
+
+    async def _add_images_to_slides(
+        self,
+        slides: List[dict],
+        topic: str,
+        image_style: str = "professional",
+    ) -> List[dict]:
+        """
+        为幻灯片添加图片
+
+        根据布局类型和内容，智能添加合适的图片。
+
+        Args:
+            slides: 幻灯片列表
+            topic: 演示文稿主题
+            image_style: 图片风格
+
+        Returns:
+            添加图片后的幻灯片列表
+        """
+        # 需要图片的布局类型
+        image_layouts = {
+            "title_cover": "cover",
+            "image_text": "concept",
+            "image_full": "landscape",
+            "two_column": "concept",
+            "gallery": "collection",
+            "thank_you": "ending",
+        }
+
+        # 可选添加图片的布局类型 (根据内容决定)
+        optional_image_layouts = {
+            "title_section": "section",
+            "timeline": "timeline",
+            "process_flow": "process",
+            "comparison": "comparison",
+        }
+
+        updated_slides = []
+
+        for i, slide in enumerate(slides):
+            layout = slide.get("layout", "bullet_points")
+            title = slide.get("title", "")
+            content = slide.get("content", "")
+
+            # 检查是否需要添加图片
+            if layout in image_layouts:
+                content_type = image_layouts[layout]
+                image_url = await self._get_image_for_slide(
+                    content_type=content_type,
+                    title=title,
+                    content=content,
+                    topic=topic,
+                    image_style=image_style,
+                )
+
+                if image_url:
+                    slide["images"] = [{
+                        "url": image_url,
+                        "alt": f"{title} - {topic}",
+                        "caption": "",
+                    }]
+
+            # 可选布局：根据内容关键词决定是否添加图片
+            elif layout in optional_image_layouts:
+                # 检查内容是否包含图片相关关键词
+                keywords = image_service.suggest_keywords_for_slide(title, content, layout)
+                if keywords and len(keywords) > 0:
+                    content_type = optional_image_layouts[layout]
+                    image_url = await self._get_image_for_slide(
+                        content_type=content_type,
+                        title=title,
+                        content=content,
+                        topic=topic,
+                        image_style=image_style,
+                    )
+
+                    if image_url:
+                        slide["images"] = [{
+                            "url": image_url,
+                            "alt": f"{title} - {topic}",
+                            "caption": "",
+                        }]
+
+            updated_slides.append(slide)
+
+        return updated_slides
+
+    async def _get_image_for_slide(
+        self,
+        content_type: str,
+        title: str,
+        content: str,
+        topic: str,
+        image_style: str = "professional",
+    ) -> Optional[str]:
+        """
+        为单个幻灯片获取图片
+
+        Args:
+            content_type: 内容类型
+            title: 幻灯片标题
+            content: 幻灯片内容
+            topic: 演示文稿主题
+            image_style: 图片风格
+
+        Returns:
+            图片 URL 或 None
+        """
+        try:
+            # 获取推荐的关键词
+            keywords = image_service.suggest_keywords_for_slide(title, content, content_type)
+
+            # 构建搜索查询
+            if keywords:
+                query = keywords[0]
+            else:
+                query = topic
+
+            # 添加风格关键词
+            style_keywords = {
+                "professional": "professional",
+                "creative": "creative colorful",
+                "minimal": "minimal clean",
+                "tech": "technology digital",
+                "nature": "nature landscape",
+                "abstract": "abstract pattern",
+            }
+            style_suffix = style_keywords.get(image_style, "")
+            if style_suffix:
+                query = f"{query} {style_suffix}"
+
+            # 搜索图片
+            result = await image_service.search_images(
+                query=query,
+                per_page=1,
+                orientation="landscape",
+            )
+
+            if result.results:
+                return result.results[0].regular_url
+
+            # 如果搜索失败，使用备用方法
+            return image_service.get_image_for_content(content_type, topic)
+
+        except Exception as e:
+            print(f"[Service] Error getting image for slide: {e}")
+            # 返回备用图片
+            return image_service.get_image_for_content(content_type, topic)
 
     async def regenerate_slide(
         self,

@@ -480,6 +480,9 @@ async def generate_presentation(
     """
     AI 生成演示文稿
     根据主题和配置自动生成幻灯片内容
+
+    - 支持自动主题推荐 (auto_theme=True)
+    - 支持自动添加图片 (include_images=True)
     """
     service = PresentationService(db)
 
@@ -496,6 +499,7 @@ async def generate_presentation(
             image_style=data.image_style,
             language=data.language,
             custom_title=data.title,
+            auto_theme=data.auto_theme,
         )
 
         return PresentationResponse(

@@ -107,6 +107,7 @@ class GenerateConfig(BaseModel):
     include_images: bool = Field(True, description="是否包含图片")
     image_style: str = Field("professional", description="图片风格")
     language: str = Field("zh-CN", description="语言")
+    auto_theme: bool = Field(False, description="是否自动推荐主题")
 
 
 class PresentationGenerateRequest(GenerateConfig):
