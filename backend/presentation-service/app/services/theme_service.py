@@ -34,6 +34,13 @@ class ThemeType(str, Enum):
     # === 学术/教育 ===
     ACADEMIC_CLASSIC = "academic_classic"  # 学术经典 - 传统正式
 
+    # === 二次元/动漫 ===
+    ANIME_DARK = "anime_dark"  # 二次元暗黑 - 深色背景 + 霓虹色
+    ANIME_CUTE = "anime_cute"  # 二次元可爱 - 粉彩色系，萌系风格
+    CYBERPUNK = "cyberpunk"  # 赛博朋克 - 紫/青/粉，科幻机甲
+    EVA_NERV = "eva_nerv"  # EVA NERV - 新世纪福音战士专用
+    RETRO_PIXEL = "retro_pixel"  # 复古像素 - 8-bit 游戏风格
+
 
 class ThemeColors(BaseModel):
     """主题颜色配置"""
@@ -387,6 +394,140 @@ THEME_CONFIGS: Dict[str, ThemeConfig] = {
         recommended_for=["学术论文", "研究报告", "教育课程", "毕业答辩"],
         preview_gradient="linear-gradient(135deg, #1f2937 0%, #4b5563 100%)",
     ),
+
+    # ============================================================
+    # 二次元/动漫主题
+    # ============================================================
+
+    # === 二次元暗黑 ===
+    ThemeType.ANIME_DARK.value: ThemeConfig(
+        type=ThemeType.ANIME_DARK,
+        name="二次元暗黑",
+        name_en="Anime Dark",
+        description="深色背景配霓虹色，适合动漫/游戏介绍",
+        colors=ThemeColors(
+            primary="#ff6b9d",  # 樱花粉
+            secondary="#c084fc",  # 紫罗兰
+            accent="#00f5ff",  # 霓虹青
+            background="#0d0d1a",  # 深夜蓝黑
+            surface="#1a1a2e",  # 暗紫表面
+            text_primary="#f0f0f0",
+            text_secondary="#a0a0b0",
+            border="#2a2a4a",
+        ),
+        fonts=ThemeFonts(
+            title="'Noto Sans SC', 'M PLUS Rounded 1c', sans-serif",
+            subtitle="'Noto Sans SC', sans-serif",
+            body="'Noto Sans SC', sans-serif",
+        ),
+        style="anime, neon, dark, vibrant",
+        recommended_for=["动漫介绍", "游戏攻略", "番剧推荐", "二次元活动"],
+        preview_gradient="linear-gradient(135deg, #0d0d1a 0%, #ff6b9d 50%, #00f5ff 100%)",
+    ),
+
+    # === 二次元可爱 ===
+    ThemeType.ANIME_CUTE.value: ThemeConfig(
+        type=ThemeType.ANIME_CUTE,
+        name="二次元可爱",
+        name_en="Anime Cute",
+        description="粉彩色系萌系风格，适合日常番/萌系内容",
+        colors=ThemeColors(
+            primary="#ff9ed2",  # 粉红
+            secondary="#b4a7ff",  # 淡紫
+            accent="#7dd3fc",  # 天蓝
+            background="#fff5f8",  # 浅粉背景
+            surface="#ffffff",
+            text_primary="#5c4d6e",  # 深紫灰
+            text_secondary="#8b7a9e",
+            border="#ffd6e7",
+        ),
+        fonts=ThemeFonts(
+            title="'Noto Sans SC', 'Kosugi Maru', sans-serif",
+            subtitle="'Noto Sans SC', sans-serif",
+            body="'Noto Sans SC', sans-serif",
+        ),
+        style="cute, pastel, kawaii, soft",
+        recommended_for=["萌系动漫", "日常番", "可爱角色", "轻松内容"],
+        preview_gradient="linear-gradient(135deg, #ff9ed2 0%, #b4a7ff 50%, #7dd3fc 100%)",
+    ),
+
+    # === 赛博朋克 ===
+    ThemeType.CYBERPUNK.value: ThemeConfig(
+        type=ThemeType.CYBERPUNK,
+        name="赛博朋克",
+        name_en="Cyberpunk",
+        description="紫/青/粉科幻风格，适合机甲/科幻番",
+        colors=ThemeColors(
+            primary="#f72585",  # 霓虹粉
+            secondary="#7209b7",  # 深紫
+            accent="#4cc9f0",  # 电光蓝
+            background="#10002b",  # 深紫黑
+            surface="#240046",  # 暗紫
+            text_primary="#e0aaff",  # 淡紫文字
+            text_secondary="#9d4edd",
+            border="#3c096c",
+        ),
+        fonts=ThemeFonts(
+            title="Orbitron, 'Noto Sans SC', sans-serif",
+            subtitle="'Noto Sans SC', sans-serif",
+            body="'Noto Sans SC', sans-serif",
+        ),
+        style="cyberpunk, sci-fi, neon, futuristic",
+        recommended_for=["科幻动漫", "机甲番", "赛博朋克", "未来世界"],
+        preview_gradient="linear-gradient(135deg, #10002b 0%, #f72585 50%, #4cc9f0 100%)",
+    ),
+
+    # === EVA NERV ===
+    ThemeType.EVA_NERV.value: ThemeConfig(
+        type=ThemeType.EVA_NERV,
+        name="EVA NERV",
+        name_en="EVA NERV",
+        description="新世纪福音战士专用配色，紫/绿/橙经典组合",
+        colors=ThemeColors(
+            primary="#5B2C6F",  # 初号机紫
+            secondary="#1ABC9C",  # 初号机绿
+            accent="#E74C3C",  # 贰号机橙红
+            background="#1C1C1C",  # NERV 黑
+            surface="#2C2C2C",  # 深灰表面
+            text_primary="#00FF00",  # 终端绿
+            text_secondary="#C0C0C0",  # 银灰
+            border="#5B2C6F",
+        ),
+        fonts=ThemeFonts(
+            title="'Noto Sans SC', Impact, sans-serif",
+            subtitle="'Noto Sans SC', sans-serif",
+            body="'Noto Sans SC', Consolas, monospace",
+        ),
+        style="eva, nerv, mecha, apocalyptic",
+        recommended_for=["EVA", "新世纪福音战士", "机甲动漫", "末世题材"],
+        preview_gradient="linear-gradient(135deg, #1C1C1C 0%, #5B2C6F 33%, #1ABC9C 66%, #E74C3C 100%)",
+    ),
+
+    # === 复古像素 ===
+    ThemeType.RETRO_PIXEL.value: ThemeConfig(
+        type=ThemeType.RETRO_PIXEL,
+        name="复古像素",
+        name_en="Retro Pixel",
+        description="8-bit 游戏风格，适合游戏/怀旧内容",
+        colors=ThemeColors(
+            primary="#ff004d",  # 红
+            secondary="#00e436",  # 绿
+            accent="#29adff",  # 蓝
+            background="#1d2b53",  # 深蓝
+            surface="#7e2553",  # 紫红
+            text_primary="#fff1e8",  # 米白
+            text_secondary="#c2c3c7",  # 浅灰
+            border="#ff77a8",  # 粉
+        ),
+        fonts=ThemeFonts(
+            title="'Press Start 2P', 'Noto Sans SC', monospace",
+            subtitle="'Noto Sans SC', monospace",
+            body="'Noto Sans SC', monospace",
+        ),
+        style="pixel, retro, 8-bit, gaming",
+        recommended_for=["游戏介绍", "复古游戏", "像素艺术", "怀旧内容"],
+        preview_gradient="linear-gradient(135deg, #1d2b53 0%, #ff004d 33%, #00e436 66%, #29adff 100%)",
+    ),
 }
 
 
@@ -416,34 +557,75 @@ class ThemeService:
         """根据场景推荐主题"""
         scenario_lower = scenario.lower()
 
-        # 场景关键词映射
-        scenario_keywords = {
-            "商务": ThemeType.MODERN_BUSINESS.value,
-            "企业": ThemeType.CORPORATE_BLUE.value,
-            "正式": ThemeType.CORPORATE_BLUE.value,
-            "科技": ThemeType.DARK_TECH.value,
-            "AI": ThemeType.DARK_TECH.value,
-            "人工智能": ThemeType.DARK_TECH.value,
-            "游戏": ThemeType.NEON_FUTURE.value,
-            "高端": ThemeType.ELEGANT_DARK.value,
-            "奢华": ThemeType.ELEGANT_DARK.value,
-            "简洁": ThemeType.MINIMAL_WHITE.value,
-            "简约": ThemeType.MINIMAL_WHITE.value,
-            "环保": ThemeType.NATURE_GREEN.value,
-            "健康": ThemeType.NATURE_GREEN.value,
-            "女性": ThemeType.SOFT_PASTEL.value,
-            "儿童": ThemeType.SOFT_PASTEL.value,
-            "创意": ThemeType.CREATIVE_COLORFUL.value,
-            "营销": ThemeType.CREATIVE_COLORFUL.value,
-            "学术": ThemeType.ACADEMIC_CLASSIC.value,
-            "论文": ThemeType.ACADEMIC_CLASSIC.value,
-            "教育": ThemeType.ACADEMIC_CLASSIC.value,
-            "时尚": ThemeType.GRADIENT_PURPLE.value,
-            "旅游": ThemeType.WARM_SUNSET.value,
-            "美食": ThemeType.WARM_SUNSET.value,
-        }
+        # 场景关键词映射 (按优先级排序，更具体的关键词放前面)
+        # 使用列表保持顺序
+        scenario_keywords = [
+            # === 二次元/动漫 (优先匹配，因为更具体) ===
+            ("萌系", ThemeType.ANIME_CUTE.value),
+            ("萌", ThemeType.ANIME_CUTE.value),
+            ("可爱", ThemeType.ANIME_CUTE.value),
+            ("日常番", ThemeType.ANIME_CUTE.value),
+            ("kawaii", ThemeType.ANIME_CUTE.value),
+            ("eva", ThemeType.EVA_NERV.value),
+            ("福音战士", ThemeType.EVA_NERV.value),
+            ("nerv", ThemeType.EVA_NERV.value),
+            ("初号机", ThemeType.EVA_NERV.value),
+            ("赛博朋克", ThemeType.CYBERPUNK.value),
+            ("cyberpunk", ThemeType.CYBERPUNK.value),
+            ("机甲", ThemeType.CYBERPUNK.value),
+            ("像素", ThemeType.RETRO_PIXEL.value),
+            ("8bit", ThemeType.RETRO_PIXEL.value),
+            ("复古", ThemeType.RETRO_PIXEL.value),
+            ("动漫", ThemeType.ANIME_DARK.value),
+            ("二次元", ThemeType.ANIME_DARK.value),
+            ("番剧", ThemeType.ANIME_DARK.value),
+            ("anime", ThemeType.ANIME_DARK.value),
+            ("acg", ThemeType.ANIME_DARK.value),
+            # === 简约 (优先于报告) ===
+            ("简洁", ThemeType.MINIMAL_WHITE.value),
+            ("简约", ThemeType.MINIMAL_WHITE.value),
+            # === 科技 (优先于科幻) ===
+            ("科技", ThemeType.DARK_TECH.value),
+            ("AI", ThemeType.DARK_TECH.value),
+            ("人工智能", ThemeType.DARK_TECH.value),
+            ("编程", ThemeType.DARK_TECH.value),
+            ("代码", ThemeType.DARK_TECH.value),
+            # === 科幻 ===
+            ("科幻", ThemeType.CYBERPUNK.value),
+            # === 游戏/电竞 ===
+            ("游戏", ThemeType.RETRO_PIXEL.value),
+            ("电竞", ThemeType.NEON_FUTURE.value),
+            # === 商务/企业 ===
+            ("商务", ThemeType.MODERN_BUSINESS.value),
+            ("企业", ThemeType.CORPORATE_BLUE.value),
+            ("正式", ThemeType.CORPORATE_BLUE.value),
+            ("报告", ThemeType.CORPORATE_BLUE.value),
+            # === 高端 ===
+            ("高端", ThemeType.ELEGANT_DARK.value),
+            ("奢华", ThemeType.ELEGANT_DARK.value),
+            # === 自然/健康 ===
+            ("环保", ThemeType.NATURE_GREEN.value),
+            ("健康", ThemeType.NATURE_GREEN.value),
+            ("自然", ThemeType.NATURE_GREEN.value),
+            # === 女性/儿童 ===
+            ("女性", ThemeType.SOFT_PASTEL.value),
+            ("儿童", ThemeType.SOFT_PASTEL.value),
+            # === 创意/营销 ===
+            ("创意", ThemeType.CREATIVE_COLORFUL.value),
+            ("营销", ThemeType.CREATIVE_COLORFUL.value),
+            # === 学术 ===
+            ("学术", ThemeType.ACADEMIC_CLASSIC.value),
+            ("论文", ThemeType.ACADEMIC_CLASSIC.value),
+            ("教育", ThemeType.ACADEMIC_CLASSIC.value),
+            ("答辩", ThemeType.ACADEMIC_CLASSIC.value),
+            # === 时尚 ===
+            ("时尚", ThemeType.GRADIENT_PURPLE.value),
+            # === 旅游/美食 ===
+            ("旅游", ThemeType.WARM_SUNSET.value),
+            ("美食", ThemeType.WARM_SUNSET.value),
+        ]
 
-        for keyword, theme in scenario_keywords.items():
+        for keyword, theme in scenario_keywords:
             if keyword in scenario_lower:
                 return theme
 

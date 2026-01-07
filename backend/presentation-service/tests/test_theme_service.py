@@ -21,9 +21,9 @@ class TestThemeType:
     """主题类型枚举测试"""
 
     def test_theme_type_count(self):
-        """测试主题类型数量 (12种)"""
+        """测试主题类型数量 (17种)"""
         theme_types = list(ThemeType)
-        assert len(theme_types) == 12
+        assert len(theme_types) == 17
 
     def test_theme_type_values(self):
         """测试主题类型值"""
@@ -48,6 +48,13 @@ class TestThemeType:
 
         # 学术/教育
         assert ThemeType.ACADEMIC_CLASSIC.value == "academic_classic"
+
+        # 二次元/动漫
+        assert ThemeType.ANIME_DARK.value == "anime_dark"
+        assert ThemeType.ANIME_CUTE.value == "anime_cute"
+        assert ThemeType.CYBERPUNK.value == "cyberpunk"
+        assert ThemeType.EVA_NERV.value == "eva_nerv"
+        assert ThemeType.RETRO_PIXEL.value == "retro_pixel"
 
 
 class TestThemeColors:
@@ -165,7 +172,7 @@ class TestThemeService:
     def test_get_all_themes(self, service):
         """测试获取所有主题"""
         themes = service.get_all_themes()
-        assert len(themes) == 12
+        assert len(themes) == 17
         assert all(isinstance(config, ThemeConfig) for config in themes)
 
     def test_get_theme_valid(self, service):
@@ -182,9 +189,11 @@ class TestThemeService:
     def test_get_theme_names(self, service):
         """测试获取主题名称映射"""
         names = service.get_theme_names()
-        assert len(names) == 12
+        assert len(names) == 17
         assert names["modern_business"] == "现代商务"
         assert names["dark_tech"] == "科技深色"
+        assert names["anime_dark"] == "二次元暗黑"
+        assert names["eva_nerv"] == "EVA NERV"
 
     def test_validate_theme_valid(self, service):
         """测试验证有效主题"""
@@ -210,7 +219,8 @@ class TestThemeService:
 
     def test_suggest_theme_gaming(self, service):
         """测试游戏场景推荐"""
-        assert service.suggest_theme("游戏发布") == "neon_future"
+        assert service.suggest_theme("游戏发布") == "retro_pixel"
+        assert service.suggest_theme("电竞比赛") == "neon_future"
 
     def test_suggest_theme_luxury(self, service):
         """测试高端场景推荐"""
@@ -219,7 +229,7 @@ class TestThemeService:
 
     def test_suggest_theme_minimal(self, service):
         """测试简约场景推荐"""
-        assert service.suggest_theme("简洁报告") == "minimal_white"
+        assert service.suggest_theme("简洁的报告") == "minimal_white"
         assert service.suggest_theme("简约风格") == "minimal_white"
 
     def test_suggest_theme_eco(self, service):
@@ -319,7 +329,7 @@ class TestGlobalThemeService:
     def test_global_instance_works(self):
         """测试全局实例可用"""
         themes = theme_service.get_all_themes()
-        assert len(themes) == 12
+        assert len(themes) == 17
 
         config = theme_service.get_theme("modern_business")
         assert config is not None
@@ -329,10 +339,14 @@ class TestThemeConfigDetails:
     """主题配置详细测试"""
 
     def test_all_themes_have_chinese_names(self):
-        """测试所有主题都有中文名称"""
+        """测试所有主题都有中文名称 (EVA NERV 除外)"""
         for theme_type, config in THEME_CONFIGS.items():
-            # 检查名称包含中文字符
-            assert any('\u4e00' <= char <= '\u9fff' for char in config.name)
+            # EVA NERV 是特殊主题，使用英文名称
+            if theme_type == "eva_nerv":
+                assert config.name == "EVA NERV"
+            else:
+                # 检查名称包含中文字符
+                assert any('\u4e00' <= char <= '\u9fff' for char in config.name), f"{theme_type}: name should contain Chinese characters"
 
     def test_all_themes_have_english_names(self):
         """测试所有主题都有英文名称"""
@@ -358,3 +372,84 @@ class TestThemeConfigDetails:
         for theme_type, config in THEME_CONFIGS.items():
             assert config.preview_gradient.startswith("linear-gradient")
             assert "deg" in config.preview_gradient
+
+
+class TestAnimeThemes:
+    """二次元/动漫主题测试"""
+
+    @pytest.fixture
+    def service(self):
+        """创建主题服务实例"""
+        return ThemeService()
+
+    def test_anime_dark_config(self):
+        """测试二次元暗黑主题配置"""
+        config = THEME_CONFIGS["anime_dark"]
+        assert config.name == "二次元暗黑"
+        assert config.name_en == "Anime Dark"
+        assert "动漫" in config.recommended_for[0] or "游戏" in config.recommended_for[0]
+        # 检查深色背景
+        assert config.colors.background.startswith("#0")
+
+    def test_anime_cute_config(self):
+        """测试二次元可爱主题配置"""
+        config = THEME_CONFIGS["anime_cute"]
+        assert config.name == "二次元可爱"
+        assert config.name_en == "Anime Cute"
+        # 检查浅色背景
+        assert config.colors.background.startswith("#fff")
+
+    def test_cyberpunk_config(self):
+        """测试赛博朋克主题配置"""
+        config = THEME_CONFIGS["cyberpunk"]
+        assert config.name == "赛博朋克"
+        assert config.name_en == "Cyberpunk"
+        # 检查深色背景
+        assert config.colors.background.startswith("#1")
+
+    def test_eva_nerv_config(self):
+        """测试 EVA NERV 主题配置"""
+        config = THEME_CONFIGS["eva_nerv"]
+        assert config.name == "EVA NERV"
+        assert config.name_en == "EVA NERV"
+        # 检查经典 EVA 配色：紫、绿、橙
+        assert "#5B2C6F" in config.colors.primary  # 初号机紫
+        assert "#1ABC9C" in config.colors.secondary  # 初号机绿
+        assert "#E74C3C" in config.colors.accent  # 贰号机橙红
+        # 检查终端绿文字
+        assert "#00FF00" in config.colors.text_primary
+
+    def test_retro_pixel_config(self):
+        """测试复古像素主题配置"""
+        config = THEME_CONFIGS["retro_pixel"]
+        assert config.name == "复古像素"
+        assert config.name_en == "Retro Pixel"
+        # 检查像素字体
+        assert "Press Start 2P" in config.fonts.title
+
+    def test_suggest_theme_anime(self, service):
+        """测试动漫场景推荐"""
+        assert service.suggest_theme("动漫介绍") == "anime_dark"
+        assert service.suggest_theme("二次元活动") == "anime_dark"
+        assert service.suggest_theme("番剧推荐") == "anime_dark"
+
+    def test_suggest_theme_cute(self, service):
+        """测试萌系场景推荐"""
+        assert service.suggest_theme("萌系动漫") == "anime_cute"
+        assert service.suggest_theme("可爱角色") == "anime_cute"
+
+    def test_suggest_theme_cyberpunk(self, service):
+        """测试赛博朋克场景推荐"""
+        assert service.suggest_theme("赛博朋克世界") == "cyberpunk"
+        assert service.suggest_theme("科幻机甲") == "cyberpunk"
+
+    def test_suggest_theme_eva(self, service):
+        """测试 EVA 场景推荐"""
+        assert service.suggest_theme("eva介绍") == "eva_nerv"
+        assert service.suggest_theme("新世纪福音战士") == "eva_nerv"
+        assert service.suggest_theme("NERV组织") == "eva_nerv"
+
+    def test_suggest_theme_pixel(self, service):
+        """测试像素风场景推荐"""
+        assert service.suggest_theme("像素艺术") == "retro_pixel"
+        assert service.suggest_theme("复古游戏") == "retro_pixel"

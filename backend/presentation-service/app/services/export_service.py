@@ -546,8 +546,14 @@ class ExportService:
         elif layout == LayoutType.TWO_COLUMN.value:
             # 双栏布局
             html = f'                <div class="two-column">\n'
-            html += f'                    <div>\n{self._markdown_to_html(content)}\n                    </div>\n'
-            html += f'                    <div>\n{image_html or "<p>右侧内容</p>"}\n                    </div>\n'
+            # 如果有图片，左侧内容右侧图片；否则将内容分成两列
+            if image_html:
+                html += f'                    <div>\n{self._markdown_to_html(content)}\n                    </div>\n'
+                html += f'                    <div>\n{image_html}\n                    </div>\n'
+            else:
+                parts = self._split_content_for_columns(content, 2)
+                html += f'                    <div>\n{self._markdown_to_html(parts[0])}\n                    </div>\n'
+                html += f'                    <div>\n{self._markdown_to_html(parts[1] if len(parts) > 1 else "")}\n                    </div>\n'
             html += f'                </div>\n'
 
         elif layout == LayoutType.THREE_COLUMN.value:
