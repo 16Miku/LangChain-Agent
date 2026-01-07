@@ -3001,6 +3001,7 @@ class PresentationConfig(BaseModel):
 | 6.0 | 2026-01-07 | Phase 5.9.2 完成：二次元/动漫主题 (anime_dark/anime_cute/cyberpunk/eva_nerv/retro_pixel) + 智能主题匹配 | Claude Code |
 | 6.1 | 2026-01-07 | Phase 5.9.3 完成：AI 生成流程集成图片服务 + 自动主题推荐 (auto_theme 参数) | Claude Code |
 | 6.2 | 2026-01-07 | 前端主题选择器更新：17 种主题分类显示 + Next.js rewrites 代理配置 + 前后端联调问题解决方案文档 | Claude Code |
+| 6.3 | 2026-01-07 | Bug 修复：PPT 生成时图片不显示 (前端 includeImages 参数从 false 改为 true) | Claude Code |
 
 ---
 > **文档状态**: ✅ Phase 5.9 美学优化与 Bug 修复已完成

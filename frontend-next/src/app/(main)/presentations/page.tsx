@@ -250,7 +250,8 @@ function CreatePresentationDialog({
           targetAudience: 'general',
           presentationType: 'informative',
           theme: 'modern_business',
-          includeImages: false,
+          includeImages: true,  // 启用图片生成
+          imageStyle: 'professional',
           language: 'zh-CN',
         });
         setTopic('');
