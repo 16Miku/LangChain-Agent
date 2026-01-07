@@ -4,13 +4,14 @@
 
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-const PRESENTATION_API_URL = process.env.NEXT_PUBLIC_PRESENTATION_URL || 'http://127.0.0.1:8005';
+// 使用 Next.js 代理路径，绕过浏览器代理
+// 浏览器请求 /api/v1/presentations -> Next.js 服务端转发到 -> http://127.0.0.1:8005/api/v1/presentations
+const PRESENTATION_API_URL = '';  // 空字符串表示使用相对路径，走 Next.js 代理
 
 // 创建演示文稿服务专用客户端
 const presentationClient: AxiosInstance = axios.create({
   baseURL: PRESENTATION_API_URL,
   timeout: 120000, // AI 生成可能需要更长时间
-  proxy: false, // 禁用代理，避免 Clash 等软件干扰本地请求
   headers: {
     'Content-Type': 'application/json',
   },

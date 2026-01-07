@@ -62,6 +62,7 @@ My-Chat-LangChain (Stream-Agent) 是一个全栈 AI 研究助理应用，基于 
 | chat-service | 8002 | 聊天核心服务 (LangGraph Agent) |
 | whisper-service | 8003 | 语音识别服务 (可选) |
 | rag-service | 8004 | RAG 检索服务 |
+| presentation-service | 8005 | 演示文稿生成服务 |
 
 ## 开发命令
 
@@ -81,6 +82,9 @@ cd backend/rag-service && uvicorn app.main:app --port 8004 --reload
 
 # 启动 Whisper 服务 (可选)
 cd backend/whisper-service && uvicorn app.main:app --port 8003 --reload
+
+# 启动 Presentation 服务
+cd backend/presentation-service && uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload
 
 # ============ 前端 ============
 cd frontend-next && npm run dev
@@ -256,3 +260,74 @@ JWT_ALGORITHM=HS256
 
 - 开发计划: `Note/Plan-V9.md`
 - 部署方案: Plan-V9.md 第八章 (Render + Supabase)
+
+## 常见问题与解决方案
+
+### 前后端联调问题
+
+#### 问题 1: 浏览器代理拦截本地请求
+
+**症状**: 前端无法连接后端服务，curl 返回 `502 Bad Gateway`
+
+**原因**: 系统代理软件 (如 Clash Verge) 拦截了发往 `127.0.0.1` 的请求
+
+**解决方案**:
+1. **Next.js rewrites 代理** (推荐): 在 `next.config.ts` 中配置 rewrites，让 Next.js 服务端转发请求
+   ```typescript
+   async rewrites() {
+     return [
+       {
+         source: "/api/v1/:path*",
+         destination: "http://127.0.0.1:8005/api/v1/:path*",
+       },
+     ];
+   }
+   ```
+2. **前端 API 客户端使用相对路径**: `baseURL: ''` 而不是 `http://127.0.0.1:8005`
+
+#### 问题 2: 端口被旧进程占用
+
+**症状**: 服务启动成功但请求超时，端口显示 OPEN 但 HTTP 无响应
+
+**诊断命令**:
+```bash
+netstat -ano | findstr ":8005" | findstr "LISTENING"
+```
+
+**原因**: 旧的 Python 进程没有完全关闭，在同一端口上监听但不处理请求
+
+**解决方案**:
+```bash
+# 1. 查找占用端口的进程
+netstat -ano | findstr ":8005" | findstr "LISTENING"
+
+# 2. 查看进程详情
+powershell -Command "Get-Process -Id <PID> | Select-Object Id, ProcessName, Path"
+
+# 3. 杀掉旧进程
+powershell -Command "Stop-Process -Id <PID> -Force"
+
+# 4. 重启服务 (使用 0.0.0.0 绑定)
+uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload
+```
+
+#### 问题 3: 测试后端连通性
+
+**使用 Python 绕过代理测试**:
+```python
+import urllib.request
+
+no_proxy_handler = urllib.request.ProxyHandler({})
+opener = urllib.request.build_opener(no_proxy_handler)
+
+req = urllib.request.Request('http://127.0.0.1:8005/health')
+response = opener.open(req, timeout=5)
+print(f'Status: {response.status}')
+print(f'Response: {response.read().decode()}')
+```
+
+### 服务启动注意事项
+
+1. **presentation-service 必须使用 `--host 0.0.0.0`**: 避免只绑定 `127.0.0.1` 导致的连接问题
+2. **启动服务前检查端口占用**: 使用 `netstat -ano | findstr ":<PORT>"` 检查
+3. **重启服务时先杀掉旧进程**: 避免端口冲突

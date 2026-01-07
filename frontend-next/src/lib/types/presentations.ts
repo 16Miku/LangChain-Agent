@@ -48,6 +48,24 @@ export interface Presentation {
 
 export type PresentationTheme =
   | 'modern_business'
+  | 'corporate_blue'
+  | 'elegant_dark'
+  | 'dark_tech'
+  | 'gradient_purple'
+  | 'neon_future'
+  | 'minimal_white'
+  | 'nature_green'
+  | 'soft_pastel'
+  | 'creative_colorful'
+  | 'warm_sunset'
+  | 'academic_classic'
+  // 二次元/动漫主题
+  | 'anime_dark'
+  | 'anime_cute'
+  | 'cyberpunk'
+  | 'eva_nerv'
+  | 'retro_pixel'
+  // 兼容旧主题名称
   | 'creative'
   | 'minimalist'
   | 'dark_professional'
