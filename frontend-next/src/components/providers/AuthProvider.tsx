@@ -4,7 +4,7 @@
 // Auth Provider - Authentication Context
 // ============================================================
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores';
 
@@ -23,16 +23,11 @@ const publicRoutes = ['/login', '/register', '/'];
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false);
-  const initRef = useRef(false);
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // 只在首次挂载时执行初始化逻辑
-    if (initRef.current) return;
-    initRef.current = true;
-
     // Check if there's a stored token on mount
     const storedToken = localStorage.getItem('accessToken');
 
@@ -45,13 +40,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
     }
 
-    // 使用 setTimeout 包裹以避免同步 setState 警告
-    // 这是一个初始化模式，在挂载完成后设置状态
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 0);
-
-    return () => clearTimeout(timer);
+    // 设置初始化完成状态
+    setIsInitialized(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
