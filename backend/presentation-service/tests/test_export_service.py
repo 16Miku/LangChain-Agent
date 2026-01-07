@@ -183,6 +183,17 @@ class TestExportService:
     def test_markdown_to_html_list(self, service):
         """测试列表 Markdown 转 HTML"""
         html = service._markdown_to_html("- 项目1\n- 项目2\n- 项目3")
+        assert "<ul>" in html  # 确保有开始标签
+        assert "<li>项目1</li>" in html
+        assert "<li>项目2</li>" in html
+        assert "<li>项目3</li>" in html
+        assert "</ul>" in html
+
+    def test_markdown_to_html_list_with_literal_newline(self, service):
+        """测试字面量换行符 \\n 的处理"""
+        # 模拟从数据库读取的字面量 \n
+        html = service._markdown_to_html("- 项目1\\n- 项目2\\n- 项目3")
+        assert "<ul>" in html
         assert "<li>项目1</li>" in html
         assert "<li>项目2</li>" in html
         assert "<li>项目3</li>" in html
@@ -219,7 +230,7 @@ class TestExportService:
         }
 
         html = service._generate_slide_html(slide, 0)
-        assert "<h2>封面标题</h2>" in html
+        assert "<h1>封面标题</h1>" in html  # 封面页使用 h1
         assert "title-cover" in html
         assert "background-color: #ffffff" in html
 

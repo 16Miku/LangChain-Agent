@@ -493,9 +493,12 @@ class ExportService:
         # 开始标签
         html = f'<section data-layout="{layout}"{bg_style}>\n'
 
-        # 标题
+        # 标题 - 封面页使用 h1，其他页面使用 h2
         if title:
-            html += f"                <h2>{title}</h2>\n"
+            if layout == "title_cover":
+                html += f"                <h1>{title}</h1>\n"
+            else:
+                html += f"                <h2>{title}</h2>\n"
 
         # 根据布局生成内容
         html += self._generate_content_by_layout(layout, content, images, slide)
@@ -742,7 +745,9 @@ class ExportService:
         if not markdown:
             return ""
 
-        html = markdown
+        # 先处理字面量 \n 转换为实际换行符
+        markdown = markdown.replace("\\n", "\n")
+
         lines = markdown.split("\n")
         result = []
         in_list = False
@@ -752,18 +757,26 @@ class ExportService:
 
             # 标题
             if stripped.startswith("### "):
+                if in_list:
+                    result.append("</ul>")
+                    in_list = False
                 result.append(f"<h3>{self._escape_html(stripped[4:])}</h3>")
-                in_list = False
             elif stripped.startswith("## "):
+                if in_list:
+                    result.append("</ul>")
+                    in_list = False
                 result.append(f"<h2>{self._escape_html(stripped[3:])}</h2>")
-                in_list = False
             elif stripped.startswith("# "):
+                if in_list:
+                    result.append("</ul>")
+                    in_list = False
                 result.append(f"<h1>{self._escape_html(stripped[2:])}</h1>")
-                in_list = False
 
             # 列表
             elif stripped.startswith(("- ", "* ", "+ ")):
-                in_list = True
+                if not in_list:
+                    result.append("<ul>")
+                    in_list = True
                 item = stripped[2:]
                 result.append(f"<li>{self._escape_html(item)}</li>")
 
@@ -772,7 +785,6 @@ class ExportService:
                 if in_list:
                     result.append("</ul>")
                     in_list = False
-                result.append("<br>")
 
             # 普通段落
             else:
@@ -781,6 +793,7 @@ class ExportService:
                     in_list = False
                 result.append(f"<p>{self._escape_html(stripped)}</p>")
 
+        # 确保列表正确关闭
         if in_list:
             result.append("</ul>")
 
