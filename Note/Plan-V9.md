@@ -2448,11 +2448,78 @@ CREATE INDEX idx_slide_versions_presentation ON slide_versions(presentation_id);
 - [x] 高级主题系统 (12 种精品主题) ✅ 40项测试通过
 - [ ] Markdown 高级语法支持 (待后续)
 
-**Phase 5.8: 导出与协作**
-- [ ] 导出 HTML
+**Phase 5.8: 导出与协作** ✅ 已完成 (2026-01-07)
+- [x] 导出 HTML (含 Reveal.js / 简洁版) ✅ 34项测试通过
+- [x] 前端导出按钮集成 ✅
+- [x] 浏览器预览功能 ✅
 - [ ] 导出 PDF (可选)
-- [ ] 从聊天快速跳转
+- [ ] 从聊天快速跳转 (可选)
 - [ ] 分享链接 (可选)
+
+**Phase 5.9: 美学优化与 Bug 修复** 🚧 进行中
+
+> 基于用户测试反馈，发现以下问题需要修复和优化
+
+**5.9.1 Bug 修复 (高优先级)**
+
+- [ ] HTML 结构错误：列表标签不完整 (缺少 `<ul>` 开始标签)
+- [ ] Markdown 换行符解析：`\n` 被当作文本输出而非换行
+- [ ] 布局内容缺失：两栏/三栏布局右侧内容为占位符
+- [ ] 封面页标题层级：应使用 `<h1>` 而非 `<h2>`
+
+**5.9.2 主题系统增强**
+
+当前问题：用户指定"二次元风格"但系统使用默认商务主题
+
+新增主题：
+| 主题 ID | 名称 | 适用场景 | 配色方案 |
+|---------|------|----------|----------|
+| anime_dark | 二次元暗黑 | 动漫/游戏介绍 | 深色背景 + 霓虹色 |
+| anime_cute | 二次元可爱 | 萌系/日常番 | 粉彩色系 |
+| cyberpunk | 赛博朋克 | 科幻/机甲番 | 紫色/青色/粉色 |
+| eva_nerv | EVA NERV | 新世纪福音战士专用 | 紫/绿/橙/黑红 |
+| retro_pixel | 复古像素 | 游戏/怀旧 | 8-bit 色彩 |
+
+EVA 专用配色方案：
+```css
+:root {
+    --eva-purple: #5B2C6F;      /* 初号机紫 */
+    --eva-green: #1ABC9C;       /* 初号机绿 */
+    --eva-orange: #E74C3C;      /* 贰号机橙红 */
+    --eva-blue: #3498DB;        /* 零号机蓝 */
+    --nerv-red: #C0392B;        /* NERV 红 */
+    --nerv-black: #1C1C1C;      /* 背景黑 */
+    --terminal-green: #00FF00;  /* 终端绿 */
+}
+```
+
+**5.9.3 图片服务集成**
+
+当前问题：AI 生成时未调用图片服务，导致"图文并茂"需求无法满足
+
+改进方案：
+1. AI 生成流程中自动调用 ImageService
+2. 根据幻灯片内容智能推荐图片关键词
+3. 支持用户指定图片风格 (写实/插画/二次元)
+4. 图片布局自动适配 (全屏/半屏/缩略图)
+
+**5.9.4 智能主题匹配**
+
+根据用户输入自动推荐主题：
+| 关键词 | 推荐主题 |
+|--------|----------|
+| 动漫/二次元/番剧 | anime_dark / anime_cute |
+| 商务/企业/报告 | modern_business / corporate_blue |
+| 科技/AI/编程 | dark_tech / neon_future |
+| 学术/论文/研究 | academic_classic / minimal_white |
+| 游戏/电竞 | cyberpunk / retro_pixel |
+
+**5.9.5 视觉效果增强**
+
+- [ ] 添加幻灯片切换动画选项
+- [ ] 支持背景图片/渐变
+- [ ] 添加装饰元素 (几何图形/线条)
+- [ ] 代码块语法高亮优化
 
 ---
 
@@ -2929,8 +2996,9 @@ class PresentationConfig(BaseModel):
 | 5.5 | 2026-01-07 | Bug 修复：AuthProvider 初始化问题 (React 18 Strict Mode 下 useRef 导致页面卡在 Loading) | Claude Code |
 | 5.6 | 2026-01-07 | Bug 修复：导出 HTML 中文文件名编码 (RFC 5987 filename* 参数支持 UTF-8) | Claude Code |
 | 5.7 | 2026-01-07 | Bug 修复：JWT_SECRET 不一致 (presentation-service 与 auth-service 密钥同步) | Claude Code |
+| 5.8 | 2026-01-07 | Phase 5.9 规划：美学优化与 Bug 修复 (HTML结构/主题增强/图片集成/智能匹配) | Claude Code |
 
 ---
-> **文档状态**: ✅ Phase 5.8 导出与协作功能已完成并测试通过
+> **文档状态**: 🚧 Phase 5.9 美学优化与 Bug 修复进行中
 > **最后更新**: 2026-01-07
-> **下一步**: Phase 5 AI 生成 PPT 功能全部完成，可进入生产部署阶段
+> **下一步**: 修复 HTML 结构错误和 Markdown 解析问题
