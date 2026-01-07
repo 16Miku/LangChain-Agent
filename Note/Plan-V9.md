@@ -2926,8 +2926,11 @@ class PresentationConfig(BaseModel):
 | 5.2 | 2026-01-06 | Phase 5.7 完成：高级生成功能 (布局引擎19种/图片服务Unsplash/主题系统12种/测试113项全通过) | Claude Code |
 | 5.3 | 2026-01-06 | Phase 5.8 完成：导出 HTML 功能 (ExportService + 导出API + 34项测试全通过) | Claude Code |
 | 5.4 | 2026-01-06 | Phase 5.8 完成：前端导出按钮集成 (下拉菜单/下载HTML/浏览器预览) | Claude Code |
+| 5.5 | 2026-01-07 | Bug 修复：AuthProvider 初始化问题 (React 18 Strict Mode 下 useRef 导致页面卡在 Loading) | Claude Code |
+| 5.6 | 2026-01-07 | Bug 修复：导出 HTML 中文文件名编码 (RFC 5987 filename* 参数支持 UTF-8) | Claude Code |
+| 5.7 | 2026-01-07 | Bug 修复：JWT_SECRET 不一致 (presentation-service 与 auth-service 密钥同步) | Claude Code |
 
 ---
-> **文档状态**: ✅ Phase 5.8 导出与协作功能已完成
-> **最后更新**: 2026-01-06
-> **下一步**: 从聊天快速跳转到演示文稿编辑器 / 分享链接 (可选)
+> **文档状态**: ✅ Phase 5.8 导出与协作功能已完成并测试通过
+> **最后更新**: 2026-01-07
+> **下一步**: Phase 5 AI 生成 PPT 功能全部完成，可进入生产部署阶段
