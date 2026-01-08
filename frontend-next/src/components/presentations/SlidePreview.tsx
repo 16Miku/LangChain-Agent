@@ -197,32 +197,25 @@ export function SlidePreview({ slide, theme, className }: SlidePreviewProps) {
       {isCoverPage && (
         <div className="h-full flex flex-col items-center justify-center px-12 py-8">
           {/* 装饰线 - 上 */}
-          <div className={cn('w-24 h-1 rounded-full mb-8', themeStyle.decorLine)} />
+          <div className={cn('w-24 h-1.5 rounded-full mb-8', themeStyle.decorLine)} />
 
           {/* 主标题 */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-6 leading-tight">
             {slide.title}
           </h1>
 
-          {/* 副标题/内容 */}
+          {/* 副标题/内容 - 合并为单一描述文字 */}
           {contentLines.length > 0 && (
-            <div className="text-center space-y-2 mt-4">
-              {contentLines.map((line, i) => (
-                <p
-                  key={i}
-                  className={cn(
-                    'text-lg md:text-xl opacity-80',
-                    themeStyle.accent
-                  )}
-                >
-                  {line.replace(/^- /gm, '')}
-                </p>
-              ))}
-            </div>
+            <p className={cn(
+              'text-xl md:text-2xl text-center max-w-3xl opacity-80 mt-4 leading-relaxed',
+              themeStyle.accent
+            )}>
+              {contentLines.map(line => line.replace(/^- /gm, '')).join(' · ')}
+            </p>
           )}
 
           {/* 装饰线 - 下 */}
-          <div className={cn('w-16 h-1 rounded-full mt-8', themeStyle.decorLine, 'opacity-60')} />
+          <div className={cn('w-16 h-1 rounded-full mt-10', themeStyle.decorLine, 'opacity-60')} />
         </div>
       )}
 
@@ -305,30 +298,30 @@ export function SlidePreview({ slide, theme, className }: SlidePreviewProps) {
 
       {/* 普通内容页布局 (bullet_points, two_column, image_text 等) */}
       {!isCoverPage && !isSectionPage && !isQuotePage && !isThankYouPage && (
-        <div className="h-full flex flex-col px-10 py-8">
+        <div className="h-full flex flex-col px-12 py-8">
           {/* 标题区域 */}
-          <div className="mb-6">
+          <div className="mb-8">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">
               {slide.title}
             </h2>
             {/* 标题下装饰线 */}
-            <div className={cn('w-16 h-1 rounded-full', themeStyle.decorLine)} />
+            <div className={cn('w-20 h-1.5 rounded-full', themeStyle.decorLine)} />
           </div>
 
           {/* 内容区域 - 优化间距和排版 */}
           <div className="flex-1 overflow-hidden">
-            <ul className="space-y-4">
+            <ul className="space-y-5">
               {contentLines.map((line, i) => (
                 <li
                   key={i}
-                  className="flex items-start text-lg leading-relaxed"
+                  className="flex items-start text-lg md:text-xl leading-relaxed"
                 >
-                  {/* 自定义列表标记 */}
+                  {/* 自定义列表标记 - 更大更醒目 */}
                   <span className={cn(
-                    'inline-block w-2 h-2 rounded-full mt-2.5 mr-4 flex-shrink-0',
+                    'inline-block w-3 h-3 rounded-full mt-2 mr-5 flex-shrink-0 shadow-sm',
                     themeStyle.decorLine
                   )} />
-                  <span className={cn('flex-1', themeStyle.accent)}>
+                  <span className={cn('flex-1', themeStyle.text)}>
                     {line.replace(/^- /gm, '')}
                   </span>
                 </li>
