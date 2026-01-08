@@ -90,8 +90,15 @@ cd backend/presentation-service && uvicorn app.main:app --host 0.0.0.0 --port 80
 cd frontend-next && npm run dev
 
 # ============ 测试 ============
-# Claude Code 自动执行 (使用完整路径)
+# 运行单个服务的所有测试
 cd backend/rag-service && A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/ -v --tb=short
+cd backend/presentation-service && A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/ -v --tb=short
+
+# 运行单个测试文件
+A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_theme_service.py -v --tb=short
+
+# 运行单个测试函数
+A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_theme_service.py::TestThemeService::test_get_theme -v
 
 # 或手动执行
 conda activate My-Chat-LangChain
@@ -126,11 +133,24 @@ LangChain-Agent/
 │   │       │   ├── bm25_service.py       # BM25 关键词检索
 │   │       │   └── search_service.py     # 混合检索
 │   │       └── tests/         # 自动化测试
+│   ├── presentation-service/  # 演示文稿微服务
+│   │   └── app/
+│   │       ├── services/      # 核心服务
+│   │       │   ├── presentation_service.py  # AI 生成 PPT
+│   │       │   ├── theme_service.py         # 17 种主题系统
+│   │       │   ├── layout_engine.py         # 19 种布局引擎
+│   │       │   ├── image_service.py         # 图片服务 (Picsum)
+│   │       │   ├── export_service.py        # HTML 导出
+│   │       │   └── intent_parser.py         # AI 对话式修改
+│   │       └── tests/         # 172 项自动化测试
 │   └── whisper-service/       # 语音识别微服务 (可选)
 ├── frontend-next/             # Next.js 14 前端
 │   ├── src/
 │   │   ├── app/               # App Router 页面
 │   │   ├── components/        # React 组件
+│   │   │   └── presentations/ # PPT 相关组件
+│   │   │       ├── SlidePreview.tsx      # 幻灯片预览
+│   │   │       └── PresentationPlayer.tsx # 演示播放器
 │   │   ├── stores/            # Zustand 状态管理
 │   │   └── lib/               # 工具函数、API
 │   └── public/
@@ -146,6 +166,7 @@ LangChain-Agent/
 | **聊天** | `chat-service/app/services/` | LangGraph Agent、流式响应 |
 | **RAG** | `rag-service/app/services/` | 混合检索、文档解析、引用追溯 |
 | **向量存储** | `pgvector_service.py` | PostgreSQL + pgvector / SQLite (测试) |
+| **演示文稿** | `presentation-service/app/services/` | AI 生成 PPT、主题、布局、导出 |
 | **前端** | `frontend-next/src/` | Next.js 14 + shadcn/ui |
 
 ## 环境变量
