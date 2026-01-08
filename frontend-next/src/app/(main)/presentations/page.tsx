@@ -250,8 +250,7 @@ function CreatePresentationDialog({
           targetAudience: 'general',
           presentationType: 'informative',
           theme: 'modern_business',
-          includeImages: true,  // 启用图片生成
-          imageStyle: 'professional',
+          includeImages: false,  // 暂时禁用图片 (Picsum 随机图片与内容不相关)
           language: 'zh-CN',
         });
         setTopic('');
