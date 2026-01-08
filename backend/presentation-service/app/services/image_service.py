@@ -207,8 +207,10 @@ class ImageService:
         count: int = 10,
     ) -> ImageSearchResponse:
         """
-        获取备用图片 (使用 Unsplash Source)
-        无需 API Key，但功能有限
+        获取备用图片 (使用 Picsum Photos)
+        无需 API Key，稳定可靠
+
+        注意: Unsplash Source 已于 2023 年停止服务，改用 Picsum Photos
         """
         results = []
         keywords = self._get_related_keywords(original_query)
@@ -216,19 +218,23 @@ class ImageService:
         for i in range(min(count, len(keywords) * 2)):
             keyword = keywords[i % len(keywords)]
 
-            # Unsplash Source URL (免费，无需 API Key)
-            base_url = f"https://source.unsplash.com/featured/1600x900/?{keyword}"
+            # 使用 Picsum Photos 作为备用图片源
+            # 添加随机种子确保每次获取不同图片
+            seed = hash(f"{keyword}_{i}") % 1000
+
+            # Picsum Photos URL (免费，无需 API Key，稳定可靠)
+            base_url = f"https://picsum.photos/seed/{seed}/1600/900"
 
             results.append(ImageSearchResult(
-                id=f"source_{i}_{keyword}",
+                id=f"picsum_{i}_{seed}",
                 url=base_url,
-                thumb_url=f"https://source.unsplash.com/featured/200x150/?{keyword}",
-                small_url=f"https://source.unsplash.com/featured/400x300/?{keyword}",
-                regular_url=f"https://source.unsplash.com/featured/1080x720/?{keyword}",
+                thumb_url=f"https://picsum.photos/seed/{seed}/200/150",
+                small_url=f"https://picsum.photos/seed/{seed}/400/300",
+                regular_url=f"https://picsum.photos/seed/{seed}/1080/720",
                 alt=f"{original_query} - {keyword}",
-                author="Unsplash",
-                author_url="https://unsplash.com",
-                source="unsplash_source",
+                author="Picsum Photos",
+                author_url="https://picsum.photos",
+                source="picsum",
             ))
 
         return ImageSearchResponse(
@@ -253,18 +259,20 @@ class ImageService:
             ImageSearchResult 或 None
         """
         if not self.unsplash_access_key:
-            # 使用 Unsplash Source 获取随机图片
+            # 使用 Picsum Photos 获取随机图片
+            import random
+            seed = random.randint(1, 1000)
             keyword = self._translate_keyword(query) if query else "abstract"
             return ImageSearchResult(
-                id=f"random_{keyword}",
-                url=f"https://source.unsplash.com/featured/1600x900/?{keyword}",
-                thumb_url=f"https://source.unsplash.com/featured/200x150/?{keyword}",
-                small_url=f"https://source.unsplash.com/featured/400x300/?{keyword}",
-                regular_url=f"https://source.unsplash.com/featured/1080x720/?{keyword}",
+                id=f"random_{seed}",
+                url=f"https://picsum.photos/seed/{seed}/1600/900",
+                thumb_url=f"https://picsum.photos/seed/{seed}/200/150",
+                small_url=f"https://picsum.photos/seed/{seed}/400/300",
+                regular_url=f"https://picsum.photos/seed/{seed}/1080/720",
                 alt=query or "Random image",
-                author="Unsplash",
-                author_url="https://unsplash.com",
-                source="unsplash_source",
+                author="Picsum Photos",
+                author_url="https://picsum.photos",
+                source="picsum",
             )
 
         try:
@@ -338,9 +346,11 @@ class ImageService:
         # 如果有主题，添加主题关键词
         if topic:
             translated_topic = self._translate_keyword(topic)
-            keyword = f"{keyword},{translated_topic}"
+            keyword = f"{keyword}_{translated_topic}"
 
-        return f"https://source.unsplash.com/featured/1600x900/?{keyword}"
+        # 使用 Picsum Photos (Unsplash Source 已停止服务)
+        seed = hash(keyword) % 1000
+        return f"https://picsum.photos/seed/{seed}/1600/900"
 
     def suggest_keywords_for_slide(
         self,

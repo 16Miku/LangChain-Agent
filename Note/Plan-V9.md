@@ -3002,6 +3002,7 @@ class PresentationConfig(BaseModel):
 | 6.1 | 2026-01-07 | Phase 5.9.3 完成：AI 生成流程集成图片服务 + 自动主题推荐 (auto_theme 参数) | Claude Code |
 | 6.2 | 2026-01-07 | 前端主题选择器更新：17 种主题分类显示 + Next.js rewrites 代理配置 + 前后端联调问题解决方案文档 | Claude Code |
 | 6.3 | 2026-01-07 | Bug 修复：PPT 生成时图片不显示 (前端 includeImages 参数从 false 改为 true) | Claude Code |
+| 6.4 | 2026-01-07 | Bug 修复：Unsplash Source 服务已停止 (503)，改用 Picsum Photos 作为备用图片源 | Claude Code |
 
 ---
 > **文档状态**: ✅ Phase 5.9 美学优化与 Bug 修复已完成

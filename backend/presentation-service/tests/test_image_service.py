@@ -94,48 +94,41 @@ class TestImageService:
         assert isinstance(result, ImageSearchResponse)
         assert len(result.results) == 5
         assert result.query == "科技"
-        assert all(r.source == "unsplash_source" for r in result.results)
+        assert all(r.source == "picsum" for r in result.results)
 
     def test_get_fallback_images_urls(self, service):
         """测试备用图片 URL 格式"""
         result = service._get_fallback_images("商业", "business", 3)
 
         for img in result.results:
-            assert "source.unsplash.com" in img.url
-            assert "source.unsplash.com" in img.thumb_url
-            assert "source.unsplash.com" in img.regular_url
+            assert "picsum.photos" in img.url
+            assert "picsum.photos" in img.thumb_url
+            assert "picsum.photos" in img.regular_url
 
     def test_get_image_for_content_cover(self, service):
         """测试获取封面图片"""
         url = service.get_image_for_content("cover")
-        assert "source.unsplash.com" in url
-        assert "presentation" in url or "business" in url
+        assert "picsum.photos" in url
 
     def test_get_image_for_content_data(self, service):
         """测试获取数据图片"""
         url = service.get_image_for_content("data")
-        assert "source.unsplash.com" in url
-        assert "analytics" in url or "chart" in url or "data" in url
+        assert "picsum.photos" in url
 
     def test_get_image_for_content_timeline(self, service):
         """测试获取时间线图片"""
         url = service.get_image_for_content("timeline")
-        assert "source.unsplash.com" in url
-        assert "time" in url or "history" in url
+        assert "picsum.photos" in url
 
     def test_get_image_for_content_with_topic(self, service):
         """测试获取带主题的图片"""
         url = service.get_image_for_content("cover", topic="人工智能")
-        assert "source.unsplash.com" in url
-        # 主题应该被添加到 URL
-        assert "artificial" in url.lower() or "presentation" in url.lower()
+        assert "picsum.photos" in url
 
     def test_get_image_for_content_unknown_type(self, service):
         """测试未知内容类型"""
         url = service.get_image_for_content("unknown_type")
-        assert "source.unsplash.com" in url
-        # 应该使用默认关键词
-        assert "abstract" in url or "background" in url
+        assert "picsum.photos" in url
 
     def test_suggest_keywords_for_slide_from_title(self, service):
         """测试从标题推荐关键词"""
@@ -207,8 +200,8 @@ class TestImageServiceAsync:
         assert isinstance(result, ImageSearchResponse)
         assert len(result.results) > 0
         assert result.query == "科技"
-        # 应该使用 unsplash_source
-        assert all(r.source == "unsplash_source" for r in result.results)
+        # 应该使用 picsum (Unsplash Source 已停止服务)
+        assert all(r.source == "picsum" for r in result.results)
 
     def test_get_random_image_without_api_key(self):
         """测试无 API Key 时获取随机图片"""
@@ -220,8 +213,8 @@ class TestImageServiceAsync:
         )
 
         assert isinstance(result, ImageSearchResult)
-        assert result.source == "unsplash_source"
-        assert "source.unsplash.com" in result.url
+        assert result.source == "picsum"
+        assert "picsum.photos" in result.url
 
     def test_search_images_with_mock_api(self):
         """测试使用 Mock API 搜索图片"""
@@ -284,7 +277,7 @@ class TestGlobalImageService:
 
         # 获取图片 URL
         url = image_service.get_image_for_content("cover")
-        assert "source.unsplash.com" in url
+        assert "picsum.photos" in url
 
 
 class TestImageSearchResult:
