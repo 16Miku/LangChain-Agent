@@ -111,7 +111,17 @@ typora-copy-images-to: media
 
 
 
+## Plan-V9: 现代化前端重构与多模态增强
 
+[Note\Plan-V9.md](Note/Plan-V9.md)
+
+V9.0 是 My-Chat-LangChain 项目的重大升级版本，核心目标是：
+
+1. **前端现代化**: 使用 Next.js + shadcn/ui 完全重构前端，替代 Streamlit
+2. **多模态交互**: 支持图片理解/OCR 和语音交互
+3. **RAG 能力增强**: 混合检索、引用追溯、重排序、MinerU 文档解析
+4. **用户系统**: 传统账号认证 + JWT
+5. **生产级部署**: Docker Compose 一键部署
 
 
 
