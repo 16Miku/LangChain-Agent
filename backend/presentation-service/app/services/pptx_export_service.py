@@ -305,8 +305,7 @@ class PptxExportService:
         slide.background.fill.fore_color.rgb = self._hex_to_rgb(colors["background"])
 
         # 标题 - 紧凑布局，减少顶部空白
-        title_top = Inches(0.4)
-        title_box = slide.shapes.add_textbox(self.MARGIN, title_top, self.CONTENT_WIDTH, Inches(0.7))
+        title_box = slide.shapes.add_textbox(self.MARGIN, Inches(0.4), self.CONTENT_WIDTH, Inches(0.7))
         tf = self._create_text_frame(title_box)
         p = tf.paragraphs[0]
         p.text = title
@@ -322,17 +321,30 @@ class PptxExportService:
         lines = self._parse_content(content)
         num_lines = len(lines)
 
-        # 内容区域 - 从装饰线下方开始，充分利用空间
-        content_top = Inches(1.35)
-        content_height = Inches(5.8)  # 扩大内容区域
+        # 内容区域参数
+        available_top = Inches(1.35)
+        available_bottom = Inches(7.1)
+        available_height_px = 7.1 - 1.35  # 约 5.75 英寸
 
-        # 根据内容量计算起始位置 (内容少时垂直居中)
-        if num_lines <= 4:
-            # 内容少，垂直居中
-            estimated_content_height = num_lines * 0.5  # 估算内容高度
-            content_top = Inches(1.35 + (5.8 - estimated_content_height) / 3)  # 偏上居中
+        # 根据内容量计算起始位置
+        if num_lines <= 3:
+            # 内容很少，明显垂直居中
+            # 每行约 0.35 英寸高度（字体20pt + 行间距）
+            content_height = num_lines * 0.35 + 0.2  # 加点余量
+            # 垂直居中：起始位置 = 可用区域顶部 + (可用高度 - 内容高度) / 2
+            content_top = available_top + (available_height_px - content_height) / 2
+            if content_top < available_top:
+                content_top = available_top
+        elif num_lines <= 5:
+            # 内容较少，轻微居中
+            content_height = num_lines * 0.35
+            offset = (available_height_px - content_height) / 4  # 只偏移 1/4
+            content_top = available_top + offset
+        else:
+            # 内容较多，从顶部开始
+            content_top = available_top
 
-        content_box = slide.shapes.add_textbox(self.MARGIN, content_top, self.CONTENT_WIDTH, content_height)
+        content_box = slide.shapes.add_textbox(self.MARGIN, content_top, self.CONTENT_WIDTH, Inches(5.8))
         tf = self._create_text_frame(content_box, margin_left=Inches(0.1), margin_top=Inches(0.05))
 
         if lines:
