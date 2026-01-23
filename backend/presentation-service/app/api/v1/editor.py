@@ -970,10 +970,14 @@ async def export_pptx(
 
         filename = pptx_export_service.generate_filename(presentation.title)
 
+        # URL 编码文件名以支持中文等非 ASCII 字符 (RFC 5987)
+        from urllib.parse import quote
+        encoded_filename = quote(filename)
+
         return Response(
             content=pptx_bytes,
             media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
         )
 
     except Exception as e:
