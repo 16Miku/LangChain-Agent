@@ -3239,6 +3239,206 @@ requests>=2.31.0  # 下载远程图片
 
 ---
 
-> **文档状态**: 🔄 Phase 5.11 PPTX 导出功能开发中
+### 5.15 Phase 5.12 专业级 PPTX 导出升级 (2026-01-23)
+
+> **背景**: 基于 pptx-skills 的深度分析，将当前简陋的 PPTX 导出升级为商用专业级别
+
+#### 5.15.1 当前问题分析
+
+从用户测试反馈来看，当前 PPTX 导出存在以下问题：
+
+| 问题类别 | 具体问题 | 影响程度 |
+|---------|---------|---------|
+| **排版简陋** | 文字位置固定，缺乏视觉层次 | 高 |
+| **字体单一** | 仅使用默认字体，无专业感 | 中 |
+| **装饰不足** | 装饰线过于简单，缺乏设计感 | 中 |
+| **间距不当** | 列表项间距过小，阅读体验差 | 高 |
+| **颜色应用** | 主题色应用不够丰富 | 中 |
+| **缺少阴影** | 形状无阴影效果，缺乏立体感 | 低 |
+
+#### 5.15.2 pptx-skills 专业特性分析
+
+从 pptx-skills 的 html2pptx.js 和 SKILL.md 中提取的专业级特性：
+
+**1. 精确定位系统**
+```javascript
+// pptx-skills 使用精确的单位转换
+const PT_PER_PX = 0.75;
+const PX_PER_IN = 96;
+const EMU_PER_IN = 914400;
+
+// 位置计算精确到英寸
+const pxToInch = (px) => px / PX_PER_IN;
+```
+
+**2. 专业排版参数**
+- 字体大小: 标题 32-44pt, 正文 18-20pt, 副标题 20-24pt
+- 行间距: 1.2-1.5 倍行高
+- 段落间距: 8-12pt
+- 边距: 0.5 英寸标准边距
+- 文本框内边距: 精确控制
+
+**3. 视觉设计元素**
+- 阴影效果: `box-shadow` 转换为 PowerPoint 阴影
+- 圆角矩形: `border-radius` 支持
+- 渐变背景: 预渲染为 PNG 图片
+- 装饰线条: 精确宽度和颜色
+
+**4. 18 种专业配色方案**
+```
+Classic Blue, Teal & Coral, Bold Red, Warm Blush,
+Burgundy Luxury, Deep Purple & Emerald, Cream & Forest Green,
+Pink & Purple, Lime & Plum, Black & Gold, Sage & Terracotta,
+Charcoal & Red, Vibrant Orange, Forest Green, Retro Rainbow,
+Vintage Earthy, Coastal Rose, Orange & Turquoise
+```
+
+**5. 布局创新**
+- 对角线分割
+- 非对称列宽 (30/70, 40/60)
+- 旋转文本 (90°/270°)
+- 重叠形状创造深度
+- 全出血图片 + 文字叠加
+
+#### 5.15.3 升级实现计划
+
+**Phase 5.12.1: 专业排版系统**
+
+```python
+class ProfessionalTypography:
+    """专业排版参数"""
+
+    # 字体大小 (pt)
+    TITLE_SIZE = Pt(44)           # 封面标题
+    SECTION_TITLE_SIZE = Pt(40)   # 章节标题
+    SLIDE_TITLE_SIZE = Pt(32)     # 幻灯片标题
+    SUBTITLE_SIZE = Pt(24)        # 副标题
+    BODY_SIZE = Pt(20)            # 正文
+    CAPTION_SIZE = Pt(14)         # 说明文字
+
+    # 行间距
+    LINE_SPACING = 1.5            # 1.5 倍行高
+
+    # 段落间距 (pt)
+    PARA_SPACE_BEFORE = Pt(6)
+    PARA_SPACE_AFTER = Pt(12)
+
+    # 列表缩进
+    BULLET_INDENT = Inches(0.25)
+    TEXT_INDENT = Inches(0.5)
+```
+
+**Phase 5.12.2: 增强形状系统**
+
+```python
+class EnhancedShapes:
+    """增强形状效果"""
+
+    def add_shadow(self, shape, shadow_type="outer"):
+        """添加阴影效果"""
+        # 外阴影: 2px 2px 8px rgba(0,0,0,0.3)
+        pass
+
+    def add_rounded_rect(self, slide, x, y, w, h, radius=0.1):
+        """添加圆角矩形"""
+        pass
+
+    def add_gradient_shape(self, slide, x, y, w, h, colors):
+        """添加渐变形状 (预渲染为图片)"""
+        pass
+```
+
+**Phase 5.12.3: 专业配色系统升级**
+
+```python
+PROFESSIONAL_THEMES = {
+    "modern_business": {
+        "background": "FFFFFF",
+        "title": "1E3A8A",
+        "subtitle": "64748B",
+        "text": "1E293B",
+        "accent": "3B82F6",
+        "accent2": "60A5FA",
+        "decorLine": "3B82F6",
+        "shadow": "000000",
+        "shadowOpacity": 0.15,
+    },
+    "classic_blue": {
+        "background": "F4F6F6",
+        "title": "1C2833",
+        "subtitle": "2E4053",
+        "text": "2E4053",
+        "accent": "AAB7B8",
+        "accent2": "1C2833",
+        "decorLine": "1C2833",
+        "shadow": "1C2833",
+        "shadowOpacity": 0.2,
+    },
+    "teal_coral": {
+        "background": "FFFFFF",
+        "title": "277884",
+        "subtitle": "5EA8A7",
+        "text": "2C3E50",
+        "accent": "FE4447",
+        "accent2": "5EA8A7",
+        "decorLine": "FE4447",
+        "shadow": "277884",
+        "shadowOpacity": 0.15,
+    },
+    # ... 更多专业配色
+}
+```
+
+**Phase 5.12.4: 布局增强**
+
+| 布局类型 | 增强内容 |
+|---------|---------|
+| title_cover | 居中标题 + 装饰线 + 副标题 + 可选背景图 |
+| title_section | 大号标题 + 装饰线 + 章节编号 |
+| bullet_points | 圆点标记 + 适当缩进 + 行间距优化 |
+| two_column | 非对称列宽 + 分隔线 + 独立标题 |
+| quote_center | 大引号装饰 + 斜体引用 + 来源署名 |
+| thank_you | 装饰线 + 大标题 + 联系信息 |
+| image_left/right | 图片阴影 + 文字叠加效果 |
+| metric_card | 大数字 + 单位 + 描述 + 卡片阴影 |
+
+**Phase 5.12.5: 高级功能**
+
+- [ ] 图片阴影效果
+- [ ] 形状圆角支持
+- [ ] 渐变背景 (预渲染)
+- [ ] 表格样式增强
+- [ ] 图表集成 (基础)
+- [ ] 动画效果 (入场动画)
+- [ ] 母版/模板系统
+- [ ] 缩略图生成
+
+#### 5.15.4 实现优先级
+
+| 优先级 | 功能 | 预计工时 |
+|--------|------|---------|
+| P0 | 专业排版参数 | 2h |
+| P0 | 增强配色系统 | 1h |
+| P0 | 布局优化 (6种核心布局) | 4h |
+| P1 | 阴影效果 | 2h |
+| P1 | 圆角矩形 | 1h |
+| P2 | 渐变背景 | 2h |
+| P2 | 表格样式 | 2h |
+| P3 | 动画效果 | 4h |
+
+#### 5.15.5 测试计划
+
+| 测试类型 | 测试内容 | 验收标准 |
+|---------|---------|---------|
+| 视觉测试 | 封面页排版 | 标题居中，装饰线美观 |
+| 视觉测试 | 内容页排版 | 列表间距适当，易读性好 |
+| 视觉测试 | 主题配色 | 颜色协调，对比度足够 |
+| 兼容性测试 | PowerPoint 打开 | 无错误，格式正确 |
+| 兼容性测试 | WPS 打开 | 无错误，格式正确 |
+| 性能测试 | 20 页 PPT 导出 | < 5 秒 |
+
+---
+
+> **文档状态**: 🔄 Phase 5.12 专业级 PPTX 升级开发中
 > **最后更新**: 2026-01-23
-> **下一步**: 实施 Phase 5.11.1 PPTX 导出服务核心功能
+> **下一步**: 实施 Phase 5.12.1 专业排版系统
