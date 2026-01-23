@@ -167,6 +167,12 @@ export default function PresentationEditorPage() {
     }
   };
 
+  const handleExportPptx = async () => {
+    if (currentPresentation) {
+      await presentationApi.exportToPptx(currentPresentation.id);
+    }
+  };
+
   const handleOpenPreview = async () => {
     if (currentPresentation) {
       await presentationApi.openPreview(currentPresentation.id);
@@ -279,6 +285,10 @@ export default function PresentationEditorPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPptx}>
+                <Download className="h-4 w-4 mr-2" />
+                导出 PPTX (PowerPoint)
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportHtml}>
                 <Download className="h-4 w-4 mr-2" />
                 导出 HTML (含 Reveal.js)

@@ -350,6 +350,45 @@ export const presentationApi = {
     const url = this.getPreviewUrl(presentationId);
     window.open(url, '_blank');
   },
+
+  /**
+   * 导出演示文稿为 PPTX (下载文件)
+   */
+  async exportToPptx(presentationId: string): Promise<void> {
+    const response = await presentationClient.get(`/api/v1/editor/${presentationId}/export/pptx`, {
+      responseType: 'blob',
+    });
+
+    // 从响应头获取文件名
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'presentation.pptx';
+    if (contentDisposition) {
+      // 支持 filename*=UTF-8'' 格式
+      const utf8Matches = /filename\*=UTF-8''([^;]+)/.exec(contentDisposition);
+      if (utf8Matches?.[1]) {
+        filename = decodeURIComponent(utf8Matches[1]);
+      } else {
+        const matches = /filename="([^"]+)"/.exec(contentDisposition);
+        if (matches?.[1]) {
+          filename = matches[1];
+        }
+      }
+    }
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(
+      new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      })
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export default presentationApi;
