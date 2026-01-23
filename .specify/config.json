@@ -1,0 +1,8 @@
+{
+  "project": "LangChain-Agent",
+  "version": "10.0",
+  "ai": "claude",
+  "created": "2026-01-24",
+  "description": "Stream-Agent - 全栈 AI 研究助理应用",
+  "spec_version": "1.0.0"
+}
