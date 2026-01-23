@@ -1,6 +1,7 @@
 # ============================================================
 # Hybrid Search Service - 混合检索服务
 # 结合向量检索和 BM25 关键词检索
+# 支持查询改写优化
 # ============================================================
 
 from typing import List, Dict, Any, Optional, TYPE_CHECKING, Union
@@ -13,6 +14,7 @@ from app.config import settings
 from app.services.milvus_service import VectorSearchResult
 from app.services.bm25_service import BM25Service, BM25Result
 from app.services.embedding_service import EmbeddingService
+from app.services.query_rewriter import QueryRewriterService, get_query_rewriter
 from app.schemas.search import SearchResult
 
 if TYPE_CHECKING:
@@ -417,3 +419,142 @@ class HybridSearchService:
             )
             for r in bm25_results
         ]
+
+    async def search_with_rewrite(
+        self,
+        query: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        top_k: int = 10,
+        alpha: float = 0.5,
+        user_id: Optional[str] = None,
+        document_ids: Optional[List[str]] = None,
+        use_rerank: bool = True,
+        db: Optional[Session] = None
+    ) -> Dict[str, Any]:
+        """
+        带查询改写的混合检索
+
+        基于对话历史自动改写查询，解析指代词，补充上下文信息
+
+        Args:
+            query: 用户原始查询
+            conversation_history: 对话历史，格式为 [{"role": "user/assistant", "content": "..."}]
+            top_k: 返回数量
+            alpha: 向量权重 (0-1)
+            user_id: 用户ID
+            document_ids: 限定文档ID列表
+            use_rerank: 是否使用重排序
+            db: 数据库会话
+
+        Returns:
+            {
+                "results": List[SearchResult],  # 检索结果
+                "search_time_ms": float,        # 检索耗时
+                "rewrite_info": {               # 查询改写信息
+                    "main_query": str,          # 改写后的主查询
+                    "variants": List[str],      # 查询变体
+                    "reasoning": str,           # 改写理由
+                    "entities": List[str],      # 识别的实体
+                    "original_query": str,      # 原始查询
+                    "was_rewritten": bool       # 是否进行了改写
+                } | None
+            }
+        """
+        rewrite_info = None
+        search_query = query
+
+        # 如果有对话历史，尝试改写查询
+        if conversation_history:
+            try:
+                rewriter = get_query_rewriter()
+                rewrite_info = await rewriter.rewrite(query, conversation_history)
+                search_query = rewrite_info.get("main_query", query)
+            except Exception as e:
+                print(f"[HybridSearch] 查询改写失败，使用原始查询: {e}")
+                rewrite_info = None
+
+        # 执行检索
+        results, search_time_ms = await self.search(
+            query=search_query,
+            top_k=top_k,
+            alpha=alpha,
+            user_id=user_id,
+            document_ids=document_ids,
+            use_rerank=use_rerank,
+            db=db
+        )
+
+        return {
+            "results": results,
+            "search_time_ms": search_time_ms,
+            "rewrite_info": rewrite_info
+        }
+
+    async def search_with_multi_turn_rewrite(
+        self,
+        query: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        previous_results: Optional[List[Dict[str, Any]]] = None,
+        top_k: int = 10,
+        alpha: float = 0.5,
+        user_id: Optional[str] = None,
+        document_ids: Optional[List[str]] = None,
+        use_rerank: bool = True,
+        db: Optional[Session] = None
+    ) -> Dict[str, Any]:
+        """
+        多轮对话检索优化
+
+        考虑之前的检索结果，避免重复检索，生成能够补充新信息的查询
+
+        Args:
+            query: 用户原始查询
+            conversation_history: 对话历史
+            previous_results: 之前的检索结果，用于避免重复
+            top_k: 返回数量
+            alpha: 向量权重
+            user_id: 用户ID
+            document_ids: 限定文档ID列表
+            use_rerank: 是否使用重排序
+            db: 数据库会话
+
+        Returns:
+            {
+                "results": List[SearchResult],
+                "search_time_ms": float,
+                "rewrite_info": Dict | None
+            }
+        """
+        rewrite_info = None
+        search_query = query
+
+        # 多轮对话查询优化
+        if conversation_history or previous_results:
+            try:
+                rewriter = get_query_rewriter()
+                rewrite_info = await rewriter.rewrite_for_multi_turn(
+                    query=query,
+                    conversation_history=conversation_history or [],
+                    previous_results=previous_results
+                )
+                search_query = rewrite_info.get("main_query", query)
+            except Exception as e:
+                print(f"[HybridSearch] 多轮查询优化失败，使用原始查询: {e}")
+                rewrite_info = None
+
+        # 执行检索
+        results, search_time_ms = await self.search(
+            query=search_query,
+            top_k=top_k,
+            alpha=alpha,
+            user_id=user_id,
+            document_ids=document_ids,
+            use_rerank=use_rerank,
+            db=db
+        )
+
+        return {
+            "results": results,
+            "search_time_ms": search_time_ms,
+            "rewrite_info": rewrite_info
+        }
