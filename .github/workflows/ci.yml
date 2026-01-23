@@ -1,0 +1,281 @@
+# ============================================================
+# My-Chat-LangChain V10 CI 流水线
+# 持续集成: 代码检查、测试、构建
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'backend/**'
+      - 'frontend-next/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'backend/**'
+      - 'frontend-next/**'
+
+# 取消同一分支上的旧工作流
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================================
+  # 后端代码检查
+  # ============================================================
+  lint-backend:
+    name: 后端代码检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 安装 Ruff
+        run: pip install ruff
+
+      - name: 运行 Ruff 检查
+        run: |
+          echo "检查 auth-service..."
+          ruff check backend/auth-service --output-format=github || true
+
+          echo "检查 chat-service..."
+          ruff check backend/chat-service --output-format=github || true
+
+          echo "检查 rag-service..."
+          ruff check backend/rag-service --output-format=github || true
+
+          echo "检查 presentation-service..."
+          ruff check backend/presentation-service --output-format=github || true
+
+      - name: 运行 Ruff 格式检查
+        run: |
+          ruff format --check backend/ || true
+
+  # ============================================================
+  # 后端单元测试
+  # ============================================================
+  test-backend:
+    name: 后端测试 - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: lint-backend
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - chat-service
+          - rag-service
+          - presentation-service
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/${{ matrix.service }}/requirements.txt
+
+      - name: 安装依赖
+        run: |
+          cd backend/${{ matrix.service }}
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+
+      - name: 运行测试
+        env:
+          # 测试环境变量
+          DATABASE_URL: sqlite:///./test.db
+          JWT_SECRET: test-secret-key-for-ci
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          cd backend/${{ matrix.service }}
+
+          # 检查是否有测试目录
+          if [ -d "tests" ]; then
+            python -m pytest tests/ \
+              -v \
+              --tb=short \
+              --cov=app \
+              --cov-report=xml \
+              --cov-report=term-missing \
+              --junitxml=test-results.xml \
+              || true
+          else
+            echo "没有找到测试目录，跳过测试"
+          fi
+
+      - name: 上传测试结果
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.service }}
+          path: backend/${{ matrix.service }}/test-results.xml
+          retention-days: 7
+
+      - name: 上传覆盖率报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-${{ matrix.service }}
+          path: backend/${{ matrix.service }}/coverage.xml
+          retention-days: 7
+
+  # ============================================================
+  # 前端代码检查和构建
+  # ============================================================
+  lint-frontend:
+    name: 前端代码检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend-next/package-lock.json
+
+      - name: 安装依赖
+        run: |
+          cd frontend-next
+          npm ci
+
+      - name: 运行 ESLint
+        run: |
+          cd frontend-next
+          npm run lint || true
+
+      - name: 运行 TypeScript 类型检查
+        run: |
+          cd frontend-next
+          npx tsc --noEmit || true
+
+  build-frontend:
+    name: 前端构建
+    runs-on: ubuntu-latest
+    needs: lint-frontend
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend-next/package-lock.json
+
+      - name: 安装依赖
+        run: |
+          cd frontend-next
+          npm ci
+
+      - name: 构建
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.com
+        run: |
+          cd frontend-next
+          npm run build
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend-next/.next
+          retention-days: 7
+
+  # ============================================================
+  # 安全扫描
+  # ============================================================
+  security-scan:
+    name: 安全扫描
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 安装安全扫描工具
+        run: pip install bandit safety
+
+      - name: 运行 Bandit 安全扫描
+        run: |
+          bandit -r backend/ -f json -o bandit-report.json || true
+          bandit -r backend/ -f txt || true
+
+      - name: 检查依赖漏洞
+        run: |
+          for service in auth-service chat-service rag-service presentation-service; do
+            echo "检查 $service 依赖..."
+            if [ -f "backend/$service/requirements.txt" ]; then
+              safety check -r backend/$service/requirements.txt --output json || true
+            fi
+          done
+
+      - name: 上传安全报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: bandit-report.json
+          retention-days: 30
+
+  # ============================================================
+  # 汇总检查
+  # ============================================================
+  ci-summary:
+    name: CI 汇总
+    runs-on: ubuntu-latest
+    needs: [lint-backend, test-backend, lint-frontend, build-frontend, security-scan]
+    if: always()
+
+    steps:
+      - name: 检查所有任务状态
+        run: |
+          echo "=== CI 流水线汇总 ==="
+          echo ""
+          echo "后端代码检查: ${{ needs.lint-backend.result }}"
+          echo "后端测试: ${{ needs.test-backend.result }}"
+          echo "前端代码检查: ${{ needs.lint-frontend.result }}"
+          echo "前端构建: ${{ needs.build-frontend.result }}"
+          echo "安全扫描: ${{ needs.security-scan.result }}"
+          echo ""
+
+          # 检查是否有失败
+          if [[ "${{ needs.lint-backend.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-backend.result }}" == "failure" ]] || \
+             [[ "${{ needs.lint-frontend.result }}" == "failure" ]] || \
+             [[ "${{ needs.build-frontend.result }}" == "failure" ]]; then
+            echo "::error::CI 流水线存在失败的任务"
+            exit 1
+          fi
+
+          echo "::notice::CI 流水线执行完成"

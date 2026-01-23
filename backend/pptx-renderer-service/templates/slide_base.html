@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幻灯片模板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                         'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+        }
+
+        /* 幻灯片容器 */
+        [data-pptx-slide] {
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* 标题样式 */
+        [data-pptx-element="title"] {
+            position: absolute;
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 副标题样式 */
+        [data-pptx-element="subtitle"] {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: normal;
+        }
+
+        /* 文本样式 */
+        [data-pptx-element="text"] {
+            position: absolute;
+            color: #333333;
+            line-height: 1.6;
+        }
+
+        /* 图片样式 */
+        [data-pptx-element="image"] {
+            position: absolute;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 形状样式 */
+        [data-pptx-element="shape"] {
+            position: absolute;
+        }
+
+        /* 列表样式 */
+        [data-pptx-element="list"] {
+            position: absolute;
+            color: #333333;
+            line-height: 1.8;
+        }
+
+        [data-pptx-element="list"] li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!--
+    幻灯片模板示例
+
+    使用 data-pptx-element 属性标记需要导出到 PPTX 的元素
+    支持的类型: title, subtitle, text, image, shape, list
+
+    可选属性:
+    - data-pptx-id: 元素唯一标识
+    - data-pptx-shape: 形状类型 (rectangle, oval, triangle 等)
+    -->
+
+    <div data-pptx-slide>
+        <!-- 标题 -->
+        <h1 data-pptx-element="title"
+            data-pptx-id="main-title"
+            style="left: 100px; top: 200px; font-size: 72px; width: 1720px; text-align: center;">
+            欢迎使用 PPTX 渲染服务
+        </h1>
+
+        <!-- 副标题 -->
+        <h2 data-pptx-element="subtitle"
+            data-pptx-id="sub-title"
+            style="left: 100px; top: 320px; font-size: 36px; width: 1720px; text-align: center;">
+            将 HTML 幻灯片转换为专业的 PowerPoint 文件
+        </h2>
+
+        <!-- 内容文本 -->
+        <p data-pptx-element="text"
+           data-pptx-id="content-1"
+           style="left: 200px; top: 500px; font-size: 28px; width: 700px; color: #ffffff;">
+            本服务使用 Playwright 渲染 HTML，提取元素位置信息，
+            然后使用 python-pptx 生成高质量的 PPTX 文件。
+        </p>
+
+        <!-- 功能列表 -->
+        <ul data-pptx-element="list"
+            data-pptx-id="feature-list"
+            style="left: 1000px; top: 480px; font-size: 24px; width: 700px; color: #ffffff;">
+            <li>支持文本、图片、形状等元素</li>
+            <li>保留字体大小和颜色</li>
+            <li>支持多页幻灯片</li>
+            <li>可选截图背景模式</li>
+        </ul>
+
+        <!-- 装饰形状 -->
+        <div data-pptx-element="shape"
+             data-pptx-id="decoration-1"
+             data-pptx-shape="oval"
+             style="left: 50px; top: 800px; width: 200px; height: 200px;
+                    background: rgba(255, 255, 255, 0.1); border-radius: 50%;">
+        </div>
+
+        <div data-pptx-element="shape"
+             data-pptx-id="decoration-2"
+             data-pptx-shape="rectangle"
+             style="left: 1700px; top: 100px; width: 150px; height: 150px;
+                    background: rgba(255, 255, 255, 0.1); border-radius: 16px;">
+        </div>
+    </div>
+</body>
+</html>

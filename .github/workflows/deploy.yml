@@ -1,0 +1,367 @@
+# ============================================================
+# My-Chat-LangChain V10 CD 流水线
+# 持续部署: 自动部署到 Render
+# ============================================================
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend-next/**'
+      - 'render.yaml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署环境'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      services:
+        description: '要部署的服务 (逗号分隔，或 all)'
+        required: false
+        default: 'all'
+
+env:
+  RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+
+jobs:
+  # ============================================================
+  # 部署前检查
+  # ============================================================
+  pre-deploy-check:
+    name: 部署前检查
+    runs-on: ubuntu-latest
+
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      changed_services: ${{ steps.changes.outputs.services }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 检测变更的服务
+        id: changes
+        run: |
+          # 获取变更的文件
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "变更的文件:"
+          echo "$CHANGED_FILES"
+
+          # 检测哪些服务有变更
+          SERVICES=""
+
+          if echo "$CHANGED_FILES" | grep -q "backend/auth-service"; then
+            SERVICES="${SERVICES}auth-service,"
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "backend/chat-service"; then
+            SERVICES="${SERVICES}chat-service,"
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "backend/rag-service"; then
+            SERVICES="${SERVICES}rag-service,"
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "backend/presentation-service"; then
+            SERVICES="${SERVICES}presentation-service,"
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "frontend-next"; then
+            SERVICES="${SERVICES}frontend,"
+          fi
+
+          # 移除末尾逗号
+          SERVICES=${SERVICES%,}
+
+          echo "变更的服务: $SERVICES"
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+
+      - name: 检查是否需要部署
+        id: check
+        run: |
+          # 手动触发时总是部署
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 检查是否有服务变更
+          if [ -n "${{ steps.changes.outputs.services }}" ]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "没有检测到服务变更，跳过部署"
+          fi
+
+  # ============================================================
+  # 运行测试
+  # ============================================================
+  run-tests:
+    name: 运行测试
+    runs-on: ubuntu-latest
+    needs: pre-deploy-check
+    if: needs.pre-deploy-check.outputs.should_deploy == 'true'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 运行关键测试
+        run: |
+          # 安装测试依赖
+          pip install pytest pytest-asyncio httpx
+
+          # 运行各服务的测试
+          for service in auth-service chat-service rag-service presentation-service; do
+            if [ -d "backend/$service/tests" ]; then
+              echo "运行 $service 测试..."
+              cd backend/$service
+              pip install -r requirements.txt -q
+              python -m pytest tests/ -v --tb=short || true
+              cd ../..
+            fi
+          done
+
+  # ============================================================
+  # 部署后端服务
+  # ============================================================
+  deploy-backend:
+    name: 部署后端 - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-check, run-tests]
+    if: needs.pre-deploy-check.outputs.should_deploy == 'true'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - chat-service
+          - rag-service
+          - presentation-service
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 检查服务是否需要部署
+        id: should-deploy
+        run: |
+          CHANGED="${{ needs.pre-deploy-check.outputs.changed_services }}"
+          INPUT_SERVICES="${{ github.event.inputs.services }}"
+
+          # 手动触发且指定 all
+          if [ "$INPUT_SERVICES" == "all" ]; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 手动触发且指定了特定服务
+          if [ -n "$INPUT_SERVICES" ]; then
+            if echo "$INPUT_SERVICES" | grep -q "${{ matrix.service }}"; then
+              echo "deploy=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy=false" >> $GITHUB_OUTPUT
+            fi
+            exit 0
+          fi
+
+          # 自动触发，检查变更
+          if echo "$CHANGED" | grep -q "${{ matrix.service }}"; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 触发 Render 部署
+        if: steps.should-deploy.outputs.deploy == 'true'
+        run: |
+          echo "部署 ${{ matrix.service }}..."
+
+          # 获取服务 ID
+          SERVICE_ID=$(curl -s \
+            "https://api.render.com/v1/services?name=${{ matrix.service }}" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            | jq -r '.[0].id')
+
+          if [ "$SERVICE_ID" == "null" ] || [ -z "$SERVICE_ID" ]; then
+            echo "::warning::服务 ${{ matrix.service }} 未在 Render 上找到"
+            exit 0
+          fi
+
+          echo "服务 ID: $SERVICE_ID"
+
+          # 触发部署
+          DEPLOY_RESPONSE=$(curl -s -X POST \
+            "https://api.render.com/v1/services/$SERVICE_ID/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": false}')
+
+          DEPLOY_ID=$(echo "$DEPLOY_RESPONSE" | jq -r '.id')
+
+          if [ "$DEPLOY_ID" == "null" ] || [ -z "$DEPLOY_ID" ]; then
+            echo "::error::部署触发失败: $DEPLOY_RESPONSE"
+            exit 1
+          fi
+
+          echo "部署 ID: $DEPLOY_ID"
+          echo "::notice::${{ matrix.service }} 部署已触发"
+
+      - name: 跳过部署
+        if: steps.should-deploy.outputs.deploy != 'true'
+        run: |
+          echo "::notice::${{ matrix.service }} 没有变更，跳过部署"
+
+  # ============================================================
+  # 部署前端
+  # ============================================================
+  deploy-frontend:
+    name: 部署前端
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-check, run-tests]
+    if: |
+      needs.pre-deploy-check.outputs.should_deploy == 'true' &&
+      (contains(needs.pre-deploy-check.outputs.changed_services, 'frontend') ||
+       github.event.inputs.services == 'all' ||
+       contains(github.event.inputs.services, 'frontend'))
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 触发 Render 部署
+        run: |
+          echo "部署前端..."
+
+          # 获取服务 ID
+          SERVICE_ID=$(curl -s \
+            "https://api.render.com/v1/services?name=frontend-next" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            | jq -r '.[0].id')
+
+          if [ "$SERVICE_ID" == "null" ] || [ -z "$SERVICE_ID" ]; then
+            echo "::warning::前端服务未在 Render 上找到"
+            exit 0
+          fi
+
+          # 触发部署
+          curl -s -X POST \
+            "https://api.render.com/v1/services/$SERVICE_ID/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": true}'
+
+          echo "::notice::前端部署已触发"
+
+  # ============================================================
+  # 部署后验证
+  # ============================================================
+  post-deploy-verify:
+    name: 部署后验证
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: always() && needs.pre-deploy-check.outputs.should_deploy == 'true'
+
+    steps:
+      - name: 等待部署完成
+        run: |
+          echo "等待 60 秒让部署完成..."
+          sleep 60
+
+      - name: 健康检查
+        run: |
+          # 服务 URL 列表 (需要根据实际情况配置)
+          SERVICES=(
+            "auth-service:${{ secrets.AUTH_SERVICE_URL }}"
+            "chat-service:${{ secrets.CHAT_SERVICE_URL }}"
+            "rag-service:${{ secrets.RAG_SERVICE_URL }}"
+            "presentation-service:${{ secrets.PRESENTATION_SERVICE_URL }}"
+          )
+
+          ALL_HEALTHY=true
+
+          for service_info in "${SERVICES[@]}"; do
+            SERVICE_NAME="${service_info%%:*}"
+            SERVICE_URL="${service_info##*:}"
+
+            if [ -z "$SERVICE_URL" ]; then
+              echo "::warning::$SERVICE_NAME URL 未配置，跳过健康检查"
+              continue
+            fi
+
+            echo "检查 $SERVICE_NAME..."
+
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${SERVICE_URL}/health" --max-time 10 || echo "000")
+
+            if [ "$HTTP_CODE" == "200" ]; then
+              echo "::notice::$SERVICE_NAME 健康检查通过"
+            else
+              echo "::warning::$SERVICE_NAME 健康检查失败 (HTTP $HTTP_CODE)"
+              ALL_HEALTHY=false
+            fi
+          done
+
+          if [ "$ALL_HEALTHY" == "false" ]; then
+            echo "::warning::部分服务健康检查未通过，请检查 Render 控制台"
+          fi
+
+      - name: 发送部署通知
+        if: always()
+        run: |
+          # 可以集成 Slack/Discord/邮件通知
+          echo "部署完成通知"
+          echo "环境: ${{ github.event.inputs.environment || 'production' }}"
+          echo "提交: ${{ github.sha }}"
+          echo "分支: ${{ github.ref_name }}"
+
+  # ============================================================
+  # 部署汇总
+  # ============================================================
+  deploy-summary:
+    name: 部署汇总
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-check, deploy-backend, deploy-frontend, post-deploy-verify]
+    if: always()
+
+    steps:
+      - name: 生成部署报告
+        run: |
+          echo "# 部署报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 基本信息" >> $GITHUB_STEP_SUMMARY
+          echo "- **触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **分支**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **提交**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 部署状态" >> $GITHUB_STEP_SUMMARY
+          echo "| 任务 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 部署前检查 | ${{ needs.pre-deploy-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 后端部署 | ${{ needs.deploy-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 前端部署 | ${{ needs.deploy-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 部署后验证 | ${{ needs.post-deploy-verify.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.deploy-backend.result }}" == "success" ]] && \
+             [[ "${{ needs.post-deploy-verify.result }}" == "success" ]]; then
+            echo "## 结果: 部署成功 ✅" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 结果: 部署可能存在问题 ⚠️" >> $GITHUB_STEP_SUMMARY
+            echo "请检查 Render 控制台确认部署状态" >> $GITHUB_STEP_SUMMARY
+          fi

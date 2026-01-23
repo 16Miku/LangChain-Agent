@@ -146,3 +146,15 @@ nul
 # 临时 HTML 文件
 temp.html
 **/temp.html
+
+# -------------------- V10 新增 --------------------
+# pptx-renderer-service
+backend/pptx-renderer-service/data/
+backend/pptx-renderer-service/output/
+
+# Playwright
+.playwright/
+
+# Claude Code 本地设置
+.claude/settings.local.json
+

@@ -1,0 +1,29 @@
+# ============================================================
+# PPTX Renderer Service - Requirements
+# ============================================================
+
+# FastAPI 和服务器
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.9
+
+# 数据验证
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Playwright (HTML 渲染)
+playwright>=1.40.0
+
+# PPTX 生成
+python-pptx>=0.6.21
+Pillow>=10.0.0
+
+# HTTP 客户端
+httpx>=0.25.0
+
+# 工具
+python-dotenv>=1.0.0
+
+# 测试
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
