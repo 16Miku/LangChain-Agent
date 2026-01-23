@@ -3100,6 +3100,145 @@ LAYOUT_IMPROVEMENTS = {
 | 6.5 | 2026-01-08 | Phase 5.10 规划：PPT 美学优化方案 (移除随机图片/优化纯文字布局/增强视觉层次) | Claude Code |
 
 ---
-> **文档状态**: 🔄 Phase 5.10 美学优化进行中
-> **最后更新**: 2026-01-08
-> **下一步**: 实施 Phase 5.10.1 移除随机图片，优化纯文字布局
+
+### 5.14 Phase 5.11 原生 PPTX 导出功能 (2026-01-23)
+
+> **背景**: 参考 pptx-skills 的实现方式，为 presentation-service 添加原生 .pptx 文件导出能力
+
+#### 5.14.1 技术差异分析
+
+| 特性 | pptx-skills | 当前 presentation-service |
+|------|-------------|--------------------------|
+| **输出格式** | 原生 .pptx 文件 (PptxGenJS) | HTML (Reveal.js) |
+| **布局精度** | 像素级精确定位 | CSS 布局 (相对定位) |
+| **图片处理** | Sharp 光栅化 + 精确位置 | URL 引用 |
+| **主题系统** | 完整配色方案 + 字体 | CSS 变量 |
+| **图表支持** | PptxGenJS 原生图表 | 无 |
+| **模板支持** | 支持模板复用 | 不支持 |
+| **缩略图** | 自动生成预览 | 无 |
+| **验证机制** | 视觉验证 + 溢出检测 | 无 |
+
+#### 5.14.2 改进方案
+
+**方案选择**: 使用 Python 原生库 `python-pptx` 实现 PPTX 导出
+
+**理由**:
+1. 与现有 Python 后端技术栈一致
+2. 无需引入 Node.js 依赖
+3. python-pptx 功能成熟，支持完整的 PPTX 操作
+4. 可复用现有的主题和布局系统
+
+#### 5.14.3 实现计划
+
+**Phase 5.11.1: PPTX 导出服务 (核心)**
+
+```python
+# app/services/pptx_export_service.py
+class PptxExportService:
+    """原生 PPTX 导出服务"""
+
+    async def export_to_pptx(
+        self,
+        presentation: Dict[str, Any],
+        theme: str = "modern_business"
+    ) -> bytes:
+        """导出为 PPTX 文件"""
+        pass
+
+    def _create_slide(self, prs, slide_data, layout_type):
+        """创建单个幻灯片"""
+        pass
+
+    def _apply_theme(self, prs, theme_name):
+        """应用主题样式"""
+        pass
+```
+
+**功能清单**:
+- [x] 基础 PPTX 生成 (标题页/内容页/结尾页)
+- [ ] 19 种布局类型映射到 PPTX 布局
+- [ ] 17 种主题配色应用
+- [ ] 图片嵌入 (URL 下载 + 嵌入)
+- [ ] 表格支持
+- [ ] 图表支持 (基础柱状图/饼图)
+- [ ] 演讲者备注
+- [ ] 自定义字体
+
+**Phase 5.11.2: API 端点**
+
+```python
+# app/api/v1/editor.py
+@router.get("/{presentation_id}/export/pptx")
+async def export_pptx(presentation_id: str):
+    """导出为 PPTX 文件"""
+    pass
+```
+
+**Phase 5.11.3: 前端集成**
+
+- [ ] 导出下拉菜单添加 "下载 PPTX" 选项
+- [ ] 导出进度提示 (大文件可能需要时间)
+
+#### 5.14.4 布局映射表
+
+| 系统布局 | PPTX 布局 | 说明 |
+|---------|----------|------|
+| title_cover | Title Slide | 封面页 |
+| title_section | Section Header | 章节页 |
+| bullet_points | Title and Content | 列表页 |
+| two_column | Two Content | 双栏布局 |
+| three_column | 自定义 | 三栏布局 |
+| image_full | Blank + 全屏图片 | 全屏图片 |
+| image_left | Picture with Caption | 左图右文 |
+| image_right | Picture with Caption (镜像) | 右图左文 |
+| quote_center | Blank + 居中文本 | 引用页 |
+| metric_card | 自定义 | 指标卡片 |
+| timeline | 自定义 | 时间线 |
+| comparison | Comparison | 对比布局 |
+| thank_you | Title Slide | 感谢页 |
+
+#### 5.14.5 主题配色映射
+
+```python
+PPTX_THEME_COLORS = {
+    "modern_business": {
+        "background": "FFFFFF",
+        "text": "1E3A8A",
+        "accent1": "3B82F6",
+        "accent2": "60A5FA",
+    },
+    "dark_tech": {
+        "background": "0A0A0A",
+        "text": "00FF88",
+        "accent1": "00D4FF",
+        "accent2": "FF00FF",
+    },
+    # ... 其他 15 种主题
+}
+```
+
+#### 5.14.6 依赖项
+
+```txt
+# requirements.txt 新增
+python-pptx>=0.6.21
+Pillow>=10.0.0  # 图片处理
+requests>=2.31.0  # 下载远程图片
+```
+
+#### 5.14.7 测试计划
+
+| 测试类型 | 测试内容 | 预期结果 |
+|---------|---------|---------|
+| 单元测试 | 基础 PPTX 生成 | 生成有效的 .pptx 文件 |
+| 单元测试 | 各布局类型 | 19 种布局正确渲染 |
+| 单元测试 | 主题应用 | 17 种主题配色正确 |
+| 单元测试 | 图片嵌入 | 图片正确显示 |
+| 集成测试 | API 端点 | 返回有效的 PPTX 文件 |
+| E2E 测试 | 前端下载 | 文件可在 PowerPoint 中打开 |
+
+---
+
+> **文档状态**: 🔄 Phase 5.11 PPTX 导出功能开发中
+> **最后更新**: 2026-01-23
+> **下一步**: 实施 Phase 5.11.1 PPTX 导出服务核心功能

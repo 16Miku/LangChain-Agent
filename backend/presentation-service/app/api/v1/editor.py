@@ -24,10 +24,13 @@ from app.schemas import (
     AddSlideRequest,
     Slide,
 )
+from fastapi.responses import Response
+
 from app.services.presentation_service import PresentationService
 from app.services.layout_engine import layout_engine, LayoutType, LayoutConfig, LAYOUT_CONFIGS
 from app.services.image_service import image_service, ImageSearchResult, ImageSearchResponse
 from app.services.theme_service import theme_service, ThemeType, ThemeConfig, THEME_CONFIGS
+from app.services.pptx_export_service import pptx_export_service
 
 router = APIRouter(prefix="/editor", tags=["editor"])
 
@@ -914,3 +917,67 @@ async def delete_slide(
         created_at=presentation.created_at,
         updated_at=presentation.updated_at,
     )
+
+
+# ============================================================
+# PPTX 导出 API
+# ============================================================
+
+@router.get("/{presentation_id}/export/pptx")
+async def export_pptx(
+    presentation_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    导出演示文稿为 PPTX 文件
+    返回原生 PowerPoint 文件，可直接在 Microsoft PowerPoint 中打开编辑
+    """
+    try:
+        uuid.UUID(presentation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid presentation ID"
+        )
+
+    result = await db.execute(
+        select(Presentation).where(
+            Presentation.id == presentation_id,
+            Presentation.user_id == user_id
+        )
+    )
+    presentation = result.scalar_one_or_none()
+
+    if not presentation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Presentation not found"
+        )
+
+    try:
+        presentation_data = {
+            "title": presentation.title,
+            "description": presentation.description,
+            "slides": presentation.slides,
+            "theme": presentation.theme,
+        }
+
+        pptx_bytes = await pptx_export_service.export_to_pptx(
+            presentation_data=presentation_data,
+            theme=presentation.theme or "modern_business"
+        )
+
+        filename = pptx_export_service.generate_filename(presentation.title)
+
+        return Response(
+            content=pptx_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export PPTX: {str(e)}"
+        )
