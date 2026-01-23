@@ -321,28 +321,32 @@ class PptxExportService:
         lines = self._parse_content(content)
         num_lines = len(lines)
 
-        # 内容区域参数
-        available_top = Inches(1.35)
-        available_bottom = Inches(7.1)
-        available_height_px = 7.1 - 1.35  # 约 5.75 英寸
+        # 幻灯片总高度 7.5 英寸，底部留 0.4 英寸边距
+        slide_usable_bottom = Inches(7.1)
+        content_area_bottom = Inches(1.1)  # 装饰线位置
 
-        # 根据内容量计算起始位置
-        if num_lines <= 3:
-            # 内容很少，明显垂直居中
-            # 每行约 0.35 英寸高度（字体20pt + 行间距）
-            content_height = num_lines * 0.35 + 0.2  # 加点余量
-            # 垂直居中：起始位置 = 可用区域顶部 + (可用高度 - 内容高度) / 2
-            content_top = available_top + (available_height_px - content_height) / 2
-            if content_top < available_top:
-                content_top = available_top
+        # 根据内容量动态计算起始位置
+        # 幻灯片中心大约在 3.75 英寸
+        slide_center = Inches(3.75)
+
+        if num_lines == 0:
+            # 无内容
+            content_top = Inches(1.35)
+        elif num_lines == 1:
+            # 单行内容 - 明显居中（放在中心位置）
+            content_top = slide_center - Inches(0.3)  # 稍微偏上一点
+        elif num_lines == 2:
+            # 两行内容 - 居中
+            content_top = slide_center - Inches(0.6)
+        elif num_lines == 3:
+            # 三行内容 - 轻微居中
+            content_top = slide_center - Inches(0.9)
         elif num_lines <= 5:
-            # 内容较少，轻微居中
-            content_height = num_lines * 0.35
-            offset = (available_height_px - content_height) / 4  # 只偏移 1/4
-            content_top = available_top + offset
+            # 4-5行 - 轻微偏移
+            content_top = Inches(2.0)
         else:
-            # 内容较多，从顶部开始
-            content_top = available_top
+            # 内容多 - 从标准位置开始
+            content_top = Inches(1.35)
 
         content_box = slide.shapes.add_textbox(self.MARGIN, content_top, self.CONTENT_WIDTH, Inches(5.8))
         tf = self._create_text_frame(content_box, margin_left=Inches(0.1), margin_top=Inches(0.05))
