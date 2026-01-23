@@ -296,16 +296,17 @@ class PptxExportService:
     def _add_content_slide(self, prs: Presentation, title: str, content: str, colors: Dict[str, str], notes: str = "") -> None:
         """
         内容页 - 专业级设计
-        - 清晰的标题区
+        - 紧凑的标题区
         - 短装饰线
-        - 优化的列表间距
+        - 内容感知的动态布局
         """
         slide = prs.slides.add_slide(prs.slide_layouts[6])
         slide.background.fill.solid()
         slide.background.fill.fore_color.rgb = self._hex_to_rgb(colors["background"])
 
-        # 标题
-        title_box = slide.shapes.add_textbox(self.MARGIN, self.MARGIN, self.CONTENT_WIDTH, Inches(0.9))
+        # 标题 - 紧凑布局，减少顶部空白
+        title_top = Inches(0.4)
+        title_box = slide.shapes.add_textbox(self.MARGIN, title_top, self.CONTENT_WIDTH, Inches(0.7))
         tf = self._create_text_frame(title_box)
         p = tf.paragraphs[0]
         p.text = title
@@ -314,13 +315,25 @@ class PptxExportService:
         p.font.name = self.typo.FONT_TITLE
         p.font.color.rgb = self._hex_to_rgb(colors["title"])
 
-        # 短装饰线
-        self._add_decoration_line(slide, self.MARGIN, Inches(1.5), self.DECOR_LINE_SHORT, colors["decorLine"], Pt(3))
+        # 短装饰线 - 紧跟标题
+        self._add_decoration_line(slide, self.MARGIN, Inches(1.1), self.DECOR_LINE_SHORT, colors["decorLine"], Pt(3))
 
-        # 内容区
-        content_box = slide.shapes.add_textbox(self.MARGIN, Inches(1.8), self.CONTENT_WIDTH, Inches(5.2))
-        tf = self._create_text_frame(content_box, margin_left=Inches(0.1), margin_top=Inches(0.1))
+        # 解析内容
         lines = self._parse_content(content)
+        num_lines = len(lines)
+
+        # 内容区域 - 从装饰线下方开始，充分利用空间
+        content_top = Inches(1.35)
+        content_height = Inches(5.8)  # 扩大内容区域
+
+        # 根据内容量计算起始位置 (内容少时垂直居中)
+        if num_lines <= 4:
+            # 内容少，垂直居中
+            estimated_content_height = num_lines * 0.5  # 估算内容高度
+            content_top = Inches(1.35 + (5.8 - estimated_content_height) / 3)  # 偏上居中
+
+        content_box = slide.shapes.add_textbox(self.MARGIN, content_top, self.CONTENT_WIDTH, content_height)
+        tf = self._create_text_frame(content_box, margin_left=Inches(0.1), margin_top=Inches(0.05))
 
         if lines:
             # 第一行
@@ -333,7 +346,7 @@ class PptxExportService:
             p.level = level
             if is_bullet:
                 p.bullet = True
-            self._set_paragraph_spacing(p, space_after=self.typo.BULLET_SPACE_AFTER)
+            self._set_paragraph_spacing(p, space_after=self.typo.PARA_SPACE_AFTER)
 
             # 后续行
             for text, level, is_bullet in lines[1:]:
@@ -345,7 +358,7 @@ class PptxExportService:
                 p.level = level
                 if is_bullet:
                     p.bullet = True
-                self._set_paragraph_spacing(p, space_before=Pt(4), space_after=self.typo.BULLET_SPACE_AFTER)
+                self._set_paragraph_spacing(p, space_before=Pt(6), space_after=self.typo.PARA_SPACE_AFTER)
 
         # 演讲者备注
         if notes:
@@ -354,16 +367,15 @@ class PptxExportService:
     def _add_two_column_slide(self, prs: Presentation, title: str, content: str, colors: Dict[str, str], notes: str = "") -> None:
         """
         双栏页 - 专业级设计
-        - 非对称列宽 (可选)
-        - 分隔线
-        - 独立标题
+        - 紧凑标题区
+        - 均衡的双栏布局
         """
         slide = prs.slides.add_slide(prs.slide_layouts[6])
         slide.background.fill.solid()
         slide.background.fill.fore_color.rgb = self._hex_to_rgb(colors["background"])
 
-        # 标题
-        title_box = slide.shapes.add_textbox(self.MARGIN, self.MARGIN, self.CONTENT_WIDTH, Inches(0.9))
+        # 标题 - 紧凑布局
+        title_box = slide.shapes.add_textbox(self.MARGIN, Inches(0.4), self.CONTENT_WIDTH, Inches(0.7))
         tf = self._create_text_frame(title_box)
         p = tf.paragraphs[0]
         p.text = title
@@ -373,7 +385,7 @@ class PptxExportService:
         p.font.color.rgb = self._hex_to_rgb(colors["title"])
 
         # 短装饰线
-        self._add_decoration_line(slide, self.MARGIN, Inches(1.5), self.DECOR_LINE_SHORT, colors["decorLine"], Pt(3))
+        self._add_decoration_line(slide, self.MARGIN, Inches(1.1), self.DECOR_LINE_SHORT, colors["decorLine"], Pt(3))
 
         # 分割内容
         lines = self._parse_content(content)
@@ -381,14 +393,16 @@ class PptxExportService:
         left_lines = lines[:mid] if mid else lines
         right_lines = lines[mid:] if mid else []
 
-        # 列宽计算 (45% / 45% 带 10% 间隙)
-        col_width = Inches(5.5)
-        col_gap = Inches(0.6)
+        # 列宽计算 - 更紧凑的间隙
+        col_width = Inches(5.8)
+        col_gap = Inches(0.5)
         left_x = self.MARGIN
         right_x = self.MARGIN + col_width + col_gap
+        content_top = Inches(1.35)
+        content_height = Inches(5.8)
 
         # 左栏
-        left_box = slide.shapes.add_textbox(left_x, Inches(1.8), col_width, Inches(5.2))
+        left_box = slide.shapes.add_textbox(left_x, content_top, col_width, content_height)
         tf = self._create_text_frame(left_box, margin_left=Inches(0.05))
         if left_lines:
             p = tf.paragraphs[0]
@@ -398,7 +412,7 @@ class PptxExportService:
             p.font.color.rgb = self._hex_to_rgb(colors["text"])
             if left_lines[0][2]:
                 p.bullet = True
-            self._set_paragraph_spacing(p, space_after=self.typo.BULLET_SPACE_AFTER)
+            self._set_paragraph_spacing(p, space_after=self.typo.PARA_SPACE_AFTER)
 
             for text, _, is_bullet in left_lines[1:]:
                 p = tf.add_paragraph()
@@ -408,10 +422,10 @@ class PptxExportService:
                 p.font.color.rgb = self._hex_to_rgb(colors["text"])
                 if is_bullet:
                     p.bullet = True
-                self._set_paragraph_spacing(p, space_before=Pt(4), space_after=self.typo.BULLET_SPACE_AFTER)
+                self._set_paragraph_spacing(p, space_before=Pt(6), space_after=self.typo.PARA_SPACE_AFTER)
 
         # 右栏
-        right_box = slide.shapes.add_textbox(right_x, Inches(1.8), col_width, Inches(5.2))
+        right_box = slide.shapes.add_textbox(right_x, content_top, col_width, content_height)
         tf = self._create_text_frame(right_box, margin_left=Inches(0.05))
         if right_lines:
             p = tf.paragraphs[0]
@@ -421,7 +435,7 @@ class PptxExportService:
             p.font.color.rgb = self._hex_to_rgb(colors["text"])
             if right_lines[0][2]:
                 p.bullet = True
-            self._set_paragraph_spacing(p, space_after=self.typo.BULLET_SPACE_AFTER)
+            self._set_paragraph_spacing(p, space_after=self.typo.PARA_SPACE_AFTER)
 
             for text, _, is_bullet in right_lines[1:]:
                 p = tf.add_paragraph()
@@ -431,7 +445,7 @@ class PptxExportService:
                 p.font.color.rgb = self._hex_to_rgb(colors["text"])
                 if is_bullet:
                     p.bullet = True
-                self._set_paragraph_spacing(p, space_before=Pt(4), space_after=self.typo.BULLET_SPACE_AFTER)
+                self._set_paragraph_spacing(p, space_before=Pt(6), space_after=self.typo.PARA_SPACE_AFTER)
 
         # 演讲者备注
         if notes:
