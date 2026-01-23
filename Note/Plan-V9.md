@@ -21,6 +21,9 @@
 10. [风险评估与应对](#十风险评估与应对)
 11. [验收标准](#十一验收标准)
 12. [附录](#十二附录)
+   - 12.1 [参考资料](#121-参考资料)
+   - 12.2 [术语表](#122-术语表)
+   - 12.3 [变更历史](#123-变更历史)
 
 ---
 
@@ -2939,167 +2942,10 @@ LAYOUT_IMPROVEMENTS = {
 
 **推荐**: 暂时移除图片，专注于纯文字布局的美学优化。未来可添加 Unsplash API 集成。
 
----
 
-## 十、风险评估与应对
 
-### 10.1 技术风险
 
-| 风险 | 可能性 | 影响 | 应对措施 |
-|------|--------|------|---------|
-| Milvus 学习曲线 | 中 | 中 | 提前学习文档，准备 ChromaDB 回退方案 |
-| Whisper 性能问题 | 中 | 低 | 使用 base 模型，考虑 API 服务回退 |
-| MinerU API 不稳定 | 中 | 中 | 实现默认解析方案作为 fallback |
-| 前后端集成问题 | 中 | 中 | 定义清晰 API 接口，渐进式开发 |
-| SSE 流式传输兼容性 | 低 | 高 | 测试多浏览器，准备 WebSocket 备选 |
 
-### 10.2 资源风险
-
-| 风险 | 可能性 | 影响 | 应对措施 |
-|------|--------|------|---------|
-| 开发时间不足 | 中 | 高 | 按优先级砍需求，Phase 3 可延后 |
-| 服务器资源不足 | 低 | 中 | 优化配置，考虑云服务 |
-| API 额度限制 | 中 | 中 | 实现请求缓存，添加限流 |
-
-### 10.3 回退方案
-
-| 功能 | 主方案 | 回退方案 |
-|------|--------|---------|
-| 向量存储 | Milvus | ChromaDB (现有) |
-| 语音识别 | faster-whisper (本地) | Web Speech API (浏览器) |
-| 语音合成 | Edge TTS | pyttsx3 (本地) |
-| 文档解析 | MinerU API | PyPDF2 + 基础分块 |
-| 重排序 | bge-reranker | 无重排序 |
-
----
-
-## 十一、验收标准
-
-### 11.1 功能验收
-
-| 功能 | 验收条件 |
-|------|---------|
-| **用户注册** | 能成功注册新用户，密码加密存储 |
-| **用户登录** | 能登录并获取 JWT Token |
-| **会话管理** | 能创建、切换、删除会话 |
-| **流式聊天** | 消息实时流式显示，支持中断 |
-| **工具调用** | 工具执行过程可视化，状态正确 |
-| **图片理解** | 能上传图片并获得分析结果 |
-| **语音输入** | 能录音并转换为文字 |
-| **语音输出** | AI 回复能转换为语音播放 |
-| **文档上传** | 能上传 PDF 并解析入库 |
-| **混合检索** | 能检索到相关内容并显示引用 |
-| **Docker 部署** | docker-compose up 一键启动 |
-| **AI 生成 PPT** | 能根据主题生成演示文稿并预览/下载 |
-
-### 11.2 性能验收
-
-| 指标 | 目标值 | 测试方法 |
-|------|--------|---------|
-| 首屏加载 | < 2s | Lighthouse |
-| 登录响应 | < 500ms | API 测试 |
-| 流式首 Token | < 1s | 手动测试 |
-| 检索延迟 | < 500ms | API 测试 |
-| 并发用户 | 100+ | 压力测试 |
-
-### 11.3 质量验收
-
-- [ ] 所有 API 有 OpenAPI 文档
-- [ ] 关键路径有单元测试
-- [ ] 无严重安全漏洞
-- [ ] 错误提示用户友好
-- [ ] 移动端可正常使用
-
----
-
-## 十二、附录
-
-### 12.1 参考资料
-
-| 资源 | 链接 |
-|------|------|
-| Next.js 文档 | https://nextjs.org/docs |
-| shadcn/ui | https://ui.shadcn.com |
-| Tailwind CSS | https://tailwindcss.com |
-| FastAPI | https://fastapi.tiangolo.com |
-| Milvus | https://milvus.io/docs |
-| faster-whisper | https://github.com/guillaumekln/faster-whisper |
-| Edge TTS | https://github.com/rany2/edge-tts |
-| MinerU | https://github.com/opendatalab/MinerU |
-
-### 12.2 术语表
-
-| 术语 | 说明 |
-|------|------|
-| SSE | Server-Sent Events，服务器推送事件 |
-| JWT | JSON Web Token，认证令牌 |
-| RAG | Retrieval-Augmented Generation，检索增强生成 |
-| RRF | Reciprocal Rank Fusion，排名融合算法 |
-| BM25 | Best Matching 25，经典检索算法 |
-| OCR | Optical Character Recognition，光学字符识别 |
-| TTS | Text-to-Speech，文字转语音 |
-| STT | Speech-to-Text，语音转文字 |
-
-### 12.3 变更历史
-
-| 版本 | 日期 | 变更内容 | 作者 |
-|------|------|---------|------|
-| 1.0 | 2025-12-31 | 初始版本 | Claude Code |
-| 1.1 | 2025-12-31 | Week 1 完成：Next.js 前端基础架构 | Claude Code |
-| 1.2 | 2025-12-31 | Week 2 完成：auth-service 用户认证服务 | Claude Code |
-| 1.3 | 2025-12-31 | Week 3 进行中：chat-service 后端完成 | Claude Code |
-| 1.4 | 2025-12-31 | Week 3 完成：前端 SSE 流式对接、工具可视化、代码高亮、图表渲染组件 | Claude Code |
-| 1.5 | 2025-12-31 | Week 3 完成：修复工具导入路径、UTF-8 中文乱码、OpenAI 兼容模式支持 | Claude Code |
-| 1.6 | 2026-01-01 | Week 4 完成：图片理解多模态功能 | Claude Code |
-| 1.7 | 2026-01-01 | Week 4 Bug修复：E2B图表显示(变量名冲突)、Markdown图片渲染 | Claude Code |
-| 1.8 | 2026-01-01 | 优化 System Prompt：E2B沙箱指南、代码格式规则；新增 Phase 5 AI生成PPT规划 | Claude Code |
-| 1.9 | 2026-01-01 | Week 5 完成：语音交互功能 (whisper-service + faster-whisper + edge-tts + 前端组件) | Claude Code |
-| 2.0 | 2026-01-02 | Week 5.5 完成：前端侧边栏优化 (ConversationItem组件、Grid布局、默认页面重定向) | Claude Code |
-| 2.1 | 2026-01-02 | Week 6 进行中：创建 rag-service 微服务 (Milvus+BM25+RRF混合检索) | Claude Code |
-| 2.2 | 2026-01-02 | Week 6 完成：PDF解析(PyPDF2)、SQLite测试模式修复、BM25中文搜索测试通过 | Claude Code |
-| 2.3 | 2026-01-02 | Week 7 进行中：Reranker重排序、引用追溯(CitationService)、Milvus空指针修复 | Claude Code |
-| 2.4 | 2026-01-02 | Week 7 进行中：智能分块服务(ChunkingService - 语义/页面感知/递归策略) | Claude Code |
-| 2.5 | 2026-01-02 | Week 7 进行中：前端引用展示组件(CitationPanel + RAG API + chatStore集成) | Claude Code |
-| 2.6 | 2026-01-03 | Week 7 进行中：文档管理界面(DocumentsPage - Tabs组件/上传/列表/删除) | Claude Code |
-| 2.7 | 2026-01-03 | Week 7 完成：RAG与Chat集成(rag_search + list_knowledge_documents工具，代理绕过修复) | Claude Code |
-| 2.8 | 2026-01-03 | Week 7 完成：RAG检索优化(chunk_size 500→1500, overlap 50→200, top_k 5→10) | Claude Code |
-| 2.9 | 2026-01-03 | Week 7 完成：LLM RAG结果利用优化(System Prompt + 引用数据传递 + citation SSE事件) | Claude Code |
-| 3.0 | 2026-01-03 | Week 7 完成：文档目录提取功能(extract_toc + chunk_with_toc) + 前端文档列表UI修复 | Claude Code |
-| 3.1 | 2026-01-03 | Week 8 规划：新增 Render + Supabase 云部署方案 (pgvector 替代 Milvus) | Claude Code |
-| 3.2 | 2026-01-03 | Week 8 实现：PgvectorService 完成 (SQLite暴力搜索 + PostgreSQL pgvector双模式支持) | Claude Code |
-| 3.3 | 2026-01-03 | Week 8 完成：Supabase Schema (database/supabase_schema.sql) + Render 部署配置 (render.yaml) | Claude Code |
-| 3.4 | 2026-01-03 | Week 8 完成：前端构建配置 (Dockerfile + next.config.ts + API客户端优化 + 类型修复) | Claude Code |
-| 3.5 | 2026-01-03 | Week 8 完成：端到端测试脚本 (test_e2e.py + health_check.py + pytest.ini) | Claude Code |
-| 3.6 | 2026-01-03 | Week 8 修复：前端 API 路由配置 (.env.local + auth.ts 使用 authApiClient) | Claude Code |
-| 3.7 | 2026-01-03 | Week 8 修复：Token Refresh 500 错误 (添加 jti 确保 token 唯一性) | Claude Code |
-| 3.8 | 2026-01-03 | Week 8 修复：工具调用/引用持久化 (后端 citation 收集 + 前端字段名驼峰匹配) | Claude Code |
-| 3.9 | 2026-01-03 | Phase 5.1 完成：AI生成PPT功能 (generate_presentation工具 + Reveal.js + 前端PresentationPreview组件) | Claude Code |
-| 4.0 | 2026-01-03 | Phase 5.1 修复：PPT预览不显示 (agent_service.py 保护 [PRESENTATION_HTML:] 标记不被截断) | Claude Code |
-| 4.1 | 2026-01-03 | Phase 5.1 修复：PPT中文乱码 (前端使用 TextDecoder 正确解码 UTF-8 base64) | Claude Code |
-| 4.2 | 2026-01-03 | Phase 5 规划：AI生成PPT完整方案 (15+布局类型、图片集成、主题系统、迭代优化) | Claude Code |
-| 4.3 | 2026-01-03 | Phase 5 重构：采用方案 B - 独立 presentation-service 架构 (完整设计文档) | Claude Code |
-| 4.4 | 2026-01-03 | Phase 5.2 完成：独立服务基础设施 (数据模型/CRUD/编辑器API/AI生成/SQLite兼容) | Claude Code |
-| 4.5 | 2026-01-03 | Phase 5.3 完成：前端独立页面 (列表/编辑器/预览/状态管理/组件补齐) | Claude Code |
-| 4.6 | 2026-01-03 | Phase 5.4 规划：在线编辑器功能 (实时编辑/插入删除幻灯片/自动保存) | Claude Code |
-| 4.7 | 2026-01-03 | Phase 5.5 规划：AI 对话式修改 (自然语言指令解析/多轮对话/AI自动修改PPT) | Claude Code |
-| 4.8 | 2026-01-04 | Phase 5.4 完成：在线编辑器功能 (实时编辑/插入删除/自动保存防抖/SQLAlchemy JSON更新修复) | Claude Code |
-| 4.9 | 2026-01-04 | Phase 5.4 修复：SQLite 数据库查询类型不匹配 (String vs UUID 对象比较问题) | Claude Code |
-| 5.0 | 2026-01-04 | Phase 5.5 完成：AI 对话式修改基础功能 (IntentParserService + AssistantPanel + 14项测试全通过) | Claude Code |
-| 5.1 | 2026-01-04 | Phase 5.5 修复：AI 助手对话记录消失问题 (db.commit + 静默更新 + ScrollArea 修复) | Claude Code |
-| 5.2 | 2026-01-06 | Phase 5.7 完成：高级生成功能 (布局引擎19种/图片服务Unsplash/主题系统12种/测试113项全通过) | Claude Code |
-| 5.3 | 2026-01-06 | Phase 5.8 完成：导出 HTML 功能 (ExportService + 导出API + 34项测试全通过) | Claude Code |
-| 5.4 | 2026-01-06 | Phase 5.8 完成：前端导出按钮集成 (下拉菜单/下载HTML/浏览器预览) | Claude Code |
-| 5.5 | 2026-01-07 | Bug 修复：AuthProvider 初始化问题 (React 18 Strict Mode 下 useRef 导致页面卡在 Loading) | Claude Code |
-| 5.6 | 2026-01-07 | Bug 修复：导出 HTML 中文文件名编码 (RFC 5987 filename* 参数支持 UTF-8) | Claude Code |
-| 5.7 | 2026-01-07 | Bug 修复：JWT_SECRET 不一致 (presentation-service 与 auth-service 密钥同步) | Claude Code |
-| 5.8 | 2026-01-07 | Phase 5.9 规划：美学优化与 Bug 修复 (HTML结构/主题增强/图片集成/智能匹配) | Claude Code |
-| 5.9 | 2026-01-07 | Phase 5.9.1 完成：Bug 修复 (HTML列表标签/Markdown换行符/封面页标题层级) | Claude Code |
-| 6.0 | 2026-01-07 | Phase 5.9.2 完成：二次元/动漫主题 (anime_dark/anime_cute/cyberpunk/eva_nerv/retro_pixel) + 智能主题匹配 | Claude Code |
-| 6.1 | 2026-01-07 | Phase 5.9.3 完成：AI 生成流程集成图片服务 + 自动主题推荐 (auto_theme 参数) | Claude Code |
-| 6.2 | 2026-01-07 | 前端主题选择器更新：17 种主题分类显示 + Next.js rewrites 代理配置 + 前后端联调问题解决方案文档 | Claude Code |
-| 6.3 | 2026-01-07 | Bug 修复：PPT 生成时图片不显示 (前端 includeImages 参数从 false 改为 true) | Claude Code |
-| 6.4 | 2026-01-07 | Bug 修复：Unsplash Source 服务已停止 (503)，改用 Picsum Photos 作为备用图片源 | Claude Code |
-| 6.5 | 2026-01-08 | Phase 5.10 规划：PPT 美学优化方案 (移除随机图片/优化纯文字布局/增强视觉层次) | Claude Code |
 
 ---
 
@@ -3241,7 +3087,7 @@ requests>=2.31.0  # 下载远程图片
 
 ---
 
-#### Phase 5.12 专业级 PPTX 导出升级 (2026-01-23)
+#### 5.15 Phase 5.12 专业级 PPTX 导出升级 (2026-01-23)
 
 > **背景**: 基于 pptx-skills 的深度分析，将当前简陋的 PPTX 导出升级为商用专业级别
 
@@ -3441,9 +3287,9 @@ PROFESSIONAL_THEMES = {
 
 ---
 
-### Phase 5.12 开发进度记录
+##### 5.15.6 开发进度记录
 
-### 2026-01-23 进度更新
+> **记录时间**: 2026-01-23
 
 | 任务 | 状态 | 说明 |
 |------|------|------|
@@ -3452,11 +3298,9 @@ PROFESSIONAL_THEMES = {
 | 布局优化 | ❌ 未达预期 | 紧凑标题区，但整体视觉效果差 |
 | 测试 | ✅ 通过 | 24 项自动化测试通过 |
 
-### 专业设计师评价 (2026-01-23)
+###### 专业设计师评价
 
 **总体评分: 2/10 - 不可用于商用**
-
-#### 具体问题分析
 
 | 页面类型 | 评分 | 问题描述 |
 |----------|------|----------|
@@ -3467,7 +3311,7 @@ PROFESSIONAL_THEMES = {
 | **双栏页** | 3/10 | 栏宽不够均衡，无分隔设计 |
 | **结束页** | 5/10 | 基本合格，双装饰线略显刻意 |
 
-#### 核心设计缺陷
+###### 核心设计缺陷
 
 1. **空间滥用** - 大量无意义空白，没有形成视觉引导
 2. **缺乏层次** - 所有元素都是平铺，没有主次之分
@@ -3475,7 +3319,7 @@ PROFESSIONAL_THEMES = {
 4. **色彩单一** - 只用了单色填充，无渐变、无阴影、无质感
 5. **排版僵硬** - 纯靠硬编码位置，无法适应不同内容
 
-#### 与专业 PPT 的差距
+###### 与专业 PPT 的差距
 
 | 方面 | 专业 PPT | 当前实现 | 差距 |
 |------|----------|----------|------|
@@ -3485,7 +3329,7 @@ PROFESSIONAL_THEMES = {
 | 色彩应用 | 渐变、透明度、配色 | 纯色填充 | 大 |
 | 排版灵活性 | 内容驱动布局 | 固定位置 | 大 |
 
-### 根本原因分析
+###### 根本原因分析
 
 **技术架构层面的根本问题**:
 
@@ -3503,7 +3347,7 @@ PROFESSIONAL_THEMES = {
    - 只关注"功能实现"，没有"美学设计"
    - 缺乏专业设计规范（网格系统、黄金比例等）
 
-### 结论
+###### 结论
 
 **当前 PPTX 导出功能不适用于生产环境。**
 
@@ -3512,7 +3356,7 @@ PROFESSIONAL_THEMES = {
 - **中期**: 引入 HTML 预渲染机制，参考 pptx-skills
 - **长期**: 考虑与专业设计工具集成，或使用模板系统
 
-### 已提交的 Git 记录
+###### 已提交的 Git 记录
 
 ```
 f03b070 - fix(presentation): 优化 PPTX 布局减少空白区域
@@ -3521,7 +3365,7 @@ f03b070 - fix(presentation): 优化 PPTX 布局减少空白区域
 f50dcca - feat(presentation): 升级为专业级 PPTX 导出服务
 ```
 
-### 功能可用性评估
+###### 功能可用性评估
 
 | 评估项 | 状态 | 说明 |
 |--------|------|------|
@@ -3530,6 +3374,172 @@ f50dcca - feat(presentation): 升级为专业级 PPTX 导出服务
 | **可用性** | ⚠️ | 仅作为草稿级导出 |
 | **商用性** | ❌ | 不适合对外使用 |
 
+
+
+
+---
+
+## 十、风险评估与应对
+
+### 10.1 技术风险
+
+| 风险 | 可能性 | 影响 | 应对措施 |
+|------|--------|------|---------|
+| Milvus 学习曲线 | 中 | 中 | 提前学习文档，准备 ChromaDB 回退方案 |
+| Whisper 性能问题 | 中 | 低 | 使用 base 模型，考虑 API 服务回退 |
+| MinerU API 不稳定 | 中 | 中 | 实现默认解析方案作为 fallback |
+| 前后端集成问题 | 中 | 中 | 定义清晰 API 接口，渐进式开发 |
+| SSE 流式传输兼容性 | 低 | 高 | 测试多浏览器，准备 WebSocket 备选 |
+
+### 10.2 资源风险
+
+| 风险 | 可能性 | 影响 | 应对措施 |
+|------|--------|------|---------|
+| 开发时间不足 | 中 | 高 | 按优先级砍需求，Phase 3 可延后 |
+| 服务器资源不足 | 低 | 中 | 优化配置，考虑云服务 |
+| API 额度限制 | 中 | 中 | 实现请求缓存，添加限流 |
+
+### 10.3 回退方案
+
+| 功能 | 主方案 | 回退方案 |
+|------|--------|---------|
+| 向量存储 | Milvus | ChromaDB (现有) |
+| 语音识别 | faster-whisper (本地) | Web Speech API (浏览器) |
+| 语音合成 | Edge TTS | pyttsx3 (本地) |
+| 文档解析 | MinerU API | PyPDF2 + 基础分块 |
+| 重排序 | bge-reranker | 无重排序 |
+
+---
+
+## 十一、验收标准
+
+### 11.1 功能验收
+
+| 功能 | 验收条件 |
+|------|---------|
+| **用户注册** | 能成功注册新用户，密码加密存储 |
+| **用户登录** | 能登录并获取 JWT Token |
+| **会话管理** | 能创建、切换、删除会话 |
+| **流式聊天** | 消息实时流式显示，支持中断 |
+| **工具调用** | 工具执行过程可视化，状态正确 |
+| **图片理解** | 能上传图片并获得分析结果 |
+| **语音输入** | 能录音并转换为文字 |
+| **语音输出** | AI 回复能转换为语音播放 |
+| **文档上传** | 能上传 PDF 并解析入库 |
+| **混合检索** | 能检索到相关内容并显示引用 |
+| **Docker 部署** | docker-compose up 一键启动 |
+| **AI 生成 PPT** | 能根据主题生成演示文稿并预览/下载 |
+
+### 11.2 性能验收
+
+| 指标 | 目标值 | 测试方法 |
+|------|--------|---------|
+| 首屏加载 | < 2s | Lighthouse |
+| 登录响应 | < 500ms | API 测试 |
+| 流式首 Token | < 1s | 手动测试 |
+| 检索延迟 | < 500ms | API 测试 |
+| 并发用户 | 100+ | 压力测试 |
+
+### 11.3 质量验收
+
+- [ ] 所有 API 有 OpenAPI 文档
+- [ ] 关键路径有单元测试
+- [ ] 无严重安全漏洞
+- [ ] 错误提示用户友好
+- [ ] 移动端可正常使用
+
+---
+
+## 十二、附录
+
+### 12.1 参考资料
+
+| 资源 | 链接 |
+|------|------|
+| Next.js 文档 | https://nextjs.org/docs |
+| shadcn/ui | https://ui.shadcn.com |
+| Tailwind CSS | https://tailwindcss.com |
+| FastAPI | https://fastapi.tiangolo.com |
+| Milvus | https://milvus.io/docs |
+| faster-whisper | https://github.com/guillaumekln/faster-whisper |
+| Edge TTS | https://github.com/rany2/edge-tts |
+| MinerU | https://github.com/opendatalab/MinerU |
+
+### 12.2 术语表
+
+| 术语 | 说明 |
+|------|------|
+| SSE | Server-Sent Events，服务器推送事件 |
+| JWT | JSON Web Token，认证令牌 |
+| RAG | Retrieval-Augmented Generation，检索增强生成 |
+| RRF | Reciprocal Rank Fusion，排名融合算法 |
+| BM25 | Best Matching 25，经典检索算法 |
+| OCR | Optical Character Recognition，光学字符识别 |
+| TTS | Text-to-Speech，文字转语音 |
+| STT | Speech-to-Text，语音转文字 |
+
+### 12.3 变更历史
+
+| 版本 | 日期 | 变更内容 | 作者 |
+|------|------|---------|------|
+| 1.0 | 2025-12-31 | 初始版本 | Claude Code |
+| 1.1 | 2025-12-31 | Week 1 完成：Next.js 前端基础架构 | Claude Code |
+| 1.2 | 2025-12-31 | Week 2 完成：auth-service 用户认证服务 | Claude Code |
+| 1.3 | 2025-12-31 | Week 3 进行中：chat-service 后端完成 | Claude Code |
+| 1.4 | 2025-12-31 | Week 3 完成：前端 SSE 流式对接、工具可视化、代码高亮、图表渲染组件 | Claude Code |
+| 1.5 | 2025-12-31 | Week 3 完成：修复工具导入路径、UTF-8 中文乱码、OpenAI 兼容模式支持 | Claude Code |
+| 1.6 | 2026-01-01 | Week 4 完成：图片理解多模态功能 | Claude Code |
+| 1.7 | 2026-01-01 | Week 4 Bug修复：E2B图表显示(变量名冲突)、Markdown图片渲染 | Claude Code |
+| 1.8 | 2026-01-01 | 优化 System Prompt：E2B沙箱指南、代码格式规则；新增 Phase 5 AI生成PPT规划 | Claude Code |
+| 1.9 | 2026-01-01 | Week 5 完成：语音交互功能 (whisper-service + faster-whisper + edge-tts + 前端组件) | Claude Code |
+| 2.0 | 2026-01-02 | Week 5.5 完成：前端侧边栏优化 (ConversationItem组件、Grid布局、默认页面重定向) | Claude Code |
+| 2.1 | 2026-01-02 | Week 6 进行中：创建 rag-service 微服务 (Milvus+BM25+RRF混合检索) | Claude Code |
+| 2.2 | 2026-01-02 | Week 6 完成：PDF解析(PyPDF2)、SQLite测试模式修复、BM25中文搜索测试通过 | Claude Code |
+| 2.3 | 2026-01-02 | Week 7 进行中：Reranker重排序、引用追溯(CitationService)、Milvus空指针修复 | Claude Code |
+| 2.4 | 2026-01-02 | Week 7 进行中：智能分块服务(ChunkingService - 语义/页面感知/递归策略) | Claude Code |
+| 2.5 | 2026-01-02 | Week 7 进行中：前端引用展示组件(CitationPanel + RAG API + chatStore集成) | Claude Code |
+| 2.6 | 2026-01-03 | Week 7 进行中：文档管理界面(DocumentsPage - Tabs组件/上传/列表/删除) | Claude Code |
+| 2.7 | 2026-01-03 | Week 7 完成：RAG与Chat集成(rag_search + list_knowledge_documents工具，代理绕过修复) | Claude Code |
+| 2.8 | 2026-01-03 | Week 7 完成：RAG检索优化(chunk_size 500→1500, overlap 50→200, top_k 5→10) | Claude Code |
+| 2.9 | 2026-01-03 | Week 7 完成：LLM RAG结果利用优化(System Prompt + 引用数据传递 + citation SSE事件) | Claude Code |
+| 3.0 | 2026-01-03 | Week 7 完成：文档目录提取功能(extract_toc + chunk_with_toc) + 前端文档列表UI修复 | Claude Code |
+| 3.1 | 2026-01-03 | Week 8 规划：新增 Render + Supabase 云部署方案 (pgvector 替代 Milvus) | Claude Code |
+| 3.2 | 2026-01-03 | Week 8 实现：PgvectorService 完成 (SQLite暴力搜索 + PostgreSQL pgvector双模式支持) | Claude Code |
+| 3.3 | 2026-01-03 | Week 8 完成：Supabase Schema (database/supabase_schema.sql) + Render 部署配置 (render.yaml) | Claude Code |
+| 3.4 | 2026-01-03 | Week 8 完成：前端构建配置 (Dockerfile + next.config.ts + API客户端优化 + 类型修复) | Claude Code |
+| 3.5 | 2026-01-03 | Week 8 完成：端到端测试脚本 (test_e2e.py + health_check.py + pytest.ini) | Claude Code |
+| 3.6 | 2026-01-03 | Week 8 修复：前端 API 路由配置 (.env.local + auth.ts 使用 authApiClient) | Claude Code |
+| 3.7 | 2026-01-03 | Week 8 修复：Token Refresh 500 错误 (添加 jti 确保 token 唯一性) | Claude Code |
+| 3.8 | 2026-01-03 | Week 8 修复：工具调用/引用持久化 (后端 citation 收集 + 前端字段名驼峰匹配) | Claude Code |
+| 3.9 | 2026-01-03 | Phase 5.1 完成：AI生成PPT功能 (generate_presentation工具 + Reveal.js + 前端PresentationPreview组件) | Claude Code |
+| 4.0 | 2026-01-03 | Phase 5.1 修复：PPT预览不显示 (agent_service.py 保护 [PRESENTATION_HTML:] 标记不被截断) | Claude Code |
+| 4.1 | 2026-01-03 | Phase 5.1 修复：PPT中文乱码 (前端使用 TextDecoder 正确解码 UTF-8 base64) | Claude Code |
+| 4.2 | 2026-01-03 | Phase 5 规划：AI生成PPT完整方案 (15+布局类型、图片集成、主题系统、迭代优化) | Claude Code |
+| 4.3 | 2026-01-03 | Phase 5 重构：采用方案 B - 独立 presentation-service 架构 (完整设计文档) | Claude Code |
+| 4.4 | 2026-01-03 | Phase 5.2 完成：独立服务基础设施 (数据模型/CRUD/编辑器API/AI生成/SQLite兼容) | Claude Code |
+| 4.5 | 2026-01-03 | Phase 5.3 完成：前端独立页面 (列表/编辑器/预览/状态管理/组件补齐) | Claude Code |
+| 4.6 | 2026-01-03 | Phase 5.4 规划：在线编辑器功能 (实时编辑/插入删除幻灯片/自动保存) | Claude Code |
+| 4.7 | 2026-01-03 | Phase 5.5 规划：AI 对话式修改 (自然语言指令解析/多轮对话/AI自动修改PPT) | Claude Code |
+| 4.8 | 2026-01-04 | Phase 5.4 完成：在线编辑器功能 (实时编辑/插入删除/自动保存防抖/SQLAlchemy JSON更新修复) | Claude Code |
+| 4.9 | 2026-01-04 | Phase 5.4 修复：SQLite 数据库查询类型不匹配 (String vs UUID 对象比较问题) | Claude Code |
+| 5.0 | 2026-01-04 | Phase 5.5 完成：AI 对话式修改基础功能 (IntentParserService + AssistantPanel + 14项测试全通过) | Claude Code |
+| 5.1 | 2026-01-04 | Phase 5.5 修复：AI 助手对话记录消失问题 (db.commit + 静默更新 + ScrollArea 修复) | Claude Code |
+| 5.2 | 2026-01-06 | Phase 5.7 完成：高级生成功能 (布局引擎19种/图片服务Unsplash/主题系统12种/测试113项全通过) | Claude Code |
+| 5.3 | 2026-01-06 | Phase 5.8 完成：导出 HTML 功能 (ExportService + 导出API + 34项测试全通过) | Claude Code |
+| 5.4 | 2026-01-06 | Phase 5.8 完成：前端导出按钮集成 (下拉菜单/下载HTML/浏览器预览) | Claude Code |
+| 5.5 | 2026-01-07 | Bug 修复：AuthProvider 初始化问题 (React 18 Strict Mode 下 useRef 导致页面卡在 Loading) | Claude Code |
+| 5.6 | 2026-01-07 | Bug 修复：导出 HTML 中文文件名编码 (RFC 5987 filename* 参数支持 UTF-8) | Claude Code |
+| 5.7 | 2026-01-07 | Bug 修复：JWT_SECRET 不一致 (presentation-service 与 auth-service 密钥同步) | Claude Code |
+| 5.8 | 2026-01-07 | Phase 5.9 规划：美学优化与 Bug 修复 (HTML结构/主题增强/图片集成/智能匹配) | Claude Code |
+| 5.9 | 2026-01-07 | Phase 5.9.1 完成：Bug 修复 (HTML列表标签/Markdown换行符/封面页标题层级) | Claude Code |
+| 6.0 | 2026-01-07 | Phase 5.9.2 完成：二次元/动漫主题 (anime_dark/anime_cute/cyberpunk/eva_nerv/retro_pixel) + 智能主题匹配 | Claude Code |
+| 6.1 | 2026-01-07 | Phase 5.9.3 完成：AI 生成流程集成图片服务 + 自动主题推荐 (auto_theme 参数) | Claude Code |
+| 6.2 | 2026-01-07 | 前端主题选择器更新：17 种主题分类显示 + Next.js rewrites 代理配置 + 前后端联调问题解决方案文档 | Claude Code |
+| 6.3 | 2026-01-07 | Bug 修复：PPT 生成时图片不显示 (前端 includeImages 参数从 false 改为 true) | Claude Code |
+| 6.4 | 2026-01-07 | Bug 修复：Unsplash Source 服务已停止 (503)，改用 Picsum Photos 作为备用图片源 | Claude Code |
+| 6.5 | 2026-01-08 | Phase 5.10 规划：PPT 美学优化方案 (移除随机图片/优化纯文字布局/增强视觉层次) | Claude Code |
+
+---
 ---
 
 > **文档状态**: ⚠️ Phase 5.12 基础功能完成，美学质量不达标
