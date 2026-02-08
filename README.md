@@ -125,6 +125,17 @@ V9.0 是 My-Chat-LangChain 项目的重大升级版本，核心目标是：
 
 
 
+# ## Plan-V10:
+
+[Note\Plan-V10.md](Note/Plan-V10.md)
+
+
+[tNote\V10-Manual-Test-Guide.mdt](Note/V10-Manual-Test-Guide.md)
+
+
+
+
+
 
 
 ## 面试备战文档
