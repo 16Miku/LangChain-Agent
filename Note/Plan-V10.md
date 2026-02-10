@@ -33,10 +33,29 @@
 | QueryRewriterService | ✅ 完成 | 查询改写 |
 | CI/CD 流水线 | ✅ 完成 | GitHub Actions |
 | 部署脚本 | ✅ 完成 | deploy.sh |
-| MinerU API 集成 | 🚧 进行中 | vibe-kanban 并行 |
-| 移动端适配 | 🚧 进行中 | vibe-kanban 并行 |
-| E2E 测试 | 🚧 进行中 | vibe-kanban 并行 |
-| API 文档完善 | 🚧 进行中 | vibe-kanban 并行 |
+| MinerU API 集成 | ✅ 完成 | vibe-kanban 并行 (2026-02-11) |
+| 移动端适配 | ✅ 完成 | vibe-kanban 并行 (2026-02-11) |
+| E2E 测试 | ✅ 完成 | vibe-kanban 并行 (2026-02-11) |
+| API 文档完善 | ✅ 完成 | vibe-kanban 并行 (2026-02-11) |
+| 代码审查修复 | ✅ 完成 | 后台任务 DB 会话问题 |
+
+### vibe-kanban 并行任务完成记录 (2026-02-11)
+
+| 任务 | 提交 | 变更文件数 | 新增代码行 |
+|------|------|-----------|-----------|
+| 移动端响应式适配 | 2cdc72a | 7 | +306/-140 |
+| E2E 测试编写 | d03aaea | 11 | +1718 |
+| API 文档完善 | 6840d1e | 11 | +994/-79 |
+| MinerU API 集成 | f3f75d1 | 4 | +1382/-39 |
+
+### 代码审查发现的问题及修复 (2026-02-11)
+
+| 问题 | 严重程度 | 状态 |
+|------|---------|------|
+| 后台任务使用已关闭的 DB 会话 | 高 | ✅ 已修复 |
+| 无效 Tailwind 类名 `size-default` | 高 | ✅ 已修复 |
+| E2E 测试使用 waitForTimeout 反模式 | 中 | 待修复 |
+| httpx.AsyncClient 未复用 | 中 | 待修复 |
 
 ---
 
