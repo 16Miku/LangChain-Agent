@@ -414,7 +414,15 @@ print(f'Response: {response.read().decode()}')
 
 ### 概述
 
-vibe-kanban MCP 是一个任务管理系统，支持启动云端工作空间进行并行开发。适用于多个**完全独立、无依赖**的任务同时开发。
+vibe-kanban MCP 是一个任务管理系统，支持在本地启动多个独立的 Claude Code agent 进行并行开发。每个子任务在独立的工作区内执行，完成后自动合并到主分支。适用于多个**完全独立、无依赖**的任务同时开发。
+
+### 工作原理
+
+1. 创建任务后，调用 `start_workspace_session` 启动工作空间
+2. vibe-kanban 在本地为每个任务启动一个独立的 Claude Code agent
+3. 每个 agent 在独立的工作区内执行开发任务
+4. 任务完成后，代码自动合并到主分支 (master)
+5. 主会话可以继续其他工作，无需等待子任务完成
 
 ### 使用场景
 
@@ -509,12 +517,7 @@ vibe-kanban 任务完成后，需要进行代码审查：
 
 ### 注意事项
 
-1. **不要重复创建任务**: vibe-kanban 云端任务和本地 Task subagent 是不同的，不要同时使用
-2. **任务描述要详细**: 云端工作空间是独立的，需要完整的上下文
-3. **配置 setup script**: 云端需要知道如何安装依赖
-   ```bash
-   mcp__vibe_kanban__update_setup_script
-     - repo_id: "仓库UUID"
-     - script: "uv sync && cd frontend-next && npm install"
-   ```
-4. **合并后审查**: 任务完成合并到 master 后，必须进行代码审查
+1. **不要重复创建任务**: vibe-kanban 子任务和本地 Task subagent 是不同的，不要混淆
+2. **任务描述要详细**: 每个 agent 是独立的，需要完整的上下文信息
+3. **合并后审查**: 任务完成合并到 master 后，必须进行代码审查
+4. **处理合并冲突**: 多个并行任务可能修改相同文件，合并后需检查冲突
