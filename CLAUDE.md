@@ -11,12 +11,51 @@ My-Chat-LangChain (Stream-Agent) 是一个全栈 AI 研究助理应用，基于 
 
 ## 开发环境
 
-- **包管理器**: uv (推荐) 或 Anaconda
+- **包管理器**: uv (推荐)
 - **Python 版本**: 3.12+
 - **Node.js**: v18+ (前端开发)
 - **依赖文件**: `requirements-full.txt` (完整锁定依赖)
 
 > **注意**: 项目已从 Anaconda 迁移到 uv，详见 `Note/Anaconda-to-UV-Migration.md`
+
+### uv 环境设置 (必读)
+
+```bash
+# 1. 创建虚拟环境 (首次)
+uv venv --python 3.12
+
+# 2. 激活虚拟环境
+# Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# Windows CMD:
+.\.venv\Scripts\activate.bat
+# Linux/macOS:
+source .venv/bin/activate
+
+# 3. 安装依赖 (使用清华镜像加速)
+uv pip install -r requirements-full.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 4. 验证安装
+python -c "import fastapi, langchain, torch; print('OK')"
+```
+
+### Python 路径
+
+根据环境不同，Python 可执行文件路径：
+
+| 环境 | Python 路径 |
+|------|-------------|
+| uv venv | `.venv/Scripts/python.exe` (Windows) 或 `.venv/bin/python` (Linux/macOS) |
+| Anaconda (旧) | `A:/Anaconda/envs/My-Chat-LangChain/python.exe` |
+
+**Claude Code 执行命令时，优先使用 uv venv 路径：**
+```bash
+# 测试命令
+.venv/Scripts/python.exe -m pytest tests/test_xxx.py -v --tb=short
+
+# 启动服务
+.venv/Scripts/python.exe -m uvicorn app.main:app --port 8001 --reload
+```
 
 ## 系统架构
 
@@ -67,7 +106,10 @@ My-Chat-LangChain (Stream-Agent) 是一个全栈 AI 研究助理应用，基于 
 ## 开发命令
 
 ```bash
-# 激活 Conda 环境 (必须)
+# ============ 环境激活 (二选一) ============
+# uv 环境 (推荐):
+.\.venv\Scripts\Activate.ps1  # Windows PowerShell
+# Anaconda 环境 (旧):
 conda activate My-Chat-LangChain
 
 # ============ 后端服务 ============
@@ -90,19 +132,15 @@ cd backend/presentation-service && uvicorn app.main:app --host 0.0.0.0 --port 80
 cd frontend-next && npm run dev
 
 # ============ 测试 ============
-# 运行单个服务的所有测试
-cd backend/rag-service && A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/ -v --tb=short
-cd backend/presentation-service && A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/ -v --tb=short
+# uv 环境测试命令:
+cd backend/rag-service && .venv/Scripts/python.exe -m pytest tests/ -v --tb=short
+cd backend/presentation-service && .venv/Scripts/python.exe -m pytest tests/ -v --tb=short
 
 # 运行单个测试文件
-A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_theme_service.py -v --tb=short
+.venv/Scripts/python.exe -m pytest tests/test_theme_service.py -v --tb=short
 
 # 运行单个测试函数
-A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_theme_service.py::TestThemeService::test_get_theme -v
-
-# 或手动执行
-conda activate My-Chat-LangChain
-cd backend/rag-service && python -m pytest tests/ -v --tb=short
+.venv/Scripts/python.exe -m pytest tests/test_theme_service.py::TestThemeService::test_get_theme -v
 
 # ============ Docker ============
 docker-compose up -d --build
@@ -220,7 +258,7 @@ JWT_ALGORITHM=HS256
 
 1. **获取文档** (必要时)
    - 使用 Context7 MCP 工具获取相关库/框架的最新文档
-   - 示例: `mcp__upstash-context7-mcp__resolve-library-id` + `mcp__upstash-context7-mcp__get-library-docs`
+   - 示例: `mcp__upstash-context7-mcp__resolve-library-id` + `mcp__upstash-context7-mcp__query-docs`
 
 2. **编写代码**
    - 编写功能代码和对应的测试用例
@@ -228,7 +266,7 @@ JWT_ALGORITHM=HS256
 
 3. **自动测试**
    - 运行 pytest 测试，确保所有测试通过
-   - 测试命令: `A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_xxx.py -v --tb=short`
+   - 测试命令: `.venv/Scripts/python.exe -m pytest tests/test_xxx.py -v --tb=short`
 
 4. **更新 .gitignore**
    - 检查是否有新的需要忽略的文件类型
@@ -240,12 +278,30 @@ JWT_ALGORITHM=HS256
    - 自动执行 `git add` 和 `git commit`
 
 6. **更新开发文档**
-   - 更新 `Note/Plan-V9.md` 中对应任务的状态
+   - 更新 `Note/Plan-V10.md` 中对应任务的状态
    - 标记完成项: `- [x] 任务名称 ✅ 测试通过`
    - 添加变更记录到文档末尾的变更历史
 
 7. **提交文档更新**
    - 单独提交文档更新: `docs(plan): 更新 xxx 完成状态`
+
+### 需要实时更新的文件 (重要)
+
+以下文件需要在开发过程中实时更新，不要等到最后才更新：
+
+| 文件 | 更新时机 | 说明 |
+|------|----------|------|
+| `.gitignore` | 新增文件类型时 | 添加需要忽略的文件模式 |
+| `Note/Plan-V10.md` | 完成任务时 | 更新任务状态、添加完成记录 |
+| `requirements-full.txt` | 新增依赖时 | 锁定新依赖的版本 |
+| `pyproject.toml` | 新增核心依赖时 | 更新依赖声明 |
+| `CLAUDE.md` | 发现新规范时 | 添加开发规范、常见问题 |
+| `frontend-next/package.json` | 新增前端依赖时 | 更新 npm 依赖 |
+
+**更新原则：**
+- 小步提交：每完成一个功能点就提交，不要积累大量修改
+- 文档同步：代码提交后立即更新相关文档
+- 版本锁定：新增依赖时必须锁定具体版本号
 
 ### Git 提交规范
 - 使用中文提交信息
@@ -279,8 +335,9 @@ JWT_ALGORITHM=HS256
 
 ## 参考文档
 
-- 开发计划: `Note/Plan-V9.md`
-- 部署方案: Plan-V9.md 第八章 (Render + Supabase)
+- 开发计划: `Note/Plan-V10.md`
+- 部署方案: Plan-V10.md 第八章 (Render + Supabase)
+- 迁移文档: `Note/Anaconda-to-UV-Migration.md`
 
 ## 常见问题与解决方案
 
