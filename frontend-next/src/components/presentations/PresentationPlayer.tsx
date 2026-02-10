@@ -80,39 +80,40 @@ export function PresentationPlayer({
     <div
       className={containerClass}
       onMouseMove={() => isFullscreen && setShowControls(true)}
+      onTouchStart={() => isFullscreen && setShowControls(true)}
     >
       {/* Header Controls */}
       <div
         className={cn(
-          'flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent transition-opacity',
+          'flex items-center justify-between p-2 sm:p-4 bg-gradient-to-b from-black/50 to-transparent transition-opacity',
           !showControls && 'opacity-0'
         )}
       >
-        <div className="text-white/80 text-sm">
+        <div className="text-white/80 text-xs sm:text-sm truncate max-w-[60%]">
           {presentation.title} • {currentIndex + 1} / {presentation.slides.length}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:text-white"
+            className="text-white hover:text-white h-8 w-8 sm:h-10 sm:w-10 hidden sm:flex"
             onClick={() => setIsFullscreen(!isFullscreen)}
           >
-            <Expand className="h-5 w-5" />
+            <Expand className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:text-white"
+            className="text-white hover:text-white h-8 w-8 sm:h-10 sm:w-10"
             onClick={onClose}
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </div>
       </div>
 
       {/* Slide Display */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-6xl aspect-video">
           <SlidePreview
             slide={currentSlide}
@@ -125,22 +126,22 @@ export function PresentationPlayer({
       {/* Footer Controls */}
       <div
         className={cn(
-          'flex items-center justify-between p-4 bg-gradient-to-t from-black/50 to-transparent transition-opacity',
+          'flex items-center justify-between p-2 sm:p-4 bg-gradient-to-t from-black/50 to-transparent transition-opacity',
           !showControls && 'opacity-0'
         )}
       >
         <Button
           variant="ghost"
           size="icon"
-          className="text-white hover:text-white"
+          className="text-white hover:text-white h-10 w-10 sm:h-12 sm:w-12"
           onClick={goToPrev}
           disabled={currentIndex === 0}
         >
-          <ChevronLeft className="h-6 w-6" />
+          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
         </Button>
 
         {/* Progress Bar */}
-        <div className="flex-1 mx-8">
+        <div className="flex-1 mx-2 sm:mx-8">
           <div className="bg-white/20 rounded-full h-1 overflow-hidden">
             <div
               className="bg-white h-full transition-all"
@@ -149,7 +150,8 @@ export function PresentationPlayer({
               }}
             />
           </div>
-          <div className="flex justify-between mt-2">
+          {/* 移动端隐藏单独的幻灯片点，只显示进度条 */}
+          <div className="hidden sm:flex justify-between mt-2">
             {presentation.slides.map((_, i) => (
               <button
                 key={i}
@@ -163,22 +165,26 @@ export function PresentationPlayer({
               />
             ))}
           </div>
+          {/* 移动端显示简化的页码 */}
+          <div className="flex sm:hidden justify-center mt-2 text-white/60 text-xs">
+            {currentIndex + 1} / {presentation.slides.length}
+          </div>
         </div>
 
         <Button
           variant="ghost"
           size="icon"
-          className="text-white hover:text-white"
+          className="text-white hover:text-white h-10 w-10 sm:h-12 sm:w-12"
           onClick={goToNext}
           disabled={currentIndex === presentation.slides.length - 1}
         >
-          <ChevronRight className="h-6 w-6" />
+          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
         </Button>
       </div>
 
-      {/* Keyboard Hints */}
+      {/* Keyboard Hints - 仅桌面端显示 */}
       {!isFullscreen && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/60 text-xs">
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/60 text-xs hidden sm:block">
           使用方向键或点击导航 • 按 F 全屏 • ESC 退出
         </div>
       )}

@@ -119,8 +119,8 @@ export function InputArea({
   }, []);
 
   return (
-    <div className="border-t bg-background p-4">
-      <div className="mx-auto max-w-3xl">
+    <div className="border-t bg-background p-2 sm:p-4">
+      <div className="mx-auto max-w-3xl px-1 sm:px-0">
         {/* Image Preview Bar */}
         {images.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
@@ -143,8 +143,8 @@ export function InputArea({
         )}
 
         {/* Input Container */}
-        <div className="flex items-end gap-2 rounded-2xl border bg-card p-2">
-          {/* File Upload Button */}
+        <div className="flex items-end gap-1 sm:gap-2 rounded-2xl border bg-card p-2">
+          {/* File Upload Button - 移动端隐藏，合并到图片按钮 */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -152,7 +152,7 @@ export function InputArea({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 shrink-0"
+                  className="hidden sm:flex h-9 w-9 shrink-0"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={disabled || isStreaming}
                 >
@@ -172,7 +172,7 @@ export function InputArea({
             onChange={handleFileSelect}
           />
 
-          {/* Image Upload Button */}
+          {/* Image/File Upload Button - 移动端合并附件功能 */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -184,7 +184,8 @@ export function InputArea({
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';
-                    input.accept = 'image/*';
+                    // 移动端支持所有文件类型
+                    input.accept = 'image/*,.pdf,.csv,.xlsx,.xls,.json,.txt,.py';
                     input.multiple = true;
                     input.onchange = (e) =>
                       handleFileSelect(e as unknown as React.ChangeEvent<HTMLInputElement>);
@@ -195,7 +196,7 @@ export function InputArea({
                   <ImageIcon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Upload image</TooltipContent>
+              <TooltipContent className="hidden sm:block">Upload image</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -246,7 +247,7 @@ export function InputArea({
         </div>
 
         {/* Hint Text */}
-        <p className="mt-2 text-center text-xs text-muted-foreground">
+        <p className="mt-2 text-center text-xs text-muted-foreground hidden sm:block">
           Press Enter to send, Shift+Enter for new line. Paste images directly.
         </p>
       </div>

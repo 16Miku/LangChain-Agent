@@ -116,11 +116,11 @@ export function SlideEditor({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs sm:text-sm text-muted-foreground">
             幻灯片 {slideIndex + 1} / {totalSlides}
           </span>
           {(hasLocalChanges || isSaving) && (
@@ -128,12 +128,12 @@ export function SlideEditor({
               {isSaving ? (
                 <>
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  保存中...
+                  <span className="hidden sm:inline">保存中...</span>
                 </>
               ) : (
                 <>
                   <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                  未保存
+                  <span className="hidden sm:inline">未保存</span>
                 </>
               )}
             </span>
@@ -145,38 +145,39 @@ export function SlideEditor({
             size="sm"
             onClick={handleManualSave}
             disabled={isSaving}
+            className="text-xs sm:text-sm"
           >
-            <Save className="h-4 w-4 mr-1" />
-            立即保存
+            <Save className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">立即保存</span>
           </Button>
         )}
       </div>
 
       {/* Title Input */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">标题</label>
+        <label className="text-xs sm:text-sm font-medium">标题</label>
         <Input
           value={localTitle}
           onChange={(e) => handleTitleChange(e.target.value)}
           placeholder="输入幻灯片标题..."
-          className="text-lg"
+          className="text-base sm:text-lg"
         />
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'content' | 'style' | 'notes')}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="content">内容</TabsTrigger>
-          <TabsTrigger value="style">样式</TabsTrigger>
-          <TabsTrigger value="notes">备注</TabsTrigger>
+          <TabsTrigger value="content" className="text-xs sm:text-sm">内容</TabsTrigger>
+          <TabsTrigger value="style" className="text-xs sm:text-sm">样式</TabsTrigger>
+          <TabsTrigger value="notes" className="text-xs sm:text-sm">备注</TabsTrigger>
         </TabsList>
 
         {/* Content Tab */}
         <TabsContent value="content" className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label className="text-xs sm:text-sm font-medium">
               内容
-              <span className="text-muted-foreground font-normal ml-2">
+              <span className="text-muted-foreground font-normal ml-2 hidden sm:inline">
                 (使用换行分隔要点)
               </span>
             </label>
@@ -186,8 +187,8 @@ export function SlideEditor({
               placeholder="- 要点一
 - 要点二
 - 要点三"
-              rows={10}
-              className="font-mono text-sm"
+              rows={8}
+              className="font-mono text-xs sm:text-sm"
             />
           </div>
 
@@ -196,6 +197,7 @@ export function SlideEditor({
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => {
                 const newContent = localContent + '\n- 新要点';
                 handleContentChange(newContent);
@@ -206,6 +208,7 @@ export function SlideEditor({
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => {
                 const newContent = localContent
                   .split('\n')
@@ -222,17 +225,17 @@ export function SlideEditor({
         {/* Style Tab */}
         <TabsContent value="style" className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">布局类型</label>
+            <label className="text-xs sm:text-sm font-medium">布局类型</label>
             <Select value={localLayout} onValueChange={handleLayoutChange}>
-              <SelectTrigger>
+              <SelectTrigger className="text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {LAYOUT_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     <div className="flex flex-col">
-                      <span>{option.label}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs sm:text-sm">{option.label}</span>
+                      <span className="text-xs text-muted-foreground hidden sm:block">
                         {option.description}
                       </span>
                     </div>
@@ -243,9 +246,9 @@ export function SlideEditor({
           </div>
 
           {/* Layout Preview */}
-          <div className="p-4 border rounded-lg bg-muted/20">
-            <p className="text-sm text-muted-foreground mb-2">布局预览说明</p>
-            <p className="text-sm">
+          <div className="p-3 sm:p-4 border rounded-lg bg-muted/20">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2">布局预览说明</p>
+            <p className="text-xs sm:text-sm">
               {LAYOUT_OPTIONS.find((o) => o.value === localLayout)?.description}
             </p>
           </div>
@@ -254,33 +257,34 @@ export function SlideEditor({
         {/* Notes Tab */}
         <TabsContent value="notes" className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-1">
+            <label className="text-xs sm:text-sm font-medium flex items-center gap-1">
               <HelpCircle className="h-4 w-4" />
               演讲者备注
             </label>
             <p className="text-xs text-muted-foreground">
-              这些备注仅供演讲者查看，不会在演示时显示
+              这些备注仅供演讲者查看
             </p>
             <Textarea
               value={localNotes}
               onChange={(e) => handleNotesChange(e.target.value)}
               placeholder="添加演讲备注..."
               rows={6}
+              className="text-xs sm:text-sm"
             />
           </div>
         </TabsContent>
       </Tabs>
 
       {/* Slide Actions */}
-      <div className="flex gap-2 pt-4 border-t">
-        <Button variant="outline" onClick={onAddSlide} className="flex-1">
+      <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
+        <Button variant="outline" onClick={onAddSlide} className="flex-1 text-xs sm:text-sm">
           在后面添加幻灯片
         </Button>
         <Button
           variant="outline"
           onClick={onDeleteSlide}
           disabled={!canDelete}
-          className="text-destructive hover:text-destructive"
+          className="text-destructive hover:text-destructive text-xs sm:text-sm"
         >
           删除此幻灯片
         </Button>

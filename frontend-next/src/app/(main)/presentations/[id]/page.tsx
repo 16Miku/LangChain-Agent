@@ -15,6 +15,10 @@ import {
   Bot,
   Download,
   ExternalLink,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -80,6 +84,8 @@ export default function PresentationEditorPage() {
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showAssistant, setShowAssistant] = useState(false);
+  const [showThumbnails, setShowThumbnails] = useState(false); // 移动端缩略图面板
+  const [mobileView, setMobileView] = useState<'editor' | 'preview'>('editor'); // 移动端视图切换
   const [feedback, setFeedback] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   // 本地标题状态：null 表示使用 store 的标题，非 null 表示用户正在编辑
@@ -218,23 +224,33 @@ export default function PresentationEditorPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <div className="flex items-center gap-2">
+      {/* Header - 响应式优化 */}
+      <div className="flex items-center justify-between border-b px-2 sm:px-4 py-2">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
           <Button variant="ghost" size="icon" onClick={() => router.push('/presentations')}>
             <ArrowLeft className="h-4 w-4" />
+          </Button>
+          {/* 移动端显示缩略图按钮 */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setShowThumbnails(!showThumbnails)}
+          >
+            <Menu className="h-4 w-4" />
           </Button>
           <Input
             value={displayTitle}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="w-64 font-semibold border-none shadow-none focus-visible:ring-0"
+            className="w-32 sm:w-64 font-semibold border-none shadow-none focus-visible:ring-0 text-sm sm:text-base"
           />
           {hasChanges && (
-            <span className="text-xs text-muted-foreground">未保存</span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">未保存</span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* 桌面端工具栏 */}
+        <div className="hidden md:flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -242,7 +258,9 @@ export default function PresentationEditorPage() {
             className="gap-2"
           >
             <Palette className="h-4 w-4" />
-            {THEMES.find(t => t.value === currentPresentation.theme)?.label || currentPresentation.theme}
+            <span className="hidden lg:inline">
+              {THEMES.find(t => t.value === currentPresentation.theme)?.label || currentPresentation.theme}
+            </span>
           </Button>
 
           <Separator orientation="vertical" className="h-6" />
@@ -253,8 +271,8 @@ export default function PresentationEditorPage() {
             onClick={handleAddSlide}
             disabled={isGenerating}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            添加幻灯片
+            <Plus className="h-4 w-4 lg:mr-2" />
+            <span className="hidden lg:inline">添加幻灯片</span>
           </Button>
 
           <Button
@@ -264,7 +282,7 @@ export default function PresentationEditorPage() {
             className="gap-2"
           >
             <Bot className="h-4 w-4" />
-            AI 助手
+            <span className="hidden lg:inline">AI 助手</span>
           </Button>
 
           <Button
@@ -273,15 +291,15 @@ export default function PresentationEditorPage() {
             onClick={handleSave}
             disabled={!hasChanges}
           >
-            <Save className="h-4 w-4 mr-2" />
-            保存
+            <Save className="h-4 w-4 lg:mr-2" />
+            <span className="hidden lg:inline">保存</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <Download className="h-4 w-4" />
-                导出
+                <span className="hidden lg:inline">导出</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -310,20 +328,67 @@ export default function PresentationEditorPage() {
             className="gap-2"
           >
             <Play className="h-4 w-4" />
-            播放
+            <span className="hidden lg:inline">播放</span>
+          </Button>
+        </div>
+
+        {/* 移动端工具栏 - 精简版 */}
+        <div className="flex md:hidden items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowThemeSelector(true)}
+          >
+            <Palette className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={showAssistant ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => setShowAssistant(!showAssistant)}
+          >
+            <Bot className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSave}
+            disabled={!hasChanges}
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            onClick={() => setShowPlayer(true)}
+          >
+            <Play className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Slide Thumbnails */}
-        <div className="w-48 border-r bg-muted/20 p-2 overflow-y-auto">
+      {/* Main Content - 响应式布局 */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Slide Thumbnails - 移动端抽屉式 */}
+        <div className={`
+          absolute md:relative inset-y-0 left-0 z-20
+          w-48 border-r bg-background p-2 overflow-y-auto
+          transform transition-transform duration-300
+          ${showThumbnails ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          {/* 移动端关闭按钮 */}
+          <div className="flex justify-between items-center mb-2 md:hidden">
+            <span className="text-sm font-medium">幻灯片</span>
+            <Button variant="ghost" size="icon" onClick={() => setShowThumbnails(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="space-y-2">
             {currentPresentation.slides.map((slide, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentSlideIndex(index)}
+                onClick={() => {
+                  setCurrentSlideIndex(index);
+                  setShowThumbnails(false); // 移动端选择后关闭
+                }}
                 className={`
                   w-full rounded-lg border-2 p-2 text-left transition-all
                   ${currentSlideIndex === index
@@ -343,10 +408,45 @@ export default function PresentationEditorPage() {
           </div>
         </div>
 
+        {/* 移动端缩略图遮罩 */}
+        {showThumbnails && (
+          <div
+            className="absolute inset-0 bg-black/50 z-10 md:hidden"
+            onClick={() => setShowThumbnails(false)}
+          />
+        )}
+
         {/* Slide Editor & Preview */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          {/* 移动端视图切换标签 */}
+          <div className="flex md:hidden border-b">
+            <button
+              onClick={() => setMobileView('editor')}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                mobileView === 'editor'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              编辑
+            </button>
+            <button
+              onClick={() => setMobileView('preview')}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                mobileView === 'preview'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              预览
+            </button>
+          </div>
+
           {/* Editor Panel */}
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div className={`
+            flex-1 p-2 sm:p-4 overflow-y-auto
+            ${mobileView === 'editor' ? 'block' : 'hidden'} md:block
+          `}>
             <SlideEditor
               key={currentSlideIndex}
               slide={currentSlide}
@@ -360,12 +460,17 @@ export default function PresentationEditorPage() {
             />
           </div>
 
-          <Separator orientation="vertical" />
+          <Separator orientation="vertical" className="hidden md:block" />
 
           {/* Preview Panel */}
-          <div className={`${showAssistant ? 'w-1/3' : 'w-1/2'} p-4 bg-muted/10 overflow-y-auto transition-all`}>
+          <div className={`
+            flex-1 md:w-1/3 lg:w-1/2 p-2 sm:p-4 bg-muted/10 overflow-y-auto
+            ${mobileView === 'preview' ? 'block' : 'hidden'} md:block
+            ${showAssistant ? 'md:w-1/3' : 'md:w-1/2'}
+            transition-all
+          `}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">预览</h3>
+              <h3 className="font-medium text-sm sm:text-base">预览</h3>
               <div className="flex gap-1">
                 <Button
                   variant="ghost"
@@ -374,7 +479,7 @@ export default function PresentationEditorPage() {
                   onClick={() => setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1))}
                   disabled={currentSlideIndex === 0}
                 >
-                  ‹
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm self-center px-2">
                   {currentSlideIndex + 1} / {currentPresentation.slides.length}
@@ -388,7 +493,7 @@ export default function PresentationEditorPage() {
                   )}
                   disabled={currentSlideIndex === currentPresentation.slides.length - 1}
                 >
-                  ›
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -399,17 +504,28 @@ export default function PresentationEditorPage() {
           </div>
         </div>
 
-        {/* AI Assistant Panel */}
+        {/* AI Assistant Panel - 移动端全屏覆盖 */}
         {showAssistant && (
-          <div className="w-80">
-            <AssistantPanel
-              presentationId={currentPresentation.id}
-              currentSlideIndex={currentSlideIndex}
-              onPresentationUpdate={handleAssistantUpdate}
-              isOpen={showAssistant}
-              onClose={() => setShowAssistant(false)}
+          <>
+            {/* 移动端遮罩 */}
+            <div
+              className="absolute inset-0 bg-black/50 z-20 md:hidden"
+              onClick={() => setShowAssistant(false)}
             />
-          </div>
+            <div className={`
+              absolute md:relative inset-y-0 right-0 z-30
+              w-full sm:w-80 md:w-80
+              transform transition-transform duration-300
+            `}>
+              <AssistantPanel
+                presentationId={currentPresentation.id}
+                currentSlideIndex={currentSlideIndex}
+                onPresentationUpdate={handleAssistantUpdate}
+                isOpen={showAssistant}
+                onClose={() => setShowAssistant(false)}
+              />
+            </div>
+          </>
         )}
       </div>
 

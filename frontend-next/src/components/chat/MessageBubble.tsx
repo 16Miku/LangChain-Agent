@@ -185,20 +185,20 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
   return (
     <div
       className={cn(
-        'group flex w-full gap-4 py-4',
+        'group flex w-full gap-2 sm:gap-4 py-3 sm:py-4 px-2 sm:px-0',
         isUser ? 'justify-end' : 'justify-start'
       )}
     >
       {/* Avatar for Assistant */}
       {!isUser && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <span className="text-sm font-medium">AI</span>
+        <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <span className="text-xs sm:text-sm font-medium">AI</span>
         </div>
       )}
 
       <div
         className={cn(
-          'flex max-w-[80%] flex-col gap-2',
+          'flex max-w-[85%] sm:max-w-[80%] flex-col gap-2',
           isUser ? 'items-end' : 'items-start'
         )}
       >
@@ -219,7 +219,7 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
         {/* Message Content */}
         <div
           className={cn(
-            'rounded-2xl px-4 py-3',
+            'rounded-2xl px-3 py-2 sm:px-4 sm:py-3 overflow-hidden',
             isUser
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-foreground'
@@ -231,7 +231,7 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
               <span>Thinking...</span>
             </div>
           ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={markdownComponents}
@@ -318,8 +318,8 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
 
       {/* Avatar for User */}
       {isUser && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-          <span className="text-sm font-medium">U</span>
+        <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+          <span className="text-xs sm:text-sm font-medium">U</span>
         </div>
       )}
     </div>

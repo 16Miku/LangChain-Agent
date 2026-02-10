@@ -180,15 +180,16 @@ export function AssistantPanel({
   return (
     <div className="flex flex-col h-full border-l bg-background">
       {/* 头部 */}
-      <div className="flex items-center justify-between p-3 border-b">
+      <div className="flex items-center justify-between p-2 sm:p-3 border-b">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <span className="font-medium">AI 助手</span>
+          <span className="font-medium text-sm sm:text-base">AI 助手</span>
         </div>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
             onClick={handleClear}
             title="清空对话"
           >
@@ -197,6 +198,7 @@ export function AssistantPanel({
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
             onClick={onClose}
             title="关闭"
           >
@@ -206,8 +208,8 @@ export function AssistantPanel({
       </div>
 
       {/* 消息列表 */}
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="space-y-4">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-3">
+        <div className="space-y-3 sm:space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -279,21 +281,22 @@ export function AssistantPanel({
       </div>
 
       {/* 输入区域 */}
-      <div className="p-3 border-t">
+      <div className="p-2 sm:p-3 border-t">
         <div className="flex gap-2">
           <Input
             ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="输入指令，如：把标题改成..."
+            placeholder="输入指令..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 text-sm"
           />
           <Button
             onClick={handleSend}
             disabled={!inputValue.trim() || isLoading}
             size="icon"
+            className="shrink-0"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -303,7 +306,7 @@ export function AssistantPanel({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          当前选中：第 {currentSlideIndex + 1} 页
+          第 {currentSlideIndex + 1} 页
         </p>
       </div>
     </div>

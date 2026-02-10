@@ -115,16 +115,16 @@ export function DocumentUpload({ onUploadSuccess }: DocumentUploadProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>上传文档</CardTitle>
-        <CardDescription>
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-base sm:text-lg">上传文档</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           支持 PDF、TXT、DOCX 格式，最大 50MB
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div
           className={cn(
-            'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors',
+            'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 sm:p-8 transition-colors',
             isDragging
               ? 'border-primary bg-primary/5'
               : 'border-muted-foreground/25 hover:border-muted-foreground/50',
@@ -144,9 +144,9 @@ export function DocumentUpload({ onUploadSuccess }: DocumentUploadProps) {
 
           {isUploading ? (
             <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary" />
               <div className="w-full max-w-xs space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-xs sm:text-sm">
                   <span>上传中...</span>
                   <span>{uploadProgress}%</span>
                 </div>
@@ -159,23 +159,24 @@ export function DocumentUpload({ onUploadSuccess }: DocumentUploadProps) {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Upload className="h-8 w-8 text-primary" />
+            <div className="flex flex-col items-center gap-3 sm:gap-4 text-center">
+              <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10">
+                <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
               <div>
-                <p className="font-medium">拖拽文件到此处上传</p>
-                <p className="text-sm text-muted-foreground">或点击下方按钮选择文件</p>
+                <p className="font-medium text-sm sm:text-base hidden sm:block">拖拽文件到此处上传</p>
+                <p className="font-medium text-sm sm:hidden">点击选择文件上传</p>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">或点击下方按钮选择文件</p>
               </div>
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline">
+              <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="sm:size-default">
                 选择文件
               </Button>
             </div>
           )}
 
           {errorMessage && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4" />
+            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -347,7 +348,7 @@ export function DocumentList({ searchQuery, onRefresh }: DocumentListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">
+        <CardTitle className="text-base sm:text-lg">
           文档列表 ({filteredDocs.length})
         </CardTitle>
       </CardHeader>
@@ -357,34 +358,69 @@ export function DocumentList({ searchQuery, onRefresh }: DocumentListProps) {
             {filteredDocs.map((doc) => (
               <div
                 key={doc.id}
-                className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto_auto] items-start sm:items-center gap-2 sm:gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
               >
-                {/* 文件图标 */}
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-                  {getFileIcon(doc.filename)}
-                </div>
+                {/* 移动端：图标+文件名+操作在一行 */}
+                <div className="flex items-center gap-3 w-full sm:contents">
+                  {/* 文件图标 */}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                    {getFileIcon(doc.filename)}
+                  </div>
 
-                {/* 文件信息 - 使用 overflow-hidden 确保不会撑开容器 */}
-                <div className="overflow-hidden">
-                  <p className="font-medium truncate" title={doc.filename}>
-                    {doc.filename}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{formatFileSize(doc.fileSize)}</span>
-                    <span>·</span>
-                    <span>{doc.chunkCount} 个分块</span>
-                    <span>·</span>
-                    <span>{formatDate(doc.createdAt)}</span>
+                  {/* 文件信息 */}
+                  <div className="flex-1 overflow-hidden min-w-0">
+                    <p className="font-medium truncate text-sm sm:text-base" title={doc.filename}>
+                      {doc.filename}
+                    </p>
+                    {/* 移动端：简化信息显示 */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                      <span>{formatFileSize(doc.fileSize)}</span>
+                      <span className="hidden sm:inline">·</span>
+                      <span className="hidden sm:inline">{doc.chunkCount} 个分块</span>
+                      <span>·</span>
+                      <span>{formatDate(doc.createdAt)}</span>
+                    </div>
+                  </div>
+
+                  {/* 移动端：状态和操作在右侧 */}
+                  <div className="flex items-center gap-2 sm:hidden">
+                    {getStatusBadge(doc.status)}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(doc.id)}
+                          disabled={deletingId === doc.id}
+                          className="text-destructive"
+                        >
+                          {deletingId === doc.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              删除中...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              删除
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 
-                {/* 状态 */}
-                <div className="shrink-0">
+                {/* 桌面端：状态 */}
+                <div className="hidden sm:block shrink-0">
                   {getStatusBadge(doc.status)}
                 </div>
 
-                {/* 操作菜单 */}
-                <div className="shrink-0">
+                {/* 桌面端：操作菜单 */}
+                <div className="hidden sm:block shrink-0">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
