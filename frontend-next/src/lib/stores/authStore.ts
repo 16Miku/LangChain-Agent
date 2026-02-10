@@ -161,11 +161,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // 注意：不要持久化 isAuthenticated，它应该在 initialize 时根据 token 动态计算
+      // 否则会导致 token 过期/清除后，isAuthenticated 仍为 true 的 bug
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
       }),
     }
   )
