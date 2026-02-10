@@ -65,11 +65,83 @@ async def lifespan(app: FastAPI):
     print(f"Shutting down {settings.SERVICE_NAME}...")
 
 
+# OpenAPI 标签描述
+tags_metadata = [
+    {
+        "name": "Health",
+        "description": "服务健康检查接口",
+    },
+    {
+        "name": "Documents",
+        "description": "文档管理接口：列表、详情、删除",
+    },
+    {
+        "name": "Ingest",
+        "description": "文档摄取接口：上传文件、摄取文本",
+    },
+    {
+        "name": "Search",
+        "description": "检索接口：混合检索、向量检索、BM25 检索、引用追溯",
+    },
+]
+
 app = FastAPI(
     title="RAG Service",
-    description="检索增强生成服务 - 支持混合检索、文档解析、引用追溯",
+    description="""
+## RAG Service - 检索增强生成服务
+
+Stream-Agent V9 的 RAG 微服务，提供文档解析、向量存储和混合检索功能。
+
+### 功能特性
+
+- **文档解析**: 支持 PDF、TXT、MD、DOCX 格式
+- **智能分块**: 语义感知分块、页面感知分块
+- **混合检索**: 向量相似度 + BM25 关键词检索
+- **重排序**: 基于 Cross-Encoder 的结果重排序
+- **引用追溯**: 支持查看引用来源和上下文
+
+### 向量存储后端
+
+| 后端 | 说明 |
+|------|------|
+| pgvector | PostgreSQL + pgvector 扩展 (推荐) |
+| milvus | Milvus 向量数据库 |
+
+### 检索算法
+
+混合检索使用 RRF (Reciprocal Rank Fusion) 算法融合向量和 BM25 结果：
+
+```
+score = alpha * vector_score + (1 - alpha) * bm25_score
+```
+
+### 认证方式
+
+所有接口都需要在请求头中携带 Bearer Token:
+
+```
+Authorization: Bearer <access_token>
+```
+
+### 错误码说明
+
+| 状态码 | 说明 |
+|--------|------|
+| 400 | 请求参数错误 (如不支持的文件类型) |
+| 401 | 未认证或令牌无效 |
+| 404 | 文档或引用不存在 |
+| 500 | 服务器内部错误 |
+""",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    openapi_tags=tags_metadata,
+    contact={
+        "name": "Stream-Agent Team",
+        "email": "support@stream-agent.com",
+    },
+    license_info={
+        "name": "MIT",
+    },
 )
 
 # CORS

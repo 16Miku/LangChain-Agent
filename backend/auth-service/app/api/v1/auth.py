@@ -20,24 +20,66 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 # HTTP Bearer token scheme for verify endpoint
 security = HTTPBearer()
 
+# 通用错误响应定义
+ERROR_RESPONSES = {
+    400: {
+        "description": "请求参数错误",
+        "content": {
+            "application/json": {
+                "examples": {
+                    "email_exists": {"summary": "邮箱已注册", "value": {"detail": "Email already registered"}},
+                    "username_exists": {"summary": "用户名已存在", "value": {"detail": "Username already taken"}},
+                }
+            }
+        }
+    },
+    401: {
+        "description": "认证失败",
+        "content": {
+            "application/json": {
+                "examples": {
+                    "invalid_credentials": {"summary": "凭证无效", "value": {"detail": "Invalid email or password"}},
+                    "invalid_token": {"summary": "令牌无效", "value": {"detail": "Invalid or expired token"}},
+                }
+            }
+        }
+    },
+    403: {
+        "description": "权限不足",
+        "content": {
+            "application/json": {
+                "example": {"detail": "User account is deactivated"}
+            }
+        }
+    },
+}
+
 
 @router.post(
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
+    summary="用户注册",
+    description="""
+注册新用户账户。
+
+### 密码要求
+- 长度: 8-100 字符
+- 必须包含至少一个大写字母
+- 必须包含至少一个小写字母
+- 必须包含至少一个数字
+
+### 用户名要求
+- 长度: 3-50 字符
+- 仅支持字母、数字和下划线
+""",
+    responses={201: {"description": "注册成功"}, **{k: v for k, v in ERROR_RESPONSES.items() if k == 400}},
 )
 async def register(
     user_data: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> UserResponse:
-    """
-    Register a new user account.
-
-    - **username**: Unique username (3-50 characters, alphanumeric and underscores)
-    - **email**: Unique email address
-    - **password**: Password (8-100 characters, must contain uppercase, lowercase, and digit)
-    """
+    """注册新用户账户。"""
     service = UserService(db)
 
     # Check if user already exists
@@ -57,18 +99,22 @@ async def register(
 @router.post(
     "/login",
     response_model=TokenResponse,
-    summary="User login",
+    summary="用户登录",
+    description="""
+用户登录并获取访问令牌。
+
+### 返回内容
+- `access_token`: 访问令牌，有效期 1 小时
+- `refresh_token`: 刷新令牌，有效期 7 天
+- `expires_in`: 访问令牌过期时间（秒）
+""",
+    responses={401: ERROR_RESPONSES[401]},
 )
 async def login(
     login_data: UserLogin,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:
-    """
-    Authenticate user and return access/refresh tokens.
-
-    - **email**: User email address
-    - **password**: User password
-    """
+    """用户登录并获取访问令牌。"""
     service = UserService(db)
 
     # Authenticate user
@@ -89,17 +135,21 @@ async def login(
 @router.post(
     "/refresh",
     response_model=TokenResponse,
-    summary="Refresh access token",
+    summary="刷新访问令牌",
+    description="""
+使用刷新令牌获取新的访问令牌和刷新令牌。
+
+### 注意事项
+- 旧的刷新令牌在使用后会失效
+- 如果刷新令牌已过期，需要重新登录
+""",
+    responses={401: ERROR_RESPONSES[401]},
 )
 async def refresh_token(
     token_data: TokenRefresh,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:
-    """
-    Exchange a refresh token for new access and refresh tokens.
-
-    - **refresh_token**: Valid refresh token
-    """
+    """使用刷新令牌获取新的访问令牌。"""
     import logging
     logger = logging.getLogger(__name__)
 
@@ -126,18 +176,22 @@ async def refresh_token(
 @router.post(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="User logout",
+    summary="用户登出",
+    description="""
+登出当前设备，撤销指定的刷新令牌。
+
+### 注意事项
+- 需要在请求头中携带有效的访问令牌
+- 登出后该刷新令牌将无法再使用
+""",
+    responses={401: ERROR_RESPONSES[401]},
 )
 async def logout(
     token_data: TokenRefresh,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> None:
-    """
-    Logout user by revoking the refresh token.
-
-    Requires authentication.
-    """
+    """登出当前设备，撤销刷新令牌。"""
     service = UserService(db)
     await service.revoke_refresh_token(token_data.refresh_token)
 
@@ -145,35 +199,56 @@ async def logout(
 @router.get(
     "/me",
     response_model=UserResponse,
-    summary="Get current user",
+    summary="获取当前用户信息",
+    description="获取当前已认证用户的详细信息。需要在请求头中携带有效的访问令牌。",
+    responses={401: ERROR_RESPONSES[401]},
 )
 async def get_current_user_info(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> UserResponse:
-    """
-    Get the current authenticated user's information.
-
-    Requires authentication.
-    """
+    """获取当前已认证用户的详细信息。"""
     return UserResponse.model_validate(current_user)
 
 
 @router.get(
     "/verify",
-    summary="Verify JWT token",
+    summary="验证 JWT 令牌",
+    description="""
+验证 JWT 令牌并返回用户信息。
+
+### 用途
+此接口供其他微服务调用，用于验证用户令牌的有效性。
+
+### 返回内容
+- `user_id`: 用户 ID
+- `username`: 用户名
+- `email`: 邮箱
+- `is_active`: 账户状态
+""",
+    responses={
+        200: {
+            "description": "令牌有效",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "id": "550e8400-e29b-41d4-a716-446655440000",
+                        "username": "john_doe",
+                        "email": "john@example.com",
+                        "is_active": True
+                    }
+                }
+            }
+        },
+        401: ERROR_RESPONSES[401],
+        403: ERROR_RESPONSES[403],
+    },
 )
 async def verify_token_endpoint(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    """
-    Verify a JWT token and return user information.
-
-    This endpoint is used by other services to validate tokens.
-
-    Returns:
-        dict with user_id and username if valid
-    """
+    """验证 JWT 令牌并返回用户信息。"""
     token = credentials.credentials
     payload = verify_token(token, token_type="access")
 

@@ -124,6 +124,85 @@ V9.0 是 My-Chat-LangChain 项目的重大升级版本，核心目标是：
 5. **生产级部署**: Docker Compose 一键部署
 
 
+## API 文档
+
+### 在线文档
+
+各服务启动后可访问 Swagger UI 和 ReDoc：
+
+| 服务 | Swagger UI | ReDoc |
+|------|------------|-------|
+| Auth Service (8001) | http://localhost:8001/docs | http://localhost:8001/redoc |
+| Chat Service (8002) | http://localhost:8002/docs | http://localhost:8002/redoc |
+| RAG Service (8004) | http://localhost:8004/docs | http://localhost:8004/redoc |
+| Presentation Service (8005) | http://localhost:8005/docs | http://localhost:8005/redoc |
+
+### API 概览
+
+#### Auth Service (端口 8001)
+用户认证服务，提供注册、登录、令牌管理功能。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/auth/register` | POST | 用户注册 |
+| `/api/auth/login` | POST | 用户登录 |
+| `/api/auth/refresh` | POST | 刷新令牌 |
+| `/api/auth/logout` | POST | 用户登出 |
+| `/api/auth/me` | GET | 获取当前用户 |
+| `/api/users/me` | GET/PUT | 用户资料管理 |
+| `/api/users/me/password` | PUT | 修改密码 |
+
+#### Chat Service (端口 8002)
+聊天服务，提供 AI Agent 对话和会话管理。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/chat/stream` | POST | 流式聊天 (SSE) |
+| `/api/conversations` | GET/POST | 会话列表/创建 |
+| `/api/conversations/{id}` | GET/PUT/DELETE | 会话详情/更新/删除 |
+| `/api/conversations/{id}/messages` | GET | 获取消息列表 |
+
+#### RAG Service (端口 8004)
+检索增强生成服务，提供文档管理和混合检索。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/documents` | GET | 文档列表 |
+| `/api/v1/documents/{id}` | GET/DELETE | 文档详情/删除 |
+| `/api/v1/ingest/upload` | POST | 上传文档 |
+| `/api/v1/ingest/text` | POST | 摄取文本 |
+| `/api/v1/search` | POST | 混合检索 |
+| `/api/v1/search/vector` | POST | 向量检索 |
+| `/api/v1/search/bm25` | POST | BM25 检索 |
+| `/api/v1/search/citations` | POST/GET | 引用追溯 |
+
+#### Presentation Service (端口 8005)
+演示文稿服务，提供 AI 生成 PPT 和编辑功能。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/presentations` | GET/POST | 演示文稿列表/创建 |
+| `/api/v1/presentations/{id}` | GET/PUT/DELETE | 详情/更新/删除 |
+| `/api/v1/presentations/{id}/export/html` | GET | 导出 HTML |
+| `/api/v1/editor/generate` | POST | AI 生成 PPT |
+| `/api/v1/editor/themes` | GET | 主题列表 |
+| `/api/v1/editor/layouts` | GET | 布局列表 |
+| `/api/v1/assistant/{id}/chat` | POST | AI 助手对话 |
+
+### 错误码文档
+
+详细的错误码说明请参考: [docs/API_ERROR_CODES.md](docs/API_ERROR_CODES.md)
+
+### OpenAPI 导出
+
+运行以下命令导出 OpenAPI 文档：
+
+```bash
+python scripts/export_openapi.py
+```
+
+导出文件位于 `docs/openapi/` 目录。
+
 
 # ## Plan-V10:
 

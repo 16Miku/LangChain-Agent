@@ -28,11 +28,76 @@ async def lifespan(app: FastAPI):
     print("Cleanup completed.")
 
 
+# OpenAPI 标签描述
+tags_metadata = [
+    {
+        "name": "Health",
+        "description": "服务健康检查接口",
+    },
+    {
+        "name": "chat",
+        "description": "聊天接口：流式对话、AI Agent 交互",
+    },
+    {
+        "name": "conversations",
+        "description": "会话管理接口：创建、查询、更新、删除会话和消息",
+    },
+]
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Chat Service for Stream-Agent V9 - Handles conversations, messages, and AI agent interactions",
+    description="""
+## Chat Service - 聊天服务
+
+Stream-Agent V9 的核心聊天微服务，提供 AI Agent 对话和会话管理功能。
+
+### 功能特性
+
+- **流式对话**: 基于 SSE (Server-Sent Events) 的实时流式响应
+- **LangGraph Agent**: 支持 96+ 工具的智能 Agent
+- **多模态支持**: 支持图片输入的多模态对话
+- **会话管理**: 完整的会话和消息 CRUD 操作
+- **工具调用**: 实时展示工具执行状态
+- **引用追溯**: RAG 检索结果的引用信息
+
+### SSE 事件类型
+
+| 事件类型 | 说明 |
+|----------|------|
+| `text` | AI 文本响应 (Base64 编码) |
+| `tool_start` | 工具开始执行 |
+| `tool_end` | 工具执行完成 |
+| `citation` | 引用信息 |
+| `done` | 流结束 |
+| `error` | 错误信息 |
+
+### 认证方式
+
+所有接口都需要在请求头中携带 Bearer Token:
+
+```
+Authorization: Bearer <access_token>
+```
+
+### 错误码说明
+
+| 状态码 | 说明 |
+|--------|------|
+| 400 | 请求参数错误 |
+| 401 | 未认证或令牌无效 |
+| 404 | 会话或消息不存在 |
+| 500 | 服务器内部错误 |
+""",
     lifespan=lifespan,
+    openapi_tags=tags_metadata,
+    contact={
+        "name": "Stream-Agent Team",
+        "email": "support@stream-agent.com",
+    },
+    license_info={
+        "name": "MIT",
+    },
 )
 
 # CORS Configuration
