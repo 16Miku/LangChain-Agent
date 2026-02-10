@@ -50,9 +50,12 @@ class Settings(BaseSettings):
     MINIO_BUCKET: str = "documents"
     MINIO_SECURE: bool = False
 
-    # MinerU API (可选)
+    # MinerU API (可选 - 智能文档解析)
     MINERU_API_KEY: str | None = None
-    MINERU_API_URL: str = "https://mineru.datadance.cn/api/v1"
+    MINERU_API_URL: str = "https://mineru.net/api/v4"
+    MINERU_ENABLED: bool = False  # 是否启用 MinerU 解析
+    MINERU_TIMEOUT: float = 300.0  # 请求超时时间（秒）
+    MINERU_MAX_RETRIES: int = 3  # 最大重试次数
 
     # JWT (用于验证请求) - 测试模式可跳过
     JWT_ENABLED: bool = False  # 测试时禁用 JWT 验证
