@@ -6,17 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 My-Chat-LangChain (Stream-Agent) 是一个全栈 AI 研究助理应用，基于 LangChain + LangGraph 构建，支持多工具 Agent、网络搜索、RAG 知识库、E2B 云沙箱代码执行、多模态交互等功能。
 
-**当前版本**: V9.0 (开发中)
-**开发计划**: 详见 `Note/Plan-V9.md`
+**当前版本**: V10.0 (开发中)
+**开发计划**: 详见 `Note/Plan-V10.md`
 
 ## 开发环境
 
-- **Conda 环境**: `My-Chat-LangChain`
-- **Python 完整路径**: `A:/Anaconda/envs/My-Chat-LangChain/python.exe`
-- **激活命令**: `conda activate My-Chat-LangChain`
+- **包管理器**: uv (推荐) 或 Anaconda
+- **Python 版本**: 3.12+
 - **Node.js**: v18+ (前端开发)
+- **依赖文件**: `requirements-full.txt` (完整锁定依赖)
 
-> **注意**: Claude Code 可使用 Python 完整路径直接执行命令，无需手动激活 conda 环境。
+> **注意**: 项目已从 Anaconda 迁移到 uv，详见 `Note/Anaconda-to-UV-Migration.md`
 
 ## 系统架构
 
@@ -352,3 +352,112 @@ print(f'Response: {response.read().decode()}')
 1. **presentation-service 必须使用 `--host 0.0.0.0`**: 避免只绑定 `127.0.0.1` 导致的连接问题
 2. **启动服务前检查端口占用**: 使用 `netstat -ano | findstr ":<PORT>"` 检查
 3. **重启服务时先杀掉旧进程**: 避免端口冲突
+
+## vibe-kanban 并行开发模式
+
+### 概述
+
+vibe-kanban MCP 是一个任务管理系统，支持启动云端工作空间进行并行开发。适用于多个**完全独立、无依赖**的任务同时开发。
+
+### 使用场景
+
+**适合 vibe-kanban 并行的任务：**
+- 独立的功能模块开发（如 MinerU API 集成、移动端适配）
+- E2E 测试编写
+- API 文档完善
+- 独立的 UI 组件开发
+
+**不适合 vibe-kanban 的任务：**
+- 有依赖关系的功能（如 A 依赖 B 的输出）
+- 需要实时调试的核心功能
+- 前后端联调
+- Bug 修复
+
+### 操作流程
+
+```bash
+# 1. 获取项目 ID
+mcp__vibe_kanban__list_projects
+
+# 2. 创建任务（包含详细描述）
+mcp__vibe_kanban__create_task
+  - project_id: "项目UUID"
+  - title: "任务标题"
+  - description: "详细的任务描述，包含目标、步骤、验收标准"
+
+# 3. 获取仓库信息
+mcp__vibe_kanban__list_repos
+  - project_id: "项目UUID"
+
+# 4. 启动云端工作空间（可并行启动多个）
+mcp__vibe_kanban__start_workspace_session
+  - task_id: "任务UUID"
+  - executor: "CLAUDE_CODE"
+  - repos: [{"repo_id": "仓库UUID", "base_branch": "master"}]
+```
+
+### 任务描述模板
+
+```markdown
+## 目标
+- 简要说明要实现的功能
+
+## 实现步骤
+1. 具体步骤 1
+2. 具体步骤 2
+3. ...
+
+## 验收标准
+- 功能验收条件
+- 测试覆盖要求
+```
+
+### 代码审查流程
+
+vibe-kanban 任务完成后，需要进行代码审查：
+
+1. **查看提交记录**
+   ```bash
+   git log --oneline -10
+   git show --stat <commit_hash>
+   ```
+
+2. **审查代码质量**
+   - 代码风格一致性
+   - 是否有明显 bug 或安全问题
+   - 错误处理是否完善
+   - 测试覆盖是否充分
+
+3. **修复发现的问题**
+   - 高优先级问题立即修复
+   - 中低优先级问题记录到 Plan 文档
+
+4. **更新开发文档**
+   - 更新 Plan-V10.md 开发进度
+   - 记录审查发现的问题和修复状态
+
+### 实际案例 (2026-02-11)
+
+**并行任务：**
+| 任务 | 提交 | 变更 | 评分 |
+|------|------|------|------|
+| MinerU API 集成 | f3f75d1 | +1382 行 | 8.5/10 |
+| 移动端响应式适配 | 2cdc72a | +306/-140 行 | 7.5/10 |
+| E2E 测试编写 | d03aaea | +1718 行 | 7/10 |
+| API 文档完善 | 6840d1e | +994/-79 行 | 8/10 |
+
+**审查修复：**
+- 后台任务 DB 会话问题 (高优先级) ✅
+- 无效 Tailwind 类名 (高优先级) ✅
+
+### 注意事项
+
+1. **不要重复创建任务**: vibe-kanban 云端任务和本地 Task subagent 是不同的，不要同时使用
+2. **任务描述要详细**: 云端工作空间是独立的，需要完整的上下文
+3. **配置 setup script**: 云端需要知道如何安装依赖
+   ```bash
+   mcp__vibe_kanban__update_setup_script
+     - repo_id: "仓库UUID"
+     - script: "uv sync && cd frontend-next && npm install"
+   ```
+4. **合并后审查**: 任务完成合并到 master 后，必须进行代码审查
