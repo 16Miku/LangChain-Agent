@@ -168,7 +168,7 @@ export function DocumentUpload({ onUploadSuccess }: DocumentUploadProps) {
                 <p className="font-medium text-sm sm:hidden">点击选择文件上传</p>
                 <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">或点击下方按钮选择文件</p>
               </div>
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" className="sm:size-default">
+              <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="h-8 px-3 text-sm sm:h-10 sm:px-4 sm:text-base">
                 选择文件
               </Button>
             </div>

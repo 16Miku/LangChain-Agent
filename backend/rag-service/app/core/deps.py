@@ -14,3 +14,15 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def get_new_db_session() -> Session:
+    """
+    获取新的数据库会话（用于后台任务）
+
+    注意：调用者负责关闭会话
+
+    Returns:
+        新的数据库会话
+    """
+    return SessionLocal()

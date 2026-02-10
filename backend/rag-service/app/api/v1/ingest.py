@@ -14,7 +14,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db
+from app.core.deps import get_db, get_new_db_session
 from app.core.security import get_current_user, CurrentUser
 from app.services.document_service import DocumentService
 from app.services.milvus_service import MilvusService, ChunkData
@@ -133,7 +133,6 @@ async def process_document(
     user_id: str,
     content: str,
     filename: str,
-    db: Session,
     vector_service,  # MilvusService 或 PgvectorService
     embedding_service: EmbeddingService
 ):
@@ -145,10 +144,11 @@ async def process_document(
         user_id: 用户ID
         content: 文档内容
         filename: 文件名
-        db: 数据库会话
         vector_service: 向量服务 (MilvusService 或 PgvectorService)
         embedding_service: 嵌入服务
     """
+    # 后台任务需要创建新的数据库会话
+    db = get_new_db_session()
     try:
         # 更新状态为处理中
         DocumentService.update_document_status(
@@ -225,6 +225,8 @@ async def process_document(
             status=DocumentStatus.ERROR,
             error_message=str(e)
         )
+    finally:
+        db.close()
 
 
 async def process_document_with_mineru(
@@ -233,7 +235,6 @@ async def process_document_with_mineru(
     content_bytes: bytes,
     filename: str,
     parse_options: MinerUParseOptions,
-    db: Session,
     vector_service,
     embedding_service: EmbeddingService,
     mineru_service: MinerUService
@@ -247,11 +248,12 @@ async def process_document_with_mineru(
         content_bytes: 文件内容
         filename: 文件名
         parse_options: MinerU 解析选项
-        db: 数据库会话
         vector_service: 向量服务
         embedding_service: 嵌入服务
         mineru_service: MinerU 服务
     """
+    # 后台任务需要创建新的数据库会话
+    db = get_new_db_session()
     try:
         # 更新状态为处理中
         DocumentService.update_document_status(
@@ -382,6 +384,8 @@ async def process_document_with_mineru(
             status=DocumentStatus.ERROR,
             error_message=str(e)
         )
+    finally:
+        db.close()
 
 
 @router.post("/upload", response_model=DocumentUploadResponse, status_code=status.HTTP_202_ACCEPTED)
@@ -508,7 +512,6 @@ async def upload_document(
             content_bytes=content_bytes,
             filename=filename,
             parse_options=parse_options,
-            db=db,
             vector_service=vector_service,
             embedding_service=embedding_service,
             mineru_service=mineru_service
@@ -547,7 +550,6 @@ async def upload_document(
             user_id=current_user.user_id,
             content=content,
             filename=filename,
-            db=db,
             vector_service=vector_service,
             embedding_service=embedding_service
         )
@@ -610,7 +612,6 @@ async def ingest_text(
         user_id=current_user.user_id,
         content=text,
         filename=filename,
-        db=db,
         vector_service=vector_service,
         embedding_service=embedding_service
     )
