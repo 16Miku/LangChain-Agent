@@ -28,15 +28,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check if there's a stored token on mount
+    // 直接检查独立存储的 token（不是 Zustand persist 的）
     const storedToken = localStorage.getItem('accessToken');
+    const storedRefreshToken = localStorage.getItem('refreshToken');
 
-    if (storedToken && !isAuthenticated) {
-      // Token exists but state says not authenticated - restore state
+    // 只有当两个 token 都存在时才认为已认证
+    if (storedToken && storedRefreshToken && !isAuthenticated) {
       useAuthStore.setState({
         accessToken: storedToken,
-        refreshToken: localStorage.getItem('refreshToken'),
+        refreshToken: storedRefreshToken,
         isAuthenticated: true,
+      });
+    } else if (!storedToken || !storedRefreshToken) {
+      // 如果 token 不完整，确保状态为未认证
+      useAuthStore.setState({
+        accessToken: null,
+        refreshToken: null,
+        isAuthenticated: false,
       });
     }
 
