@@ -106,11 +106,13 @@ python -c "import fastapi, langchain, torch; print('OK')"
 ## 开发命令
 
 ```bash
-# ============ 环境激活 (二选一) ============
-# uv 环境 (推荐):
-.\.venv\Scripts\Activate.ps1  # Windows PowerShell
-# Anaconda 环境 (旧):
-conda activate My-Chat-LangChain
+# ============ 环境激活 ============
+# Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# Windows CMD:
+.\.venv\Scripts\activate.bat
+# Linux/macOS:
+source .venv/bin/activate
 
 # ============ 后端服务 ============
 # 启动 Auth 服务

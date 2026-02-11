@@ -2,7 +2,8 @@
 
 1. 生成测试命令供用户执行：
    ```bash
-   conda activate My-Chat-LangChain
+   cd A:\study\AI\LLM\LangChain-Agent
+   .\.venv\Scripts\Activate.ps1
    cd backend/rag-service
    python -m pytest tests/ -v --tb=short
    ```

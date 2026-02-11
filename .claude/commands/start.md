@@ -4,28 +4,31 @@
 
 **终端 1 - Auth 服务：**
 ```bash
-conda activate My-Chat-LangChain
+cd A:\study\AI\LLM\LangChain-Agent
+.\.venv\Scripts\Activate.ps1
 cd backend/auth-service
 uvicorn app.main:app --port 8001 --reload
 ```
 
 **终端 2 - Chat 服务：**
 ```bash
-conda activate My-Chat-LangChain
+cd A:\study\AI\LLM\LangChain-Agent
+.\.venv\Scripts\Activate.ps1
 cd backend/chat-service
 uvicorn app.main:app --port 8002 --reload
 ```
 
 **终端 3 - RAG 服务：**
 ```bash
-conda activate My-Chat-LangChain
+cd A:\study\AI\LLM\LangChain-Agent
+.\.venv\Scripts\Activate.ps1
 cd backend/rag-service
 uvicorn app.main:app --port 8004 --reload
 ```
 
 **终端 4 - 前端：**
 ```bash
-cd frontend-next
+cd A:\study\AI\LLM\LangChain-Agent\frontend-next
 npm run dev
 ```
 

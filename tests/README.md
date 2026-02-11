@@ -2,7 +2,7 @@
 
 ## 概述
 
-本目录包含 My-Chat-LangChain V9.0 的测试脚本。
+本目录包含 My-Chat-LangChain V10.0 的测试脚本。
 
 ## 测试类型
 
@@ -14,27 +14,35 @@
 
 ## 快速开始
 
-### 1. 健康检查
+### 1. 激活虚拟环境
+
+```bash
+cd A:\study\AI\LLM\LangChain-Agent
+
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+
+# Windows CMD
+.\.venv\Scripts\activate.bat
+
+# Linux/macOS
+source .venv/bin/activate
+```
+
+### 2. 健康检查
 
 检查所有服务是否正常运行：
 
 ```bash
-cd LangChain-Agent
-
-# 使用 Python 完整路径
-A:/Anaconda/envs/My-Chat-LangChain/python.exe tests/health_check.py
-
-# 或激活 conda 环境后
-conda activate My-Chat-LangChain
 python tests/health_check.py
 ```
 
-### 2. 端到端测试
+### 3. 端到端测试
 
 运行完整的集成测试：
 
 ```bash
-# 先启动所有服务
+# 先启动所有服务（4 个终端）
 # 终端 1: Auth Service
 cd backend/auth-service && uvicorn app.main:app --port 8001 --reload
 
@@ -45,14 +53,21 @@ cd backend/chat-service && uvicorn app.main:app --port 8002 --reload
 cd backend/rag-service && uvicorn app.main:app --port 8004 --reload
 
 # 终端 4: 运行测试
-A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/test_e2e.py -v
+python -m pytest tests/test_e2e.py -v
 ```
 
-### 3. RAG 单元测试
+### 4. RAG 单元测试
 
 ```bash
 cd backend/rag-service
-A:/Anaconda/envs/My-Chat-LangChain/python.exe -m pytest tests/ -v --tb=short
+python -m pytest tests/ -v --tb=short
+```
+
+### 5. Presentation 单元测试
+
+```bash
+cd backend/presentation-service
+python -m pytest tests/ -v --tb=short
 ```
 
 ## 测试内容
