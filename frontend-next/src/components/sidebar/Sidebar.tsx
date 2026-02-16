@@ -32,6 +32,7 @@ export function Sidebar() {
     createConversation,
     selectConversation,
     deleteConversation,
+    renameConversation,
   } = useChatStore();
 
   useEffect(() => {
@@ -53,17 +54,10 @@ export function Sidebar() {
   };
 
   const handleRenameConversation = async (id: string, newTitle: string) => {
-    // TODO: Implement rename API call
-    console.log('Rename conversation:', id, 'to', newTitle);
-    // For now, just update the local state
-    const { conversations } = useChatStore.getState();
-    const conv = conversations.find(c => c.id === id);
-    if (conv) {
-      useChatStore.setState({
-        conversations: conversations.map(c =>
-          c.id === id ? { ...c, title: newTitle } : c
-        )
-      });
+    try {
+      await renameConversation(id, newTitle);
+    } catch (error) {
+      console.error('Failed to rename conversation:', error);
     }
   };
 
