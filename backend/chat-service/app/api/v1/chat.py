@@ -96,6 +96,10 @@ async def stream_chat(
         for msg in history_messages[:-1]  # Exclude the just-added user message
     ]
 
+    # 重要：在开始流式响应前提交当前事务，释放 SQLite 锁
+    # 这样 generate_and_save 中的新会话才能正常写入
+    await db.commit()
+
     async def generate_and_save():
         """Generate stream and save final response."""
         import base64

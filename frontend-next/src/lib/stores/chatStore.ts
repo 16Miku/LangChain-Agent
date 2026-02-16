@@ -102,6 +102,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   selectConversation: async (id: string) => {
+    // 防止重复选择同一个对话，或者在加载中时重复调用
+    const state = get();
+    if (state.currentConversationId === id && state.messages.length > 0) {
+      return; // 已经选择了这个对话且消息已加载，跳过
+    }
+    if (state.isLoading) {
+      return; // 正在加载中，跳过
+    }
+
     set({ isLoading: true, error: null, currentConversationId: id });
     try {
       const response = await chatApi.getMessages(id);

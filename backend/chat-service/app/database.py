@@ -9,10 +9,13 @@ from .config import settings
 
 
 # Create async engine
+# 对于 SQLite，增加超时时间避免 "database is locked" 错误
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     future=True,
+    connect_args={"timeout": 30} if "sqlite" in settings.DATABASE_URL else {},
+    pool_pre_ping=True,  # 检查连接是否有效
 )
 
 # Create async session factory
