@@ -22,7 +22,7 @@ from app.services.embedding_service import EmbeddingService
 from app.services.chunking_service import ChunkingService, ChunkingStrategy
 from app.services.mineru_service import (
     MinerUService, MinerUParseOptions, MinerULanguage,
-    MinerUTaskStatus, MinerUServiceError, get_mineru_service
+    MinerUTaskState, MinerUServiceError, get_mineru_service
 )
 from app.models.document import DocumentStatus
 from app.schemas.document import DocumentUploadResponse
@@ -283,7 +283,7 @@ async def process_document_with_mineru(
             return
 
         # 检查解析结果
-        if result.status == MinerUTaskStatus.FAILED:
+        if result.state == MinerUTaskState.FAILED:
             DocumentService.update_document_status(
                 db=db,
                 document_id=document_id,

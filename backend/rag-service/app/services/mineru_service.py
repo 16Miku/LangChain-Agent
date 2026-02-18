@@ -1,7 +1,7 @@
 # ============================================================
 # MinerU Service - 智能文档解析服务
 # ============================================================
-# 集成 MinerU 云服务 API，支持复杂文档解析
+# 集成 MinerU 云服务 API v4，支持复杂文档解析
 # - PDF/Word/PPT 等格式
 # - OCR 文字识别
 # - 表格/公式提取
@@ -11,6 +11,9 @@
 import asyncio
 import httpx
 import logging
+import zipfile
+import io
+import re
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
@@ -20,12 +23,13 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-class MinerUTaskStatus(str, Enum):
-    """MinerU 任务状态"""
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
+class MinerUTaskState(str, Enum):
+    """MinerU 任务状态 (官方文档)"""
+    PENDING = "pending"        # 排队中
+    RUNNING = "running"        # 正在解析
+    CONVERTING = "converting"  # 格式转换中
+    DONE = "done"              # 完成
+    FAILED = "failed"          # 解析失败
 
 
 class MinerULanguage(str, Enum):
@@ -42,25 +46,24 @@ class MinerULanguage(str, Enum):
     RUSSIAN = "ru"
 
 
-class MinerUExportFormat(str, Enum):
-    """MinerU 导出格式"""
-    MARKDOWN = "md"
-    HTML = "html"
-    DOCX = "docx"
-    LATEX = "latex"
+class MinerUModelVersion(str, Enum):
+    """MinerU 模型版本"""
+    PIPELINE = "pipeline"      # 默认模型
+    VLM = "vlm"                # VLM 模型
+    HTML = "MinerU-HTML"       # HTML 解析
 
 
 @dataclass
 class MinerUParseOptions:
     """MinerU 解析选项"""
-    is_ocr: bool = False  # 是否启用 OCR
-    enable_formula: bool = True  # 是否识别公式
-    enable_table: bool = True  # 是否识别表格
+    is_ocr: bool = False                  # 是否启用 OCR
+    enable_formula: bool = True           # 是否识别公式
+    enable_table: bool = True             # 是否识别表格
     language: MinerULanguage = MinerULanguage.CHINESE  # 文档语言
-    page_ranges: Optional[str] = None  # 页面范围，如 "1-10,15-20"
-    model_version: str = "v2"  # 模型版本
-    extra_formats: List[MinerUExportFormat] = field(
-        default_factory=lambda: [MinerUExportFormat.HTML]
+    model_version: MinerUModelVersion = MinerUModelVersion.VLM  # 模型版本
+    page_ranges: Optional[str] = None     # 页面范围，如 "1-10,15-20"
+    extra_formats: List[str] = field(
+        default_factory=lambda: ["html"]
     )
 
 
@@ -68,7 +71,8 @@ class MinerUParseOptions:
 class MinerUParseResult:
     """MinerU 解析结果"""
     task_id: str
-    status: MinerUTaskStatus
+    state: MinerUTaskState
+    full_zip_url: Optional[str] = None    # 解析结果压缩包 URL
     markdown_content: Optional[str] = None
     html_content: Optional[str] = None
     pages: Optional[List[Dict[str, Any]]] = None
@@ -76,7 +80,7 @@ class MinerUParseResult:
     formulas: Optional[List[Dict[str, Any]]] = None
     images: Optional[List[Dict[str, Any]]] = None
     error_message: Optional[str] = None
-    progress: int = 0  # 0-100
+    progress: Dict[str, Any] = field(default_factory=dict)  # 进度信息
 
 
 @dataclass
@@ -102,27 +106,14 @@ class MinerUService:
     """
     MinerU 智能文档解析服务
 
-    集成 MinerU 云服务 API，提供高质量的文档解析能力：
+    集成 MinerU 云服务 API v4，提供高质量的文档解析能力：
     - 支持 PDF、Word、PPT、图片等多种格式
     - OCR 文字识别（支持扫描件）
     - 表格结构提取
     - 数学公式识别（LaTeX 格式）
     - 智能语义分块
 
-    使用示例:
-        service = MinerUService()
-
-        # 通过 URL 解析
-        result = await service.parse_document_url(
-            url="https://example.com/document.pdf",
-            options=MinerUParseOptions(is_ocr=True)
-        )
-
-        # 通过文件内容解析
-        result = await service.parse_document_bytes(
-            content=pdf_bytes,
-            filename="document.pdf"
-        )
+    API 文档: https://mineru.net/doc/docs/index.html
     """
 
     # MinerU API v4 端点
@@ -136,7 +127,7 @@ class MinerUService:
     # 支持的文件格式
     SUPPORTED_FORMATS = {
         '.pdf', '.doc', '.docx', '.ppt', '.pptx',
-        '.png', '.jpg', '.jpeg'
+        '.png', '.jpg', '.jpeg', '.html'
     }
 
     def __init__(
@@ -200,7 +191,11 @@ class MinerUService:
         url = f"{self.base_url}{endpoint}"
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            # 创建不使用系统代理的客户端
+            async with httpx.AsyncClient(
+                timeout=self.timeout,
+                proxy=None  # 绕过系统代理
+            ) as client:
                 response = await client.request(
                     method=method,
                     url=url,
@@ -208,20 +203,31 @@ class MinerUService:
                     json=json_data
                 )
 
+                # 记录响应状态和内容用于调试
+                logger.info(f"MinerU API 响应: status={response.status_code}, url={url}")
+                logger.info(f"响应内容 (前500字符): {response.text[:500]}")
+
                 # 处理响应
                 if response.status_code == 200:
-                    return response.json()
+                    try:
+                        return response.json()
+                    except Exception as json_err:
+                        logger.error(f"JSON 解析错误: {json_err}, 原始响应: {response.text[:1000]}")
+                        raise MinerUServiceError(f"响应解析失败: {str(json_err)}")
 
                 # 处理错误
-                error_data = response.json() if response.content else {}
+                try:
+                    error_data = response.json() if response.content else {}
+                except Exception:
+                    error_data = {}
                 error_code = error_data.get("code", str(response.status_code))
-                error_msg = error_data.get("msg", response.text)
+                error_msg = error_data.get("msg", response.text[:500] if response.text else "Unknown error")
 
                 # 特定错误码处理
                 if error_code in ["A0202", "A0211"]:
-                    raise MinerUServiceError(f"Token 错误或过期: {error_msg}", error_code)
+                    raise MinerUServiceError(f"Token 错误或过期: {error_msg}", str(error_code))
 
-                raise MinerUServiceError(f"API 请求失败: {error_msg}", error_code)
+                raise MinerUServiceError(f"API 请求失败 ({response.status_code}): {error_msg}", str(error_code))
 
         except httpx.TimeoutException:
             if retry_count < self.max_retries:
@@ -245,6 +251,8 @@ class MinerUService:
         """
         创建文档解析任务（通过 URL）
 
+        官方 API: POST /api/v4/extract/task
+
         Args:
             url: 文档 URL
             options: 解析选项
@@ -256,30 +264,35 @@ class MinerUService:
 
         payload = {
             "url": url,
+            "model_version": options.model_version.value,
             "is_ocr": options.is_ocr,
             "enable_formula": options.enable_formula,
             "enable_table": options.enable_table,
             "language": options.language.value,
-            "model_version": options.model_version,
-            "extra_formats": [fmt.value for fmt in options.extra_formats]
         }
 
         if options.page_ranges:
             payload["page_ranges"] = options.page_ranges
 
-        response = await self._make_request("POST", "/file-urls/batch", json_data={"files": [payload]})
+        if options.extra_formats:
+            payload["extra_formats"] = options.extra_formats
 
-        # 从批量响应中提取任务 ID
-        if "batch_id" in response:
-            return response["batch_id"]
-        elif "task_id" in response:
-            return response["task_id"]
-        else:
-            raise MinerUServiceError("无法获取任务 ID")
+        response = await self._make_request("POST", "/extract/task", json_data=payload)
+
+        # 从响应中提取任务 ID
+        if response.get("code") == 0:
+            data = response.get("data", {})
+            task_id = data.get("task_id")
+            if task_id:
+                return task_id
+
+        raise MinerUServiceError("无法获取任务 ID")
 
     async def get_task_status(self, task_id: str) -> MinerUParseResult:
         """
         获取任务状态和结果
+
+        官方 API: GET /api/v4/extract/task/{task_id}
 
         Args:
             task_id: 任务 ID
@@ -287,42 +300,33 @@ class MinerUService:
         Returns:
             解析结果
         """
-        response = await self._make_request("GET", f"/extract-results/batch/{task_id}")
+        response = await self._make_request("GET", f"/extract/task/{task_id}")
 
-        # 解析状态
-        status_map = {
-            "pending": MinerUTaskStatus.PENDING,
-            "processing": MinerUTaskStatus.PROCESSING,
-            "done": MinerUTaskStatus.COMPLETED,
-            "completed": MinerUTaskStatus.COMPLETED,
-            "success": MinerUTaskStatus.COMPLETED,
-            "failed": MinerUTaskStatus.FAILED,
-            "error": MinerUTaskStatus.FAILED
+        # 检查响应
+        if response.get("code") != 0:
+            raise MinerUServiceError(f"查询任务失败: {response.get('msg', 'Unknown error')}")
+
+        data = response.get("data", {})
+
+        # 解析状态 (官方文档: pending, running, converting, done, failed)
+        state_map = {
+            "pending": MinerUTaskState.PENDING,
+            "running": MinerUTaskState.RUNNING,
+            "converting": MinerUTaskState.CONVERTING,
+            "done": MinerUTaskState.DONE,
+            "failed": MinerUTaskState.FAILED,
         }
 
-        raw_status = response.get("status", "pending").lower()
-        status = status_map.get(raw_status, MinerUTaskStatus.PENDING)
+        raw_state = data.get("state", "pending").lower()
+        state = state_map.get(raw_state, MinerUTaskState.PENDING)
 
         result = MinerUParseResult(
             task_id=task_id,
-            status=status,
-            progress=response.get("progress", 0)
+            state=state,
+            full_zip_url=data.get("full_zip_url"),
+            error_message=data.get("err_msg"),
+            progress=data.get("extract_progress", {})
         )
-
-        # 如果完成，提取结果
-        if status == MinerUTaskStatus.COMPLETED:
-            results = response.get("extract_result", [])
-            if results and len(results) > 0:
-                file_result = results[0]
-                result.markdown_content = file_result.get("md_content")
-                result.html_content = file_result.get("html_content")
-                result.pages = file_result.get("pages", [])
-                result.tables = file_result.get("tables", [])
-                result.formulas = file_result.get("formulas", [])
-                result.images = file_result.get("images", [])
-
-        elif status == MinerUTaskStatus.FAILED:
-            result.error_message = response.get("msg", "解析失败")
 
         return result
 
@@ -348,10 +352,18 @@ class MinerUService:
         while elapsed < max_wait_time:
             result = await self.get_task_status(task_id)
 
-            if result.status in [MinerUTaskStatus.COMPLETED, MinerUTaskStatus.FAILED]:
+            if result.state == MinerUTaskState.DONE:
                 return result
 
-            logger.info(f"任务 {task_id} 进度: {result.progress}%")
+            if result.state == MinerUTaskState.FAILED:
+                return result
+
+            # 记录进度
+            if result.progress:
+                extracted = result.progress.get("extracted_pages", 0)
+                total = result.progress.get("total_pages", 0)
+                logger.info(f"任务 {task_id} 进度: {extracted}/{total} 页")
+
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
 
@@ -381,8 +393,138 @@ class MinerUService:
 
         return MinerUParseResult(
             task_id=task_id,
-            status=MinerUTaskStatus.PENDING
+            state=MinerUTaskState.PENDING
         )
+
+    async def request_upload_urls(
+        self,
+        files: List[Dict[str, Any]]
+    ) -> tuple[str, List[str]]:
+        """
+        申请文件上传链接
+
+        官方 API: POST /api/v4/file-urls/batch
+
+        Args:
+            files: 文件信息列表 [{"url": "...", "is_ocr": false, ...}] 或 [{"name": "file.pdf", ...}]
+
+        Returns:
+            (batch_id, upload_urls)
+        """
+        payload = {"files": files}
+
+        response = await self._make_request("POST", "/file-urls/batch", json_data=payload)
+
+        if response.get("code") != 0:
+            raise MinerUServiceError(f"申请上传链接失败: {response.get('msg', 'Unknown error')}")
+
+        data = response.get("data", {})
+        batch_id = data.get("batch_id")
+        file_urls = data.get("file_urls", [])
+
+        if not batch_id or not file_urls:
+            raise MinerUServiceError("无法获取上传链接")
+
+        return batch_id, file_urls
+
+    async def upload_file(
+        self,
+        upload_url: str,
+        content: bytes
+    ) -> bool:
+        """
+        上传文件到预签名 URL
+
+        Args:
+            upload_url: 预签名上传 URL
+            content: 文件内容
+
+        Returns:
+            是否成功
+        """
+        async with httpx.AsyncClient(timeout=self.timeout, proxy=None) as client:
+            # 注意：上传时不需要设置 Content-Type，让服务器自动检测
+            response = await client.put(upload_url, content=content)
+
+            if response.status_code not in [200, 201]:
+                raise MinerUServiceError(f"文件上传失败: {response.text}")
+
+            return True
+
+    async def download_and_extract_result(
+        self,
+        zip_url: str
+    ) -> tuple[str, List[Dict[str, Any]]]:
+        """
+        下载并解压 MinerU 结果 zip 文件
+
+        MinerU 返回的 zip 文件包含:
+        - {filename}.md: Markdown 格式的解析结果
+        - images/: 图片文件夹
+        - {filename}.json: 结构化 JSON 数据
+
+        Args:
+            zip_url: 结果 zip 文件的 URL
+
+        Returns:
+            (markdown_content, pages_data)
+        """
+        async with httpx.AsyncClient(timeout=self.timeout, proxy=None) as client:
+            response = await client.get(zip_url)
+
+            if response.status_code != 200:
+                raise MinerUServiceError(f"下载结果失败: {response.status_code}")
+
+            # 解压 zip 文件
+            zip_buffer = io.BytesIO(response.content)
+
+            markdown_content = ""
+            pages_data = []
+
+            with zipfile.ZipFile(zip_buffer, 'r') as zf:
+                for name in zf.namelist():
+                    # 读取 Markdown 文件
+                    if name.endswith('.md') and not name.startswith('_'):
+                        content = zf.read(name).decode('utf-8', errors='ignore')
+                        markdown_content += content + "\n\n"
+                        logger.info(f"从 zip 中读取 Markdown 文件: {name}")
+
+                    # 读取 JSON 文件（包含结构化数据）
+                    elif name.endswith('.json') and 'content_list' not in name:
+                        try:
+                            json_content = zf.read(name).decode('utf-8')
+                            import json
+                            data = json.loads(json_content)
+                            # 提取页面数据
+                            if isinstance(data, list):
+                                pages_data = data
+                            logger.info(f"从 zip 中读取 JSON 文件: {name}")
+                        except Exception as e:
+                            logger.warning(f"解析 JSON 文件失败: {e}")
+
+            if not markdown_content:
+                raise MinerUServiceError("zip 文件中未找到 Markdown 内容")
+
+            return markdown_content, pages_data
+
+    async def get_batch_status(self, batch_id: str) -> Dict[str, Any]:
+        """
+        获取批量任务状态
+
+        官方 API: GET /api/v4/extract-results/batch/{batch_id}
+
+        Args:
+            batch_id: 批量任务 ID
+
+        Returns:
+            批量任务状态
+        """
+        response = await self._make_request("GET", f"/extract-results/batch/{batch_id}")
+
+        if response.get("code") != 0:
+            raise MinerUServiceError(f"查询批量任务失败: {response.get('msg', 'Unknown error')}")
+
+        return response.get("data", {})
 
     async def parse_document_bytes(
         self,
@@ -394,8 +536,10 @@ class MinerUService:
         """
         解析文档（通过文件内容）
 
-        注意: MinerU 云服务需要先上传文件获取 URL，然后再解析
-        此方法会先请求上传 URL，上传文件，然后创建解析任务
+        流程:
+        1. 申请上传链接
+        2. 上传文件
+        3. 等待解析完成（系统自动提交）
 
         Args:
             content: 文件内容
@@ -417,49 +561,84 @@ class MinerUService:
         if file_ext not in self.SUPPORTED_FORMATS:
             raise MinerUServiceError(f"不支持的文件格式: {file_ext}")
 
-        # 1. 创建批量上传任务，获取上传 URL
-        payload = {
-            "files": [{
-                "name": filename,
-                "is_ocr": options.is_ocr,
-                "enable_formula": options.enable_formula,
-                "enable_table": options.enable_table,
-                "language": options.language.value,
-                "model_version": options.model_version,
-                "extra_formats": [fmt.value for fmt in options.extra_formats]
-            }]
+        # 1. 申请上传链接
+        file_info = {
+            "name": filename,
+            "is_ocr": options.is_ocr,
+            "enable_formula": options.enable_formula,
+            "enable_table": options.enable_table,
+            "language": options.language.value,
         }
 
         if options.page_ranges:
-            payload["files"][0]["page_ranges"] = options.page_ranges
+            file_info["page_ranges"] = options.page_ranges
 
-        response = await self._make_request("POST", "/file-urls/batch", json_data=payload)
+        batch_id, upload_urls = await self.request_upload_urls([file_info])
 
-        batch_id = response.get("batch_id")
-        upload_urls = response.get("file_urls", [])
+        # 2. 上传文件
+        await self.upload_file(upload_urls[0], content)
 
-        if not upload_urls:
-            raise MinerUServiceError("无法获取上传 URL")
-
-        upload_url = upload_urls[0]
-
-        # 2. 上传文件（不设置 Content-Type，让服务器自动检测）
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            upload_response = await client.put(
-                upload_url,
-                content=content
-            )
-
-            if upload_response.status_code not in [200, 201]:
-                raise MinerUServiceError(f"文件上传失败: {upload_response.text}")
+        logger.info(f"文件 {filename} 已上传，批量任务 ID: {batch_id}")
 
         # 3. 等待解析完成
         if wait_for_result:
-            return await self.wait_for_completion(batch_id)
+            # 轮询批量任务状态
+            elapsed = 0.0
+            poll_interval = 5.0
+            max_wait_time = 600.0
+
+            while elapsed < max_wait_time:
+                batch_status = await self.get_batch_status(batch_id)
+                # 官方文档: extract_result 是数组
+                extract_results = batch_status.get("extract_result", [])
+
+                if extract_results:
+                    file_result = extract_results[0]
+                    state = file_result.get("state", "pending").lower()
+
+                    if state == "done":
+                        # 下载 zip 结果并提取 markdown
+                        full_zip_url = file_result.get("full_zip_url")
+                        markdown_content = None
+
+                        if full_zip_url:
+                            try:
+                                logger.info(f"正在下载结果: {full_zip_url}")
+                                markdown_content, pages_data = await self.download_and_extract_result(full_zip_url)
+                                logger.info(f"成功提取 Markdown 内容，长度: {len(markdown_content)}")
+                            except Exception as e:
+                                logger.error(f"下载结果失败: {e}")
+
+                        return MinerUParseResult(
+                            task_id=batch_id,
+                            state=MinerUTaskState.DONE,
+                            full_zip_url=full_zip_url,
+                            markdown_content=markdown_content,
+                            error_message=file_result.get("err_msg")
+                        )
+                    elif state == "failed":
+                        return MinerUParseResult(
+                            task_id=batch_id,
+                            state=MinerUTaskState.FAILED,
+                            error_message=file_result.get("err_msg", "解析失败")
+                        )
+                    else:
+                        # pending, running, converting, waiting-file
+                        logger.info(f"批量任务 {batch_id} 状态: {state}")
+                        progress = file_result.get("extract_progress", {})
+                        if progress:
+                            logger.info(f"进度: {progress.get('extracted_pages', 0)}/{progress.get('total_pages', 0)} 页")
+                else:
+                    logger.info(f"批量任务 {batch_id} 等待中...")
+
+                await asyncio.sleep(poll_interval)
+                elapsed += poll_interval
+
+            raise MinerUServiceError(f"任务超时，已等待 {max_wait_time} 秒")
 
         return MinerUParseResult(
             task_id=batch_id,
-            status=MinerUTaskStatus.PENDING
+            state=MinerUTaskState.PENDING
         )
 
     def extract_chunks_from_result(
@@ -479,7 +658,7 @@ class MinerUService:
         Returns:
             分块列表
         """
-        if result.status != MinerUTaskStatus.COMPLETED:
+        if result.state != MinerUTaskState.DONE:
             raise MinerUServiceError("解析未完成，无法提取分块")
 
         chunks: List[MinerUChunk] = []
