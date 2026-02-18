@@ -361,7 +361,24 @@ async def chat_with_agent_stream(
     # astream_events v1 会尝试深拷贝整个状态，包括 MCP 工具中的不可序列化对象
     try:
         async for chunk in agent.astream({"messages": messages}, config=config):
-            # chunk 是一个字典，包含 agent 的输出
+            # chunk 是一个字典，包含不同节点的输出
+            # 处理工具节点输出 (显示工具调用信息)
+            if "tools" in chunk:
+                tools_chunk = chunk["tools"]
+                if "messages" in tools_chunk:
+                    for msg in tools_chunk["messages"]:
+                        # 工具输出消息
+                        tool_name = getattr(msg, "name", "unknown_tool")
+                        tool_output = getattr(msg, "content", "")
+                        # 截断过长的输出
+                        display_output = (tool_output[:500] + "...") if len(tool_output) > 500 else tool_output
+                        tool_data = json.dumps(
+                            {"name": tool_name, "output": display_output}, ensure_ascii=False
+                        )
+                        encoded_data = encode_sse_data(tool_data)
+                        yield f"event: tool_end\ndata: {encoded_data}\n\n"
+
+            # 处理 agent 节点输出 (流式输出 AI 消息)
             if "agent" in chunk:
                 agent_chunk = chunk["agent"]
                 if "messages" in agent_chunk:
