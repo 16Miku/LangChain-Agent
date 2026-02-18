@@ -14,6 +14,15 @@ from langchain_core.tools import tool
 # E2B Code Interpreter imports
 from e2b_code_interpreter import AsyncSandbox
 
+# 导入 settings 以读取 .env 配置
+try:
+    from app.config import settings
+except ImportError:
+    # 如果直接导入失败，尝试从父目录导入
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from app.config import settings
+
 # ============================================================
 # E2B Sandbox 管理
 # ============================================================
@@ -32,7 +41,8 @@ def _get_lock() -> asyncio.Lock:
 
 async def _create_new_sandbox() -> AsyncSandbox:
     """Create a new E2B sandbox instance."""
-    api_key = os.environ.get("E2B_API_KEY")
+    # 从 settings 读取 API Key（.env 文件配置）
+    api_key = settings.E2B_API_KEY
     if not api_key:
         raise ValueError("E2B_API_KEY 环境变量未设置。请在 .env 文件中配置 E2B_API_KEY。")
 
