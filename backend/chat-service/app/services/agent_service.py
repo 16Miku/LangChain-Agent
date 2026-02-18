@@ -5,7 +5,6 @@
 
 import os
 import asyncio
-import aiosqlite
 import base64
 import json
 import re
@@ -13,7 +12,6 @@ from typing import Dict, Any, List, Optional, AsyncGenerator
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.prebuilt import create_react_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
@@ -29,12 +27,9 @@ logging.getLogger("root").setLevel(logging.ERROR)
 _agent_executors: Dict[str, Any] = {}  # Per-user agent executors
 _mcp_client = None
 _mcp_tools = []
-_sqlite_conn = None
 
 # Persistence Config
 DATA_DIR = settings.DATA_DIR
-DB_PATH = os.path.join(DATA_DIR, "state.db")
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 SYSTEM_PROMPT = """
 # Stream-Agent v9.0 - AI Research Assistant
@@ -185,7 +180,7 @@ async def initialize_agent(
     Returns:
         Agent executor
     """
-    global _agent_executors, _sqlite_conn
+    global _agent_executors
 
     # Check if agent already exists for this user
     if user_id in _agent_executors:
@@ -228,17 +223,10 @@ async def initialize_agent(
         )
         print(f"Using Google Gemini LLM: {google_model}")
 
-    # Create SQLite connection for checkpointer
-    if _sqlite_conn is None:
-        _sqlite_conn = await aiosqlite.connect(DB_PATH)
-
-    checkpointer = AsyncSqliteSaver(_sqlite_conn)
-
-    # Create agent
+    # Create agent without checkpointer (对话历史由数据库管理)
     agent_executor = create_react_agent(
         model=llm,
         tools=all_tools,
-        checkpointer=checkpointer,
     )
 
     _agent_executors[user_id] = agent_executor
