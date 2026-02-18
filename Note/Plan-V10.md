@@ -83,6 +83,32 @@
 | E2E 测试使用 waitForTimeout 反模式 | 中 | 待修复 |
 | httpx.AsyncClient 未复用 | 中 | 待修复 |
 
+### 新发现的 Bug (2026-02-18)
+
+| 问题 | 严重程度 | 状态 | 说明 |
+|------|---------|------|------|
+| 未登录状态跳转异常 | 高 | ✅ 已修复 | 未登录时访问 / 自动跳转到 /chat 并显示上次登录用户名 |
+| RAG 引用来源 UI 简陋 | 中 | 待优化 | 引用来源模块需要重新设计，提升用户体验 |
+
+#### Bug 详情
+
+**1. 未登录状态跳转异常** ✅ 已修复
+- **症状**: 清除 Cookie/LocalStorage 后访问 `http://localhost:3000/` 自动跳转到 `/chat`
+- **表现**: 显示上次登录用户的姓名，但没有对话历史数据
+- **原因**:
+  - `authStore.ts` 使用 zustand persist 持久化 `user` 对象
+  - `initialize()` 只检查 token，但 `user` 从 persist 恢复
+  - `Sidebar.tsx` 只检查 `user` 存在就显示用户名，未检查 `isAuthenticated`
+- **修复**:
+  - `authStore.ts`: initialize 时清除残留 user
+  - `AuthProvider.tsx`: 同步清除 user
+  - `Sidebar.tsx`: 添加 isAuthenticated 检查
+
+**2. RAG 引用来源 UI 简陋**
+- **症状**: 文档问答的引用来源显示过于简单
+- **当前状态**: 仅显示基础文本信息
+- **期望**: 卡片式设计、来源文档标题、页码、高亮原文片段、可点击跳转
+
 ---
 
 ## 📑 目录
