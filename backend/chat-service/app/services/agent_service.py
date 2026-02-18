@@ -357,102 +357,27 @@ async def chat_with_agent_stream(
     else:
         messages.append(HumanMessage(content=message))
 
-    # Stream events
-    async for event in agent.astream_events(
-        {"messages": messages}, config=config, version="v1"
-    ):
-        kind = event["event"]
-
-        if kind == "on_chat_model_stream":
-            raw_content = event["data"]["chunk"].content
-            text_content = extract_text_content(raw_content)
-            if text_content:
-                encoded_data = encode_sse_data(text_content)
-                yield f"event: text\ndata: {encoded_data}\n\n"
-
-        elif kind == "on_tool_start":
-            tool_name = event["name"]
-            encoded_data = encode_sse_data(tool_name)
-            yield f"event: tool_start\ndata: {encoded_data}\n\n"
-
-        elif kind == "on_tool_end":
-            tool_name = event["name"]
-            output = str(event["data"].get("output", ""))
-
-            # 处理 RAG 引用数据 - 解析 [RAG_CITATIONS] 标记
-            citations_data = None
-            display_output = output
-            if "[RAG_CITATIONS]" in output and "[/RAG_CITATIONS]" in output:
-                try:
-                    start_marker = "[RAG_CITATIONS]"
-                    end_marker = "[/RAG_CITATIONS]"
-                    start_idx = output.find(start_marker) + len(start_marker)
-                    end_idx = output.find(end_marker)
-                    citations_json = output[start_idx:end_idx]
-                    citations_data = json.loads(citations_json)
-                    # 从显示输出中移除引用数据标记
-                    display_output = output[:output.find(start_marker)].strip()
-                except Exception as e:
-                    print(f"解析 RAG 引用数据失败: {e}")
-
-            # Handle image data - preserve full images, truncate text
-            if "[IMAGE_BASE64:" in display_output:
-                image_pattern = r"\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]"
-                image_matches = re.findall(image_pattern, display_output)
-                text_parts = re.split(image_pattern, display_output)
-
-                truncated_text_parts = [
-                    (part[:500] + "..." if len(part) > 500 else part)
-                    for part in text_parts
-                ]
-
-                safe_output = ""
-                for i, text_part in enumerate(truncated_text_parts):
-                    safe_output += text_part
-                    if i < len(image_matches):
-                        safe_output += image_matches[i]
-
-            # Handle presentation data - preserve full HTML, truncate text
-            elif "[PRESENTATION_HTML:" in display_output:
-                pres_pattern = r"\[PRESENTATION_HTML:[A-Za-z0-9+/=]+\]"
-                pres_matches = re.findall(pres_pattern, display_output)
-                text_parts = re.split(pres_pattern, display_output)
-
-                truncated_text_parts = [
-                    (part[:500] + "..." if len(part) > 500 else part)
-                    for part in text_parts
-                ]
-
-                safe_output = ""
-                for i, text_part in enumerate(truncated_text_parts):
-                    safe_output += text_part
-                    if i < len(pres_matches):
-                        safe_output += pres_matches[i]
-
-            else:
-                safe_output = (display_output[:1000] + "...") if len(display_output) > 1000 else display_output
-
-            tool_data = json.dumps(
-                {"name": tool_name, "output": safe_output}, ensure_ascii=False
-            )
-            encoded_data = encode_sse_data(tool_data)
-            yield f"event: tool_end\ndata: {encoded_data}\n\n"
-
-            # 发送 citation 事件（如果有引用数据）
-            if citations_data:
-                for citation in citations_data:
-                    citation_event = json.dumps({
-                        "chunk_id": citation.get("chunk_id", ""),
-                        "document_id": citation.get("document_id", ""),
-                        "document_name": citation.get("document_name", ""),
-                        "page_number": citation.get("page_number"),
-                        "section": citation.get("section"),
-                        "content": citation.get("content", ""),
-                        "content_preview": citation.get("content_preview", ""),
-                        "score": citation.get("score", 0),
-                    }, ensure_ascii=False)
-                    encoded_citation = encode_sse_data(citation_event)
-                    yield f"event: citation\ndata: {encoded_citation}\n\n"
+    # 使用 astream 而不是 astream_events 来避免序列化问题
+    # astream_events v1 会尝试深拷贝整个状态，包括 MCP 工具中的不可序列化对象
+    try:
+        async for chunk in agent.astream({"messages": messages}, config=config):
+            # chunk 是一个字典，包含 agent 的输出
+            if "agent" in chunk:
+                agent_chunk = chunk["agent"]
+                if "messages" in agent_chunk:
+                    for msg in agent_chunk["messages"]:
+                        # 流式输出 AI 消息
+                        if hasattr(msg, "content") and msg.content:
+                            text_content = extract_text_content(msg.content)
+                            if text_content:
+                                encoded_data = encode_sse_data(text_content)
+                                yield f"event: text\ndata: {encoded_data}\n\n"
+    except Exception as e:
+        # 处理错误
+        error_msg = str(e)
+        print(f"Agent stream error: {error_msg}")
+        encoded_error = encode_sse_data(f"Error: {error_msg}")
+        yield f"event: error\ndata: {encoded_error}\n\n"
 
     # Send done marker with conversation_id for new conversations
     done_data = json.dumps({"conversation_id": conversation_id}, ensure_ascii=False)
@@ -462,11 +387,7 @@ async def chat_with_agent_stream(
 
 async def cleanup():
     """Cleanup resources."""
-    global _sqlite_conn, _mcp_client, _agent_executors
-
-    if _sqlite_conn:
-        await _sqlite_conn.close()
-        _sqlite_conn = None
+    global _mcp_client, _agent_executors
 
     _mcp_client = None
     _agent_executors.clear()
