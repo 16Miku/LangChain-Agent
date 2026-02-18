@@ -24,7 +24,7 @@ import { ConversationItem } from './ConversationItem';
 export function Sidebar() {
   const router = useRouter();
   const { sidebarOpen, toggleSidebar } = useSettingsStore();
-  const { user, logout } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuthStore();
   const {
     conversations,
     currentConversationId,
@@ -174,9 +174,13 @@ export function Sidebar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  {user?.username?.charAt(0).toUpperCase() || 'U'}
+                  {isAuthenticated && user?.username
+                    ? user.username.charAt(0).toUpperCase()
+                    : 'U'}
                 </div>
-                <span className="truncate">{user?.username || 'User'}</span>
+                <span className="truncate">
+                  {isAuthenticated && user?.username ? user.username : 'User'}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">

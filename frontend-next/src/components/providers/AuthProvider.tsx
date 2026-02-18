@@ -40,8 +40,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: true,
       });
     } else if (!storedToken || !storedRefreshToken) {
-      // 如果 token 不完整，确保状态为未认证
+      // 如果 token 不完整，清除所有认证状态（包括 user）
+      // 这修复了 user 在 token 清除后仍然残留的 bug
       useAuthStore.setState({
+        user: null,
         accessToken: null,
         refreshToken: null,
         isAuthenticated: false,

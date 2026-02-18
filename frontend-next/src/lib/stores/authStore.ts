@@ -137,8 +137,6 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== 'undefined') {
           const storedToken = localStorage.getItem('accessToken');
           const storedRefreshToken = localStorage.getItem('refreshToken');
-          // storedUser 保留以供将来使用，暂不使用
-          // const storedUser = localStorage.getItem('auth-storage-user');
 
           if (storedToken && storedRefreshToken) {
             // Has tokens, mark as authenticated
@@ -149,8 +147,13 @@ export const useAuthStore = create<AuthState>()(
               isInitialized: true,
             });
           } else {
-            // No tokens, mark as initialized but not authenticated
+            // No tokens, clear all auth state including user
+            // This fixes the bug where user persists after tokens are cleared
             set({
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+              isAuthenticated: false,
               isInitialized: true,
             });
           }
