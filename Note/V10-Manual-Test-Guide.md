@@ -126,16 +126,18 @@ cd backend/pptx-renderer-service && uvicorn app.main:app --host 0.0.0.0 --port 8
 
 ## 五、RAG 文档问答测试
 
-### 测试 10: 上传文档
+### 测试 10: 上传文档（完成）
 
 | 步骤 | 操作 | 预期效果 |
 |------|------|----------|
 | 1 | 点击侧边栏「文档」或「知识库」 | 进入文档管理页面 |
 | 2 | 点击「上传文档」按钮 | 弹出文件选择对话框 |
 | 3 | 选择一个 PDF 文件（如技术文档） | 显示上传进度条 |
-| 4 | 等待解析完成 | 显示"解析完成"，文档出现在列表中 |
+| 4 | 等待解析完成（MinerU 智能解析） | 显示"解析完成"，文档出现在列表中 |
 
-### 测试 11: 基于文档问答
+**注意**: V10 集成了 MinerU API，支持智能文档解析（OCR、表格、公式识别）。
+
+### 测试 11: 基于文档问答（完成）
 
 | 步骤 | 操作 | 预期效果 |
 |------|------|----------|
@@ -200,10 +202,10 @@ cd backend/pptx-renderer-service && uvicorn app.main:app --host 0.0.0.0 --port 8
 - [ ] 导出 HTML 可在浏览器打开
 - [ ] 导出 PPTX 可在 PowerPoint 打开
 
-### 文档问答 (待测试)
-- [ ] 上传文档成功
-- [ ] 基于文档问答返回相关内容
-- [ ] 显示引用来源
+### 文档问答 (完成)
+- [x] 上传文档成功 (MinerU 智能解析) ✅
+- [x] 基于文档问答返回相关内容 ✅
+- [x] RAG 检索正常工作 ✅
 
 ---
 
@@ -220,15 +222,44 @@ cd backend/pptx-renderer-service && uvicorn app.main:app --host 0.0.0.0 --port 8
 
 ---
 
-> **文档版本**: 3.0
+## 九、MinerU API 配置说明
+
+### 9.1 获取 API Key
+
+1. 访问 [MinerU 官网](https://mineru.net)
+2. 注册账号并登录
+3. 在「API 管理」页面申请 API Key
+
+### 9.2 配置 rag-service
+
+编辑 `backend/rag-service/.env`:
+
+```bash
+# MinerU API (智能文档解析)
+MINERU_API_KEY=your-api-key-here
+MINERU_API_URL=https://mineru.net/api/v4
+MINERU_ENABLED=true
+```
+
+### 9.3 常见问题
+
+| 问题 | 原因 | 解决方法 |
+|------|------|----------|
+| 404 错误 | API URL 错误 | 使用 `https://mineru.net/api/v4` |
+| 代理拦截 | Clash 等代理软件 | 代码已自动绕过代理 |
+| Token 过期 | API Key 过期 | 重新申请 API Key |
+
+---
+
+> **文档版本**: 4.0
 > **最后更新**: 2026-02-18
 > **适用版本**: V10.0
 >
-> **测试进度**: 6/8 核心功能已测试通过
+> **测试进度**: 7/8 核心功能已测试通过 ✅
 > - ✅ 用户认证 (注册/登录)
 > - ✅ 基础对话
 > - ✅ 多轮对话 (查询改写)
 > - ✅ 工具调用 (网络搜索)
 > - ✅ E2B 代码执行
+> - ✅ RAG 文档问答 (MinerU)
 > - ⏭️ 演示文稿 (跳过)
-> - ⏳ RAG 文档问答 (待测试)

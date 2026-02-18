@@ -19,7 +19,7 @@
 | 工具调用 (网络搜索) | ✅ 通过 | search_engine 工具正常 |
 | E2B 代码执行 | ✅ 通过 | 云沙箱正常创建和执行 |
 | 演示文稿 | ⏭️ 跳过 | 保留功能，暂不测试 |
-| RAG 文档问答 | ⏳ 待测试 | 需启动 rag-service |
+| RAG 文档问答 | ✅ 通过 | MinerU API 智能解析 |
 
 ### Bug 修复记录 (2026-02-18)
 
@@ -30,6 +30,10 @@
 | 对话重命名未保存 | - | handleRenameConversation 调用 API |
 | 工具调用序列化错误 | c5ecdcf | tool_output 转字符串 |
 | E2B API Key 读取失败 | c0a90ce | 从 settings 读取而非 os.environ |
+| MinerU API URL 错误 | - | 使用官方 mineru.net/api/v4 |
+| MinerU 批量查询端点错误 | - | 修正为 /extract-results/batch/{id} |
+| MinerU 结果下载缺失 | - | 添加 zip 下载和 Markdown 提取 |
+| 系统代理拦截请求 | - | httpx 添加 proxy=None |
 
 ### 放弃的模块
 以下模块已决定放弃开发：
