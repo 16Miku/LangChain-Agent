@@ -371,6 +371,10 @@ async def chat_with_agent_stream(
                         tool_name = getattr(msg, "name", "unknown_tool")
                         tool_output = getattr(msg, "content", "")
 
+                        # 确保 tool_output 是字符串
+                        if not isinstance(tool_output, str):
+                            tool_output = json.dumps(tool_output, ensure_ascii=False)
+
                         # 发送 tool_start 事件 (前端需要先收到 tool_start 创建 toolCall 对象)
                         encoded_name = encode_sse_data(tool_name)
                         yield f"event: tool_start\ndata: {encoded_name}\n\n"
