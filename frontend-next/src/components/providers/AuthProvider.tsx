@@ -40,8 +40,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: true,
       });
     } else if (!storedToken || !storedRefreshToken) {
-      // 如果 token 不完整，清除所有认证状态（包括 user）
+      // 如果 token 不完整，清除所有认证状态（包括 user 和 persist storage）
       // 这修复了 user 在 token 清除后仍然残留的 bug
+      localStorage.removeItem('auth-storage');
       useAuthStore.setState({
         user: null,
         accessToken: null,

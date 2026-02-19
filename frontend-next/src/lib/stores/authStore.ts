@@ -147,8 +147,10 @@ export const useAuthStore = create<AuthState>()(
               isInitialized: true,
             });
           } else {
-            // No tokens, clear all auth state including user
+            // No valid tokens - clear ALL auth data including persist storage
             // This fixes the bug where user persists after tokens are cleared
+            // Clear the zustand persist storage to prevent rehydration of stale data
+            localStorage.removeItem('auth-storage');
             set({
               user: null,
               accessToken: null,
