@@ -88,10 +88,11 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Continue with logout even if API call fails
         } finally {
-          // Clear tokens from localStorage
+          // Clear ALL auth data from localStorage including persist storage
           if (typeof window !== 'undefined') {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
+            localStorage.removeItem('auth-storage');
           }
 
           set({

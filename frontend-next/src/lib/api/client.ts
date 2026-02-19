@@ -100,9 +100,11 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch {
-        // Refresh failed - clear tokens and redirect to login
+        // Refresh failed - clear ALL auth data including persist storage
+        // This prevents showing stale username on next visit
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('auth-storage');
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
