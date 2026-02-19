@@ -257,10 +257,12 @@ function CitationCard({
             )}
           </div>
 
-          {/* Content Preview */}
-          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {preview}
-          </p>
+          {/* Content Preview - 显示完整内容 */}
+          <div className="max-h-32 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              {citation.content}
+            </p>
+          </div>
 
           {/* Score Progress Bar */}
           <div className="flex items-center gap-2 mt-2">
@@ -395,22 +397,38 @@ function CitationDetailView({ detail, isLoading, highlightRanges }: CitationDeta
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Content - 完整显示 */}
       <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Quote className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">引用内容</span>
+            <span className="text-sm font-medium text-primary">完整引用内容</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5">
+          <div className="flex items-center gap-2">
+            {/* 位置信息 */}
+            <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400">
+              <Hash className="h-3 w-3" />
               分块 {detail.chunkIndex + 1} / {detail.totalChunks}
             </span>
+            {detail.pageNumber && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-green-50 dark:bg-green-950/30 px-2 py-0.5 text-xs text-green-600 dark:text-green-400">
+                <FileText className="h-3 w-3" />
+                第 {detail.pageNumber} 页
+              </span>
+            )}
           </div>
         </div>
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-          {highlightContent(detail.content)}
-        </p>
+        {/* 完整内容显示区域 */}
+        <div className="max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            {highlightContent(detail.content)}
+          </p>
+        </div>
+        {/* 字符统计 */}
+        <div className="mt-2 pt-2 border-t border-primary/10 text-xs text-muted-foreground flex items-center justify-between">
+          <span>内容长度：{detail.content.length} 字符</span>
+          <span>分块 ID：{detail.chunkId.slice(0, 8)}...</span>
+        </div>
       </div>
 
       {/* Context: Next Chunks */}
